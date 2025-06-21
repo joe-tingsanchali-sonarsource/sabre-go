@@ -1,0 +1,13 @@
+// This is a test file with multiple lines
+// to test the line splitting functionality
+
+package main
+
+import "math"
+
+func main() {
+	x := 1.0
+	y := 2.0
+	z := math.Sqrt(x*x + y*y)
+	println(z)
+}

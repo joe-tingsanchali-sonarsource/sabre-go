@@ -4,12 +4,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type UnitFile struct {
 	path         string
 	absolutePath string
 	content      string
+	lines        []string
 }
 
 func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
@@ -22,16 +24,17 @@ func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
 	if err != nil {
 		return nil, err
 	}
+	contentStr := strings.ReplaceAll(string(content), "\r\n", "\n")
 
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-
 	unitFile = &UnitFile{
 		path:         path,
 		absolutePath: absolutePath,
-		content:      string(content),
+		content:      contentStr,
+		lines:        strings.Split(contentStr, "\n"),
 	}
 
 	return
