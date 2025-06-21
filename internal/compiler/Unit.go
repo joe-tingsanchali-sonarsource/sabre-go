@@ -44,6 +44,11 @@ type Unit struct {
 	rootFile *UnitFile
 }
 
+// File returns the root file of the unit
+func (u *Unit) File() *UnitFile {
+	return u.rootFile
+}
+
 func UnitFromFile(path string) (unit *Unit, err error) {
 	unitFile, err := UnitFileFromFile(path)
 	if err != nil {
