@@ -15,7 +15,9 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: test
-        run: go test -coverprofile=coverage.out -json .\internal\compiler > report.json
+        run: |
+          go version
+          go test -coverprofile=coverage.out -json .\internal\compiler > report.json
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
