@@ -1,0 +1,10 @@
+package main
+
+func vertexShader(position vec3, color vec3) (vec4, vec3) {
+	gl_Position := vec4(position, 1.0)
+	return gl_Position, color
+}
+
+func fragmentShader(color vec3) vec4 {
+	return vec4(color, 1.0)
+}
