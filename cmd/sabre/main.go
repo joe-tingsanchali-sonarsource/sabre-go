@@ -41,5 +41,5 @@ func main() {
 	}
 
 	fmt.Printf("Successfully created unit from file: %s\n", filePath)
-	_ = unit // TODO: Use the unit for compilation
+	_ = unit
 }
