@@ -44,8 +44,8 @@ type Unit struct {
 	rootFile *UnitFile
 }
 
-// File returns the root file of the unit
-func (u *Unit) File() *UnitFile {
+// RootFile returns the root file of the unit
+func (u *Unit) RootFile() *UnitFile {
 	return u.rootFile
 }
 

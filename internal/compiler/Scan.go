@@ -189,12 +189,18 @@ func (s *Scanner) readString() string {
 
 func (s *Scanner) readComment() string {
 	start := s.pos
+	end := start
 
-	for !s.isEOF() && s.ch != '\n' {
+	for !s.isEOF() {
 		s.readChar()
+		if s.ch != '\n' {
+			end++
+		} else {
+			break
+		}
 	}
 
-	return s.content[start:s.pos]
+	return s.content[start:end]
 }
 
 func (s *Scanner) createLocation(startLine, startColumn int32, startPos int) Location {
