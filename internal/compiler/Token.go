@@ -30,40 +30,42 @@ const (
 	TokenSemicolon // ;
 	TokenDot       // .
 	TokenComma     // ,
+	TokenColon     // :
 
 	// Operators
-	TokenLT        // <
-	TokenGT        // >
-	TokenLE        // <=
-	TokenGE        // >=
-	TokenAssign    // =
-	TokenEQ        // ==
-	TokenNE        // !=
-	TokenAdd       // +
-	TokenSub       // -
-	TokenMul       // *
-	TokenDiv       // /
-	TokenMod       // %
-	TokenAddAssign // +=
-	TokenSubAssign // -=
-	TokenMulAssign // *=
-	TokenDivAssign // /=
-	TokenModAssign // %=
-	TokenLOr       // ||
-	TokenLAnd      // &&
-	TokenNot       // !
-	TokenXor       // ^
-	TokenOr        // |
-	TokenAnd       // &
-	TokenShl       // <<
-	TokenShr       // >>
-	TokenShlAssign // <<=
-	TokenShrAssign // >>=
-	TokenXorAssign // ^=
-	TokenOrAssign  // |=
-	TokenAndAssign // &=
-	TokenInc       // ++
-	TokenDec       // --
+	TokenLT          // <
+	TokenGT          // >
+	TokenLE          // <=
+	TokenGE          // >=
+	TokenAssign      // =
+	TokenEQ          // ==
+	TokenNE          // !=
+	TokenAdd         // +
+	TokenSub         // -
+	TokenMul         // *
+	TokenDiv         // /
+	TokenMod         // %
+	TokenAddAssign   // +=
+	TokenSubAssign   // -=
+	TokenMulAssign   // *=
+	TokenDivAssign   // /=
+	TokenModAssign   // %=
+	TokenColonAssign // :=
+	TokenLOr         // ||
+	TokenLAnd        // &&
+	TokenNot         // !
+	TokenXor         // ^
+	TokenOr          // |
+	TokenAnd         // &
+	TokenShl         // <<
+	TokenShr         // >>
+	TokenShlAssign   // <<=
+	TokenShrAssign   // >>=
+	TokenXorAssign   // ^=
+	TokenOrAssign    // |=
+	TokenAndAssign   // &=
+	TokenInc         // ++
+	TokenDec         // --
 
 	// Keywords (Go keywords that make sense in shader context)
 	TokenConst
@@ -92,7 +94,7 @@ const (
 
 	// Delimiter boundaries
 	TokenDelimiterBegin = TokenLParen
-	TokenDelimiterEnd   = TokenComma
+	TokenDelimiterEnd   = TokenColon
 
 	// Operator boundaries
 	TokenOperatorBegin = TokenLT
@@ -138,6 +140,8 @@ func (tk TokenKind) String() string {
 		return "."
 	case TokenComma:
 		return ","
+	case TokenColon:
+		return ":"
 	case TokenLT:
 		return "<"
 	case TokenGT:
@@ -172,6 +176,8 @@ func (tk TokenKind) String() string {
 		return "/="
 	case TokenModAssign:
 		return "%="
+	case TokenColonAssign:
+		return ":="
 	case TokenLOr:
 		return "||"
 	case TokenLAnd:

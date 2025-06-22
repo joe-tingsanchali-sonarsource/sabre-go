@@ -1,10 +1,13 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
+	"bytes"
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/MoustaphaSaad/sabre-go/internal/compiler"
 )
@@ -12,17 +15,19 @@ import (
 const commandUsageTemplate = `Usage: %s <command> [flags]
 
 Commands:
-  scan	scans the given file and prints tokens to stdout
-      	"sabre scan <file>"
+  scan        scans the given file and prints tokens to stdout
+              "sabre scan <file>"
+  test-scan   tests the scan phase against golden output
+              "sabre test-scan <test-data-dir>"
 `
 
 type TokenDesc struct {
-	Kind      string `json:"kind"`
-	Value     string `json:"value"`
-	Line      int32  `json:"line"`
-	Column    int32  `json:"column"`
-	ByteBegin int32  `json:"byte_begin"`
-	ByteEnd   int32  `json:"byte_end"`
+	Kind      string
+	Value     string
+	Line      int32
+	Column    int32
+	ByteBegin int32
+	ByteEnd   int32
 }
 
 func helpString() string {
@@ -33,17 +38,17 @@ func help() {
 	fmt.Fprint(os.Stderr, helpString())
 }
 
-func scan(args []string) error {
-	fs := flag.NewFlagSet("scan", flag.ExitOnError)
-	outputFormat := fs.String("format", "text", "output format for scan mode (test, json)")
-	fs.Parse(args)
+func cleanString(s string) string {
+	return strings.TrimSpace(strings.ReplaceAll(s, "\r\n", "\n"))
+}
 
-	if fs.NArg() < 1 {
+func scan(args []string, out io.Writer) error {
+	if len(args) < 1 {
 		return fmt.Errorf("no file provided\n%v", helpString())
 	}
 
-	file := fs.Arg(0)
-	unit, err := compiler.UnitFromFile(fs.Arg(0))
+	file := args[0]
+	unit, err := compiler.UnitFromFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
 	}
@@ -63,32 +68,68 @@ func scan(args []string) error {
 		}
 
 		tokens = append(tokens, tokenDesc)
-		if token.Kind() == compiler.TokenEOF {
+		if token.Kind() == compiler.TokenEOF || token.Kind() == compiler.TokenInvalid {
 			break
 		}
 	}
 
-	switch *outputFormat {
-	case "json":
-		encoder := json.NewEncoder(os.Stdout)
-		encoder.SetIndent("", "  ")
-		err := encoder.Encode(tokens)
-		if err != nil {
-			return fmt.Errorf("failed to encode tokens: %v", err)
-		}
-	case "text":
-		for _, token := range tokens {
-			fmt.Printf("%-15s %-20s %4d:%-4d [%d-%d]\n",
-				token.Kind,
-				fmt.Sprintf(`"%s"`, token.Value),
-				token.Line,
-				token.Column,
-				token.ByteBegin,
-				token.ByteEnd)
-		}
-	default:
-		return fmt.Errorf("unsupported output format: %s", *outputFormat)
+	for _, token := range tokens {
+		fmt.Fprintf(out, "%-15s %-20s %4d:%-4d [%d-%d]\n",
+			token.Kind,
+			fmt.Sprintf(`"%s"`, token.Value),
+			token.Line,
+			token.Column,
+			token.ByteBegin,
+			token.ByteEnd)
 	}
+	return nil
+}
+
+func testScan(args []string, out io.Writer) error {
+	if len(args) < 1 {
+		return fmt.Errorf("no test data directory provided\n%v", helpString())
+	}
+
+	dir := args[0]
+	var goldenFiles []string
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() && filepath.Ext(path) == ".golden" {
+			goldenFiles = append(goldenFiles, path)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to walk test data directory: %v", err)
+	}
+
+	for _, goldenFile := range goldenFiles {
+		testFile := strings.TrimSuffix(goldenFile, filepath.Ext(goldenFile))
+		expectedBytes, err := os.ReadFile(goldenFile)
+		if err != nil {
+			return fmt.Errorf("failed to read test file '%v': %v", testFile, err)
+		}
+		expectedOutput := cleanString(string(expectedBytes))
+
+		fmt.Fprintf(out, "===testing %v===\n", testFile)
+
+		var actualOutputBuffer bytes.Buffer
+		err = scan([]string{testFile}, &actualOutputBuffer)
+		if err != nil {
+			return err
+		}
+		actualOutput := cleanString(actualOutputBuffer.String())
+
+		if expectedOutput != actualOutput {
+			fmt.Fprintln(out, "FAIL: expected != actual")
+			fmt.Fprintln(out, "expected:")
+			fmt.Fprintln(out, expectedOutput)
+			fmt.Fprintln(out, "actual:")
+			fmt.Fprintln(out, actualOutput)
+		} else {
+			fmt.Fprintln(out, "SUCCESS")
+		}
+	}
+
 	return nil
 }
 
@@ -105,7 +146,9 @@ func main() {
 	case "help":
 		help()
 	case "scan":
-		err = scan(subArgs)
+		err = scan(subArgs, os.Stdout)
+	case "test-scan":
+		err = testScan(subArgs, os.Stdout)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command '%s'\n", os.Args[1])
 		help()
