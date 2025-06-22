@@ -1,0 +1,24 @@
+// Integer literals
+decimal_int := 123456
+zero := 0
+hex_int := 0x1A2B3C
+hex_upper := 0XFF00AA
+binary_int := 0b101010
+binary_upper := 0B110011
+octal_int := 0o777
+octal_upper := 0O123
+
+// Float literals
+simple_float := 123.456
+dot_only := 0.5
+scientific_lower := 1.23e10
+scientific_upper := 2.45E-5
+scientific_positive := 3.14e+2
+no_decimal_scientific := 42e10
+negative_exp := 1.5e-10
+
+// String literals
+empty_string := ""
+simple_string := "hello world"
+escaped_string := "line1\nline2\ttab\"quote\\backslash"
+unicode_string := "🚀 shader compiler"

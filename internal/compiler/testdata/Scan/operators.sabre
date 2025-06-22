@@ -1,0 +1,52 @@
+// Assignment operators
+a = b
+c += d
+e -= f
+g *= h
+i /= j
+k %= l
+m &= n
+o |= p
+q ^= r
+s <<= t
+u >>= v
+w := x  // Short declaration
+
+// Comparison operators
+eq := a == b
+ne := c != d
+lt := e < f
+le := g <= h
+gt := i > j
+ge := k >= l
+
+// Arithmetic operators
+add := a + b
+sub := c - d
+mul := e * f
+div := g / h
+mod := i % j
+
+// Increment/decrement
+counter++
+index--
+
+// Bitwise operators
+bit_and := a & b
+bit_or := c | d
+bit_xor := e ^ f
+left_shift := g << h
+right_shift := i >> j
+
+// Logical operators
+logical_and := a && b
+logical_or := c || d
+logical_not := !flag
+
+// Edge cases for numbers starting with 0
+just_zero := 0
+zero_dot := 0.0
+zero_scientific := 0e5
+
+// Multiple operators together
+complex_expr := a++ + --b * c / d % e & f | g ^ h << i >> j

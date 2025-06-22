@@ -1,0 +1,26 @@
+package main
+
+import "std"
+
+func vertex() vec4 {
+    var x int32 = 42
+    const PI float32 = 3.14159
+    type MyStruct struct {
+        field1 int32
+        field2 float32
+    }
+    
+    if x > 0 {
+        for i := 0; i < 10; i++ {
+            switch x {
+            case 1:
+                return vec4(1.0, 0.0, 0.0, 1.0)
+            default:
+                break
+            }
+        }
+    } else {
+    }
+
+    return vec4(0.0)
+}

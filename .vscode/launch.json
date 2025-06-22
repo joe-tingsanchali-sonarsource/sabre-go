@@ -13,7 +13,7 @@
 			"cwd": "${workspaceFolder}",
 			"args": [
 				"scan",
-				"./internal/compiler/testdata/Scan/comments.sabre"
+				"./internal/compiler/testdata/Scan/keywords.sabre"
 			]
 		}
 	]

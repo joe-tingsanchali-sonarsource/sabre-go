@@ -1,0 +1,6 @@
+// Identifiers
+simple_identifier := value
+underscore_id := _private
+mixed_case := CamelCase
+with_numbers := var123
+all_underscore := ___

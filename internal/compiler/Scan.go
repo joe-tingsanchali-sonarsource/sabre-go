@@ -73,11 +73,11 @@ func (s *Scanner) readChar() rune {
 	if s.isEOF() {
 		s.currentCharCache = utf8.RuneError
 	} else {
-		_, size := utf8.DecodeRuneInString(s.file.content[s.currentLocation.pos:])
+		ch, size := utf8.DecodeRuneInString(s.file.content[s.currentLocation.pos:])
 		s.currentLocation.pos += int32(size)
 		s.currentCharCache, _ = utf8.DecodeRuneInString(s.file.content[s.currentLocation.pos:])
 
-		if s.currentCharCache == '\n' {
+		if ch == '\n' {
 			s.currentLocation.line++
 			s.currentLocation.column = 1
 		} else {
@@ -206,6 +206,7 @@ func (s *Scanner) readString() Token {
 		if s.currentChar() == '\\' {
 			s.readChar() // skip escaped character
 		}
+		s.readChar()
 	}
 
 	token := s.createTokenFromLocationPoint(TokenLiteralString, start)
