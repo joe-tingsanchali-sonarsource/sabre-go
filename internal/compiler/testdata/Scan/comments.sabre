@@ -1,0 +1,8 @@
+// Comprehensive test file for 100% scanner coverage
+
+// Single-line comments
+// Another comment with special chars: !@#$%^&*()
+
+// Comments at end of lines
+value := 42  // End of line comment
+another := 0xFF  // Hex with comment

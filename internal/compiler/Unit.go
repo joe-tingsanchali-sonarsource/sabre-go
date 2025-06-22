@@ -19,6 +19,7 @@ func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 
 	content, err := io.ReadAll(file)
 	if err != nil {
@@ -42,6 +43,11 @@ func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
 
 type Unit struct {
 	rootFile *UnitFile
+}
+
+// RootFile returns the root file of the unit
+func (u *Unit) RootFile() *UnitFile {
+	return u.rootFile
 }
 
 func UnitFromFile(path string) (unit *Unit, err error) {
