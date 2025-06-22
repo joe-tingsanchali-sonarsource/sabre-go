@@ -18,6 +18,9 @@ jobs:
         run: |
           go version
           go test -coverprofile=coverage.out -json ./internal/compiler > report.json
+          export GOCOVERDIR=cov
+          go build -cover -o sabre .\cmd\sabre
+          sabre test-scan .\internal\compiler\testdata\Scan
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
