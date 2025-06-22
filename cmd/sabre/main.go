@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"io/fs"
@@ -86,13 +87,20 @@ func scan(args []string, out io.Writer) error {
 }
 
 func testScan(args []string, out io.Writer) error {
-	if len(args) < 1 {
+	flagSet := flag.NewFlagSet("test-scan", flag.ContinueOnError)
+	update := flagSet.Bool("update", false, "updates test outputs")
+	err := flagSet.Parse(args)
+	if err != nil {
+		return err
+	}
+
+	if flagSet.NArg() < 1 {
 		return fmt.Errorf("no test data directory provided\n%v", helpString())
 	}
 
-	dir := args[0]
+	dir := flagSet.Arg(0)
 	var goldenFiles []string
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if !d.IsDir() && filepath.Ext(path) == ".golden" {
 			goldenFiles = append(goldenFiles, path)
 		}
@@ -102,7 +110,7 @@ func testScan(args []string, out io.Writer) error {
 		return fmt.Errorf("failed to walk test data directory: %v", err)
 	}
 
-	for _, goldenFile := range goldenFiles {
+	for i, goldenFile := range goldenFiles {
 		testFile := strings.TrimSuffix(goldenFile, filepath.Ext(goldenFile))
 		expectedBytes, err := os.ReadFile(goldenFile)
 		if err != nil {
@@ -110,7 +118,7 @@ func testScan(args []string, out io.Writer) error {
 		}
 		expectedOutput := cleanString(string(expectedBytes))
 
-		fmt.Fprintf(out, "===testing %v===\n", testFile)
+		fmt.Fprintf(out, "%v/%v) testing %v\n", i, len(goldenFiles), testFile)
 
 		var actualOutputBuffer bytes.Buffer
 		err = scan([]string{testFile}, &actualOutputBuffer)
@@ -120,11 +128,18 @@ func testScan(args []string, out io.Writer) error {
 		actualOutput := cleanString(actualOutputBuffer.String())
 
 		if expectedOutput != actualOutput {
-			fmt.Fprintln(out, "FAIL: expected != actual")
-			fmt.Fprintln(out, "expected:")
-			fmt.Fprintln(out, expectedOutput)
-			fmt.Fprintln(out, "actual:")
-			fmt.Fprintln(out, actualOutput)
+			if *update {
+				f, err := os.Create(goldenFile)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+
+				fmt.Fprintf(f, "%s\n", actualOutput)
+				fmt.Fprintln(out, "UPDATED")
+			} else {
+				fmt.Fprintln(out, "FAILURE")
+			}
 		} else {
 			fmt.Fprintln(out, "SUCCESS")
 		}
