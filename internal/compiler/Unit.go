@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ type UnitFile struct {
 	absolutePath string
 	content      string
 	lines        []string
+	errors       []Error
 }
 
 func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
@@ -41,13 +43,12 @@ func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
 	return
 }
 
-type Unit struct {
-	rootFile *UnitFile
+func (u *UnitFile) error(e Error) {
+	u.errors = append(u.errors, e)
 }
 
-// RootFile returns the root file of the unit
-func (u *Unit) RootFile() *UnitFile {
-	return u.rootFile
+type Unit struct {
+	rootFile *UnitFile
 }
 
 func UnitFromFile(path string) (unit *Unit, err error) {
@@ -60,4 +61,19 @@ func UnitFromFile(path string) (unit *Unit, err error) {
 		rootFile: unitFile,
 	}
 	return
+}
+
+// RootFile returns the root file of the unit
+func (u *Unit) RootFile() *UnitFile {
+	return u.rootFile
+}
+
+func (u *Unit) HasErrors() bool {
+	return len(u.rootFile.errors) > 0
+}
+
+func (u *Unit) PrintErrors(w io.Writer) {
+	for _, e := range u.rootFile.errors {
+		fmt.Fprintln(w, e)
+	}
 }

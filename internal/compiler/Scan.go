@@ -429,6 +429,7 @@ func (s *Scanner) Scan() Token {
 		return s.readString()
 
 	default:
+		s.file.error(Error{s.createLocation(start, s.currentLocation), "unknown token"})
 		return s.createTokenFromLocationPoint(TokenInvalid, start)
 	}
 }
