@@ -352,3 +352,19 @@ func (loc Location) String() string {
 	}
 	return fmt.Sprintf("<nil>:%v", loc.Position)
 }
+
+type Error struct {
+	Location Location
+	Message  string
+}
+
+func NewErrorOnToken(token Token, message string) Error {
+	return Error{
+		Location: token.location,
+		Message:  message,
+	}
+}
+
+func (e Error) String() string {
+	return fmt.Sprintf("%v\nError[%v]: %v", e.Location.HighlightCodeRange(), e.Location, e.Message)
+}
