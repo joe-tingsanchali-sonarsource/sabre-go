@@ -13,6 +13,7 @@ type UnitFile struct {
 	absolutePath string
 	content      string
 	lines        []string
+	tokens       []Token
 	errors       []Error
 }
 
@@ -47,8 +48,37 @@ func (u *UnitFile) error(e Error) {
 	u.errors = append(u.errors, e)
 }
 
+func (u *UnitFile) HasErrors() bool {
+	return len(u.errors) > 0
+}
+
+func (u *UnitFile) Scan() bool {
+	scanner := NewScanner(u)
+	for {
+		token := scanner.Scan()
+		u.tokens = append(u.tokens, token)
+		if token.Kind() == TokenEOF || token.Kind() == TokenInvalid {
+			break
+		}
+	}
+	return !u.HasErrors()
+}
+
+func (u *UnitFile) Tokens() []Token {
+	return u.tokens
+}
+
+type CompilationStage int
+
+const (
+	CompilationStageStart CompilationStage = iota
+	CompilationStageScanned
+	CompilationStageFailure
+)
+
 type Unit struct {
-	rootFile *UnitFile
+	compilationStage CompilationStage
+	rootFile         *UnitFile
 }
 
 func UnitFromFile(path string) (unit *Unit, err error) {
@@ -58,7 +88,8 @@ func UnitFromFile(path string) (unit *Unit, err error) {
 	}
 
 	unit = &Unit{
-		rootFile: unitFile,
+		compilationStage: CompilationStageStart,
+		rootFile:         unitFile,
 	}
 	return
 }
@@ -76,4 +107,17 @@ func (u *Unit) PrintErrors(w io.Writer) {
 	for _, e := range u.rootFile.errors {
 		fmt.Fprintln(w, e)
 	}
+}
+
+func (u *Unit) Scan() bool {
+	if u.compilationStage == CompilationStageStart {
+		if u.rootFile.Scan() {
+			u.compilationStage = CompilationStageScanned
+			return true
+		} else {
+			u.compilationStage = CompilationStageFailure
+			return false
+		}
+	}
+	return !u.HasErrors()
 }
