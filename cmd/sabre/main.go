@@ -51,13 +51,15 @@ func scan(args []string, out io.Writer) error {
 	}
 
 	for _, token := range unit.RootFile().Tokens() {
-		fmt.Fprintf(out, "%-15s %-20s %4d:%-4d [%d-%d]\n",
+		fmt.Fprintf(out, "%-15s %-20s %4d:%-4d %4d:%-4d [%d-%d]\n",
 			token.Kind().String(),
 			fmt.Sprintf(`"%s"`, token.Value()),
-			token.Location().Position.Line,
-			token.Location().Position.Column,
-			token.Location().Range.Begin,
-			token.Location().Range.End)
+			token.SourceRange().BeginPosition.Line,
+			token.SourceRange().BeginPosition.Column,
+			token.SourceRange().EndPosition.Line,
+			token.SourceRange().EndPosition.Column,
+			token.SourceRange().BeginOffset,
+			token.SourceRange().EndOffset)
 	}
 	return nil
 }
