@@ -5,25 +5,25 @@ import (
 	"testing"
 )
 
-func TestPosition_String(t *testing.T) {
+func TestSourcePosition_String(t *testing.T) {
 	tests := []struct {
 		name     string
-		position Position
+		position SourcePosition
 		expected string
 	}{
 		{
 			name:     "basic position",
-			position: Position{Line: 10, Column: 5},
+			position: SourcePosition{Line: 10, Column: 5},
 			expected: "10:5",
 		},
 		{
 			name:     "zero position",
-			position: Position{Line: 0, Column: 0},
+			position: SourcePosition{Line: 0, Column: 0},
 			expected: "0:0",
 		},
 		{
 			name:     "large numbers",
-			position: Position{Line: 1000, Column: 999},
+			position: SourcePosition{Line: 1000, Column: 999},
 			expected: "1000:999",
 		},
 	}
@@ -32,34 +32,34 @@ func TestPosition_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.position.String()
 			if result != tt.expected {
-				t.Errorf("Position.String() = %q, want %q", result, tt.expected)
+				t.Errorf("SourcePosition.String() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
 }
 
-func TestLocation_String(t *testing.T) {
+func TestSourceLocation_String(t *testing.T) {
 	unitFile := &UnitFile{
 		path: "/path/to/test.go",
 	}
 
 	tests := []struct {
 		name     string
-		location Location
+		location SourceLocation
 		expected string
 	}{
 		{
 			name: "basic location",
-			location: Location{
-				Position: Position{Line: 10, Column: 5},
+			location: SourceLocation{
+				Position: SourcePosition{Line: 10, Column: 5},
 				File:     unitFile,
 			},
 			expected: "/path/to/test.go:10:5",
 		},
 		{
 			name: "nil file",
-			location: Location{
-				Position: Position{Line: 1, Column: 1},
+			location: SourceLocation{
+				Position: SourcePosition{Line: 1, Column: 1},
 				File:     nil,
 			},
 			expected: "<nil>:1:1",
@@ -70,56 +70,84 @@ func TestLocation_String(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.location.String()
 			if result != tt.expected {
-				t.Errorf("Location.String() = %q, want %q", result, tt.expected)
+				t.Errorf("SourceLocation.String() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
 }
 
-func TestLocation_HighlightCodeRange(t *testing.T) {
+func concatLines(lines ...string) string {
+	var builder strings.Builder
+	for i, line := range lines {
+		if i > 0 {
+			builder.WriteByte('\n')
+		}
+		builder.WriteString(line)
+	}
+	return builder.String()
+}
+
+func TestSourceRange_HighlightCodeRange(t *testing.T) {
 	tests := []struct {
-		name     string
-		location Location
-		expected string
+		name        string
+		sourceRange SourceRange
+		expected    string
 	}{
 		{
 			name: "basic highlight",
-			location: Location{
-				Position: Position{Line: 1, Column: 1},
-				Range:    Range{Begin: 0, End: 3},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 1, Column: 1},
+				EndPosition:   SourcePosition{Line: 1, Column: 4},
+				BeginOffset:   0,
+				EndOffset:     3,
 				File: &UnitFile{
 					lines: []string{"add(x, y) = z;"},
 				},
 			},
-			expected: ">> \tadd(x, y) = z;\n>> \t^^^",
+			expected: concatLines(
+				">> 	add(x, y) = z;",
+				">> 	^^^           ",
+			),
 		},
 		{
 			name: "highlight with offset",
-			location: Location{
-				Position: Position{Line: 1, Column: 1},
-				Range:    Range{Begin: 4, End: 8},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 1, Column: 1},
+				EndPosition:   SourcePosition{Line: 1, Column: 5},
+				BeginOffset:   4,
+				EndOffset:     8,
 				File: &UnitFile{
 					lines: []string{"add(x, y) = z;"},
 				},
 			},
-			expected: ">> \tadd(x, y) = z;\n>> \t    ^^^^",
+			expected: concatLines(
+				">> 	add(x, y) = z;",
+				">> 	    ^^^^      ",
+			),
 		},
 		{
 			name: "highlight with tabs",
-			location: Location{
-				Position: Position{Line: 1, Column: 1},
-				Range:    Range{Begin: 1, End: 4},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 1, Column: 1},
+				EndPosition:   SourcePosition{Line: 1, Column: 4},
+				BeginOffset:   1,
+				EndOffset:     4,
 				File: &UnitFile{
 					lines: []string{"\tadd(x, y);"},
 				},
 			},
-			expected: ">> \t\tadd(x, y);\n>> \t\t^^^",
+			expected: concatLines(
+				">> 		add(x, y);",
+				">> 		^^^       ",
+			),
 		},
 		{
 			name: "invalid line number (too high)",
-			location: Location{
-				Position: Position{Line: 5, Column: 1},
-				Range:    Range{Begin: 0, End: 3},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 5, Column: 1},
+				EndPosition:   SourcePosition{Line: 5, Column: 4},
+				BeginOffset:   0,
+				EndOffset:     3,
 				File: &UnitFile{
 					lines: []string{"line1", "line2"},
 				},
@@ -128,9 +156,11 @@ func TestLocation_HighlightCodeRange(t *testing.T) {
 		},
 		{
 			name: "invalid line number (zero)",
-			location: Location{
-				Position: Position{Line: 0, Column: 1},
-				Range:    Range{Begin: 0, End: 3},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 0, Column: 1},
+				EndPosition:   SourcePosition{Line: 0, Column: 4},
+				BeginOffset:   0,
+				EndOffset:     3,
 				File: &UnitFile{
 					lines: []string{"line1"},
 				},
@@ -139,40 +169,52 @@ func TestLocation_HighlightCodeRange(t *testing.T) {
 		},
 		{
 			name: "nil file",
-			location: Location{
-				Position: Position{Line: 1, Column: 1},
-				Range:    Range{Begin: 0, End: 3},
-				File:     nil,
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 1, Column: 1},
+				EndPosition:   SourcePosition{Line: 1, Column: 4},
+				BeginOffset:   0,
+				EndOffset:     3,
+				File:          nil,
 			},
 			expected: "",
 		},
 		{
 			name: "zero length range",
-			location: Location{
-				Position: Position{Line: 1, Column: 1},
-				Range:    Range{Begin: 5, End: 5},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 1, Column: 6},
+				EndPosition:   SourcePosition{Line: 1, Column: 7},
+				BeginOffset:   5,
+				EndOffset:     6,
 				File: &UnitFile{
 					lines: []string{"hello world"},
 				},
 			},
-			expected: ">> \thello world\n>> \t     ^",
+			expected: concatLines(
+				">> 	hello world",
+				">> 	     ^     ",
+			),
 		},
 		{
 			name: "multiline file, select second line",
-			location: Location{
-				Position: Position{Line: 2, Column: 1},
-				Range:    Range{Begin: 0, End: 6},
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 2, Column: 1},
+				EndPosition:   SourcePosition{Line: 2, Column: 7},
+				BeginOffset:   11,
+				EndOffset:     17,
 				File: &UnitFile{
 					lines: []string{"first line", "second line", "third line"},
 				},
 			},
-			expected: ">> \tsecond line\n>> \t^^^^^^",
+			expected: concatLines(
+				">> 	second line",
+				">> 	^^^^^^     ",
+			),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.location.HighlightCodeRange()
+			result := tt.sourceRange.HighlightCodeRange()
 			t.Logf("Got lines:\n%s", strings.ReplaceAll(result, "\t", "  "))
 			t.Logf("Expected lines:\n%s", strings.ReplaceAll(tt.expected, "\t", "  "))
 			if result != tt.expected {

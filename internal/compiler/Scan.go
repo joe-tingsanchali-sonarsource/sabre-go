@@ -40,24 +40,28 @@ func NewScanner(file *UnitFile) *Scanner {
 	return scanner
 }
 
-func (s *Scanner) createLocation(a, b LocationPoint) Location {
-	return Location{
-		Position: Position{Line: a.line, Column: a.column},
-		Range:    Range{Begin: a.pos, End: b.pos},
-		File:     s.file,
+func (s *Scanner) createSourceLocation(a LocationPoint) SourceLocation {
+	return SourceLocation{
+		Position:    SourcePosition{a.line, a.column},
+		BeginOffset: a.pos,
+		File:        s.file,
 	}
 }
 
-func (s *Scanner) createTokenFromLocation(kind TokenKind, loc Location) Token {
+func (s *Scanner) createSourceRange(a, b LocationPoint) SourceRange {
+	return NewSourceRange(s.createSourceLocation(a), s.createSourceLocation(b))
+}
+
+func (s *Scanner) createTokenFromSourceRange(kind TokenKind, r SourceRange) Token {
 	return Token{
-		kind:     kind,
-		value:    s.file.content[loc.Range.Begin:loc.Range.End],
-		location: loc,
+		kind:        kind,
+		value:       s.file.content[r.BeginOffset:r.EndOffset],
+		sourceRange: r,
 	}
 }
 
 func (s *Scanner) createTokenFromLocationPoint(kind TokenKind, locP LocationPoint) Token {
-	return s.createTokenFromLocation(kind, s.createLocation(locP, s.currentLocation))
+	return s.createTokenFromSourceRange(kind, s.createSourceRange(locP, s.currentLocation))
 }
 
 func (s *Scanner) initKeywords() {
@@ -237,9 +241,9 @@ func (s *Scanner) Scan() Token {
 	// Handle EOF
 	if s.isEOF() {
 		return Token{
-			kind:     TokenEOF,
-			value:    "",
-			location: s.createLocation(s.currentLocation, s.currentLocation),
+			kind:        TokenEOF,
+			value:       "",
+			sourceRange: s.createSourceRange(s.currentLocation, s.currentLocation),
 		}
 	}
 
@@ -429,7 +433,8 @@ func (s *Scanner) Scan() Token {
 		return s.readString()
 
 	default:
-		s.file.error(Error{s.createLocation(start, s.currentLocation), "unknown token"})
+		s.readChar()
+		s.file.error(Error{s.createSourceRange(start, s.currentLocation), "unknown token"})
 		return s.createTokenFromLocationPoint(TokenInvalid, start)
 	}
 }

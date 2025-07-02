@@ -247,9 +247,9 @@ func (tk TokenKind) String() string {
 
 // Token represents a single token in the source code
 type Token struct {
-	kind     TokenKind
-	value    string
-	location Location
+	kind        TokenKind
+	value       string
+	sourceRange SourceRange
 }
 
 // Kind returns the token's kind/type
@@ -262,9 +262,9 @@ func (t Token) Value() string {
 	return t.value
 }
 
-// Location returns the token's location in the source
-func (t Token) Location() Location {
-	return t.location
+// SourceRange returns the token's location range in the source
+func (t Token) SourceRange() SourceRange {
+	return t.sourceRange
 }
 
 // String returns a string representation of the token
@@ -295,76 +295,126 @@ func (t Token) IsDelimiter() bool {
 	return t.kind >= TokenDelimiterBegin && t.kind <= TokenDelimiterEnd
 }
 
-type Position struct {
+// Location specification
+
+type SourcePosition struct {
 	Line, Column int32
 }
 
-func (p Position) String() string {
+func (p SourcePosition) String() string {
 	return fmt.Sprintf("%v:%v", p.Line, p.Column)
 }
 
-type Range struct {
-	Begin, End int32
+type SourceLocation struct {
+	Position    SourcePosition
+	BeginOffset int32
+	File        *UnitFile
 }
 
-type Location struct {
-	Position Position
-	Range    Range
-	File     *UnitFile
-}
-
-func (loc Location) HighlightCodeRange() string {
-	if loc.File == nil || int(loc.Position.Line) > len(loc.File.lines) || loc.Position.Line < 1 {
-		return ""
-	}
-
-	line := loc.File.lines[loc.Position.Line-1] // Convert to 0-based index
-
-	// Build the highlight string
-	var result strings.Builder
-	result.WriteString(">> \t")
-	result.WriteString(line)
-	result.WriteString("\n")
-	result.WriteString(">> \t")
-
-	// Add spaces up to the beginning of the range
-	for i := int32(0); i < loc.Range.Begin; i++ {
-		if i < int32(len(line)) && line[i] == '\t' {
-			result.WriteString("\t")
-		} else {
-			result.WriteString(" ")
-		}
-	}
-
-	// Add carets for the range
-	rangeLength := loc.Range.End - loc.Range.Begin
-	if rangeLength <= 0 {
-		rangeLength = 1 // At least one caret
-	}
-	result.WriteString(strings.Repeat("^", int(rangeLength)))
-
-	return result.String()
-}
-
-func (loc Location) String() string {
+func (loc SourceLocation) String() string {
 	if loc.File != nil {
 		return fmt.Sprintf("%v:%v", loc.File.path, loc.Position)
 	}
 	return fmt.Sprintf("<nil>:%v", loc.Position)
 }
 
+type SourceRange struct {
+	BeginPosition, EndPosition SourcePosition
+	BeginOffset, EndOffset     int32
+	File                       *UnitFile
+}
+
+func NewSourceRange(a, b SourceLocation) SourceRange {
+	if a.File != b.File {
+		panic(fmt.Sprintf("source range locations have different files '%v', '%v'", a, b))
+	}
+
+	return SourceRange{
+		BeginPosition: a.Position,
+		EndPosition:   b.Position,
+		BeginOffset:   a.BeginOffset,
+		EndOffset:     b.BeginOffset,
+		File:          a.File,
+	}
+}
+
+func (r SourceRange) Begin() SourceLocation {
+	return SourceLocation{
+		Position:    r.BeginPosition,
+		BeginOffset: r.BeginOffset,
+		File:        r.File,
+	}
+}
+
+func (r SourceRange) End() SourceLocation {
+	return SourceLocation{
+		Position:    r.EndPosition,
+		BeginOffset: r.EndOffset,
+		File:        r.File,
+	}
+}
+
+func (r SourceRange) String() string {
+	if r.File != nil {
+		return fmt.Sprintf("%v:%v:%v", r.File.path, r.BeginPosition, r.EndPosition)
+	}
+	return fmt.Sprintf("<nil>:%v:%v", r.BeginPosition, r.EndPosition)
+}
+
+func (r SourceRange) highlightLine(builder *strings.Builder, line string, byteOffset int) int {
+	builder.WriteString(">> \t")
+	builder.WriteString(line)
+	builder.WriteString("\n")
+	builder.WriteString(">> \t")
+
+	for i := 0; i < len(line); i++ {
+		if byteOffset+i >= int(r.BeginOffset) && byteOffset+i < int(r.EndOffset) {
+			builder.WriteByte('^')
+		} else {
+			if line[i] == '\t' {
+				builder.WriteByte('\t')
+			} else {
+				builder.WriteByte(' ')
+			}
+		}
+	}
+	return byteOffset + len(line) + 1 // +1 for the \n
+}
+
+func (r SourceRange) HighlightCodeRange() string {
+	if r.File == nil || int(r.BeginPosition.Line) > len(r.File.lines) || r.BeginPosition.Line < 1 {
+		return ""
+	}
+
+	lines := r.File.lines[r.BeginPosition.Line-1 : r.EndPosition.Line] // Convert to 0-based index
+	byteOffset := 0
+	for i := 0; i < int(r.BeginPosition.Line-1); i++ {
+		byteOffset += len(r.File.lines[i]) + 1 // +1 for the \n
+	}
+
+	// Build the highlight string
+	var result strings.Builder
+	for _, line := range lines {
+		byteOffset = r.highlightLine(&result, line, byteOffset)
+	}
+
+	return result.String()
+}
+
+// Error specification
+
 type Error struct {
-	Location Location
-	Message  string
+	SourceRange SourceRange
+	Message     string
 }
 
 func NewErrorOnToken(token Token, message string) Error {
 	return Error{
-		Location: token.location,
-		Message:  message,
+		SourceRange: token.sourceRange,
+		Message:     message,
 	}
 }
 
 func (e Error) String() string {
-	return fmt.Sprintf("%v\nError[%v]: %v", e.Location.HighlightCodeRange(), e.Location, e.Message)
+	return fmt.Sprintf("%v\nError[%v]: %v", e.SourceRange.HighlightCodeRange(), e.SourceRange.Begin(), e.Message)
 }

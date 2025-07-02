@@ -22,15 +22,6 @@ Commands:
               "sabre test-scan <test-data-dir>"
 `
 
-type TokenDesc struct {
-	Kind      string
-	Value     string
-	Line      int32
-	Column    int32
-	ByteBegin int32
-	ByteEnd   int32
-}
-
 func helpString() string {
 	return fmt.Sprintf(commandUsageTemplate, os.Args[0])
 }
@@ -54,39 +45,21 @@ func scan(args []string, out io.Writer) error {
 		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
 	}
 
-	scanner := compiler.NewScanner(unit.RootFile())
-	var tokens []TokenDesc
-	for {
-		token := scanner.Scan()
-
-		tokenDesc := TokenDesc{
-			Kind:      token.Kind().String(),
-			Value:     token.Value(),
-			Line:      token.Location().Position.Line,
-			Column:    token.Location().Position.Column,
-			ByteBegin: token.Location().Range.Begin,
-			ByteEnd:   token.Location().Range.End,
-		}
-
-		tokens = append(tokens, tokenDesc)
-		if token.Kind() == compiler.TokenEOF || token.Kind() == compiler.TokenInvalid {
-			break
-		}
-	}
-
-	if unit.HasErrors() {
+	if !unit.Scan() {
 		unit.PrintErrors(out)
 		return nil
 	}
 
-	for _, token := range tokens {
-		fmt.Fprintf(out, "%-15s %-20s %4d:%-4d [%d-%d]\n",
-			token.Kind,
-			fmt.Sprintf(`"%s"`, token.Value),
-			token.Line,
-			token.Column,
-			token.ByteBegin,
-			token.ByteEnd)
+	for _, token := range unit.RootFile().Tokens() {
+		fmt.Fprintf(out, "%-15s %-20s %4d:%-4d %4d:%-4d [%d-%d]\n",
+			token.Kind().String(),
+			fmt.Sprintf(`"%s"`, token.Value()),
+			token.SourceRange().BeginPosition.Line,
+			token.SourceRange().BeginPosition.Column,
+			token.SourceRange().EndPosition.Line,
+			token.SourceRange().EndPosition.Column,
+			token.SourceRange().BeginOffset,
+			token.SourceRange().EndOffset)
 	}
 	return nil
 }
