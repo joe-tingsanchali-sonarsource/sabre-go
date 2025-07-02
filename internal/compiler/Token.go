@@ -361,6 +361,26 @@ func (r SourceRange) String() string {
 	return fmt.Sprintf("<nil>:%v:%v", r.BeginPosition, r.EndPosition)
 }
 
+func (r SourceRange) highlightLine(builder *strings.Builder, line string, byteOffset int) int {
+	builder.WriteString(">> \t")
+	builder.WriteString(line)
+	builder.WriteString("\n")
+	builder.WriteString(">> \t")
+
+	for i := 0; i < len(line); i++ {
+		if byteOffset+i >= int(r.BeginOffset) && byteOffset+i < int(r.EndOffset) {
+			builder.WriteByte('^')
+		} else {
+			if line[i] == '\t' {
+				builder.WriteByte('\t')
+			} else {
+				builder.WriteByte(' ')
+			}
+		}
+	}
+	return byteOffset + len(line) + 1 // +1 for the \n
+}
+
 func (r SourceRange) HighlightCodeRange() string {
 	if r.File == nil || int(r.BeginPosition.Line) > len(r.File.lines) || r.BeginPosition.Line < 1 {
 		return ""
@@ -375,24 +395,7 @@ func (r SourceRange) HighlightCodeRange() string {
 	// Build the highlight string
 	var result strings.Builder
 	for _, line := range lines {
-		result.WriteString(">> \t")
-		result.WriteString(line)
-		result.WriteString("\n")
-		result.WriteString(">> \t")
-
-		for i := 0; i < len(line); i++ {
-			if byteOffset+i >= int(r.BeginOffset) && byteOffset+i < int(r.EndOffset) {
-				result.WriteByte('^')
-			} else {
-				if line[i] == '\t' {
-					result.WriteByte('\t')
-				} else {
-					result.WriteByte(' ')
-				}
-			}
-		}
-
-		byteOffset += len(line) + 1 // +1 for the \n
+		byteOffset = r.highlightLine(&result, line, byteOffset)
 	}
 
 	return result.String()
