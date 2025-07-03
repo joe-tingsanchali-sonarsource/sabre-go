@@ -17,6 +17,7 @@ jobs:
       - name: test
         run: |
           go version
+          go test ./internal/compiler
           go test -coverprofile=coverage.out -json ./internal/compiler > report.json
           export GOCOVERDIR=cov
           mkdir cov

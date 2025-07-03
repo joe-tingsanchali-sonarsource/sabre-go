@@ -51,7 +51,7 @@ func (u *UnitFile) error(e Error) {
 func (u *UnitFile) errorf(sourceRange SourceRange, format string, a ...any) {
 	u.error(Error{
 		SourceRange: sourceRange,
-		Message:     fmt.Sprintf(format, a),
+		Message:     fmt.Sprintf(format, a...),
 	})
 }
 
