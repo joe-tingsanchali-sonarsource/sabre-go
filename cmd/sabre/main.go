@@ -155,7 +155,7 @@ func parseExpr(args []string, out io.Writer) error {
 	parser := compiler.NewParser(unit.RootFile())
 	expr := parser.ParseExpr()
 	if expr != nil {
-		expr.ASTDump(out)
+		expr.Visit(compiler.NewASTPrinter(out))
 	} else {
 		unit.PrintErrors(out)
 	}
