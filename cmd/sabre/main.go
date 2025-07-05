@@ -43,7 +43,7 @@ func scan(args []string, out io.Writer) error {
 		return fmt.Errorf("no file provided\n%v", helpString())
 	}
 
-	file := filepath.Clean(args[0])
+	file := filepath.ToSlash(filepath.Clean(args[0]))
 	unit, err := compiler.UnitFromFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
@@ -141,7 +141,7 @@ func parseExpr(args []string, out io.Writer) error {
 		return fmt.Errorf("no file provided\n%v", helpString())
 	}
 
-	file := filepath.Clean(args[0])
+	file := filepath.ToSlash(filepath.Clean(args[0]))
 	unit, err := compiler.UnitFromFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
