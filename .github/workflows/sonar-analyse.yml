@@ -17,11 +17,13 @@ jobs:
       - name: test
         run: |
           go version
+          go test ./internal/compiler
           go test -coverprofile=coverage.out -json ./internal/compiler > report.json
           export GOCOVERDIR=cov
           mkdir cov
           go build -cover -o sabre ./cmd/sabre
           ./sabre test-scan ./internal/compiler/testdata/Scan
+          ./sabre test-parse-expr ./internal/compiler/testdata/Parse/expr
           go tool covdata textfmt -i=cov -o sabre-cov.out
 
       - name: SonarQube Scan

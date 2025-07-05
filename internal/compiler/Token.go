@@ -408,13 +408,6 @@ type Error struct {
 	Message     string
 }
 
-func NewErrorOnToken(token Token, message string) Error {
-	return Error{
-		SourceRange: token.sourceRange,
-		Message:     message,
-	}
-}
-
 func (e Error) String() string {
 	return fmt.Sprintf("%v\nError[%v]: %v", e.SourceRange.HighlightCodeRange(), e.SourceRange.Begin(), e.Message)
 }

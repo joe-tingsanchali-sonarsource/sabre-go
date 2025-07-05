@@ -16,10 +16,14 @@ import (
 const commandUsageTemplate = `Usage: %s <command> [flags]
 
 Commands:
-  scan        scans the given file and prints tokens to stdout
-              "sabre scan <file>"
-  test-scan   tests the scan phase against golden output
-              "sabre test-scan <test-data-dir>"
+  scan             scans the given file and prints tokens to stdout
+                   "sabre scan <file>"
+  test-scan        tests the scan phase against golden output
+                   "sabre test-scan <test-data-dir>"
+  parse-expr       parses an expression
+                   "sabre parse-expr <file>"
+  test-parse-expr  tests the expression parsing against golden output
+                   "sabre test-parse-expr <test-data-dir>"
 `
 
 func helpString() string {
@@ -39,7 +43,7 @@ func scan(args []string, out io.Writer) error {
 		return fmt.Errorf("no file provided\n%v", helpString())
 	}
 
-	file := filepath.Clean(args[0])
+	file := filepath.ToSlash(filepath.Clean(args[0]))
 	unit, err := compiler.UnitFromFile(file)
 	if err != nil {
 		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
@@ -64,7 +68,7 @@ func scan(args []string, out io.Writer) error {
 	return nil
 }
 
-func testScan(args []string, out io.Writer) error {
+func testFunc(f func([]string, io.Writer) error, args []string, out io.Writer) error {
 	flagSet := flag.NewFlagSet("test-scan", flag.ContinueOnError)
 	update := flagSet.Bool("update", false, "updates test outputs")
 	err := flagSet.Parse(args)
@@ -88,6 +92,8 @@ func testScan(args []string, out io.Writer) error {
 		return fmt.Errorf("failed to walk test data directory: %v", err)
 	}
 
+	var failedTests []string
+
 	for i, goldenFile := range goldenFiles {
 		testFile := strings.TrimSuffix(goldenFile, filepath.Ext(goldenFile))
 		expectedBytes, err := os.ReadFile(goldenFile)
@@ -99,7 +105,7 @@ func testScan(args []string, out io.Writer) error {
 		fmt.Fprintf(out, "%v/%v) testing %v\n", i, len(goldenFiles), testFile)
 
 		var actualOutputBuffer bytes.Buffer
-		err = scan([]string{testFile}, &actualOutputBuffer)
+		err = f([]string{testFile}, &actualOutputBuffer)
 		if err != nil {
 			return err
 		}
@@ -117,12 +123,42 @@ func testScan(args []string, out io.Writer) error {
 				fmt.Fprintln(out, "UPDATED")
 			} else {
 				fmt.Fprintln(out, "FAILURE")
+				failedTests = append(failedTests, testFile)
 			}
 		} else {
 			fmt.Fprintln(out, "SUCCESS")
 		}
 	}
 
+	if len(failedTests) > 0 {
+		return fmt.Errorf("some test file failed, %v", failedTests)
+	}
+	return nil
+}
+
+func parseExpr(args []string, out io.Writer) error {
+	if len(args) < 1 {
+		return fmt.Errorf("no file provided\n%v", helpString())
+	}
+
+	file := filepath.ToSlash(filepath.Clean(args[0]))
+	unit, err := compiler.UnitFromFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
+	}
+
+	if !unit.Scan() {
+		unit.PrintErrors(out)
+		return nil
+	}
+
+	parser := compiler.NewParser(unit.RootFile())
+	expr := parser.ParseExpr()
+	if expr != nil {
+		expr.Visit(compiler.NewASTPrinter(out))
+	} else {
+		unit.PrintErrors(out)
+	}
 	return nil
 }
 
@@ -141,7 +177,11 @@ func main() {
 	case "scan":
 		err = scan(subArgs, os.Stdout)
 	case "test-scan":
-		err = testScan(subArgs, os.Stdout)
+		err = testFunc(scan, subArgs, os.Stdout)
+	case "parse-expr":
+		err = parseExpr(subArgs, os.Stdout)
+	case "test-parse-expr":
+		err = testFunc(parseExpr, subArgs, os.Stdout)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command '%s'\n", os.Args[1])
 		help()
