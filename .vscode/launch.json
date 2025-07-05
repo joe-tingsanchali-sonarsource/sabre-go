@@ -12,8 +12,8 @@
 			"program": "${workspaceFolder}/cmd/sabre",
 			"cwd": "${workspaceFolder}",
 			"args": [
-				"scan",
-				"./internal/compiler/testdata/Scan/keywords.sabre"
+				"parse-expr",
+				"./example/test.sabre"
 			]
 		}
 	]

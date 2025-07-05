@@ -20,6 +20,8 @@ Commands:
               "sabre scan <file>"
   test-scan   tests the scan phase against golden output
               "sabre test-scan <test-data-dir>"
+  parse-expr  parses an expression
+              "sabre parse-expr <file>"
 `
 
 func helpString() string {
@@ -126,6 +128,32 @@ func testScan(args []string, out io.Writer) error {
 	return nil
 }
 
+func parseExpr(args []string, out io.Writer) error {
+	if len(args) < 1 {
+		return fmt.Errorf("no file provided\n%v", helpString())
+	}
+
+	file := filepath.Clean(args[0])
+	unit, err := compiler.UnitFromFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
+	}
+
+	if !unit.Scan() {
+		unit.PrintErrors(out)
+		return nil
+	}
+
+	parser := compiler.NewParser(unit.RootFile())
+	expr := parser.ParseExpr()
+	if expr != nil {
+		expr.ASTDump(out)
+	} else {
+		unit.PrintErrors(out)
+	}
+	return nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "Error: no command found\n")
@@ -142,6 +170,8 @@ func main() {
 		err = scan(subArgs, os.Stdout)
 	case "test-scan":
 		err = testScan(subArgs, os.Stdout)
+	case "parse-expr":
+		err = parseExpr(subArgs, os.Stdout)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command '%s'\n", os.Args[1])
 		help()

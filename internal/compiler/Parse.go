@@ -78,13 +78,19 @@ func (p *Parser) ParseExpr() Expr {
 func (p *Parser) parseLiteralExpr() *LiteralExpr {
 	switch p.currentToken().Kind() {
 	case TokenLiteralInt:
+		fallthrough
 	case TokenLiteralFloat:
+		fallthrough
 	case TokenLiteralString:
+		fallthrough
 	case TokenTrue:
+		fallthrough
 	case TokenFalse:
 		return &LiteralExpr{
 			Token: p.eatToken(),
 		}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
 	}
 	return nil
 }

@@ -1,9 +1,15 @@
 package compiler
 
+import (
+	"fmt"
+	"io"
+)
+
 type Node interface {
 	SourceRange() SourceRange
 	Parent() Node
 	Children() []Node
+	ASTDump(out io.Writer)
 }
 
 type NodeBase struct {
@@ -26,3 +32,6 @@ type LiteralExpr struct {
 
 func (e LiteralExpr) exprNode()                {}
 func (e LiteralExpr) SourceRange() SourceRange { return e.Token.SourceRange() }
+func (e LiteralExpr) ASTDump(out io.Writer) {
+	fmt.Fprintf(out, "(LiteralExpr %v)", e.Token)
+}
