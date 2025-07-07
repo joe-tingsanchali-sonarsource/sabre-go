@@ -89,6 +89,8 @@ func (p *Parser) parseAtom() Expr {
 		return p.parseLiteralExpr()
 	case TokenIdentifier:
 		return p.parseIdentiferExpr()
+	case TokenLParen:
+		return p.parseParenExpr()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected and expression but found '%v'", p.currentToken())
 	}
@@ -120,6 +122,20 @@ func (p *Parser) parseIdentiferExpr() *IdentifierExpr {
 	case TokenIdentifier:
 		return &IdentifierExpr{
 			Token: p.eatToken(),
+		}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+	}
+	return nil
+}
+
+func (p *Parser) parseParenExpr() *ParenExpr {
+	switch p.currentToken().Kind() {
+	case TokenLParen:
+		return &ParenExpr{
+			Lparen: p.eatToken(),
+			Base:   p.ParseExpr(),
+			Rparen: p.eatTokenOrError(TokenRParen),
 		}
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
