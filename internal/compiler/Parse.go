@@ -72,7 +72,27 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 }
 
 func (p *Parser) ParseExpr() Expr {
-	return p.parseLiteralExpr()
+	return p.parseAtom()
+}
+
+func (p *Parser) parseAtom() Expr {
+	switch p.currentToken().Kind() {
+	case TokenLiteralInt:
+		fallthrough
+	case TokenLiteralFloat:
+		fallthrough
+	case TokenLiteralString:
+		fallthrough
+	case TokenTrue:
+		fallthrough
+	case TokenFalse:
+		return p.parseLiteralExpr()
+	case TokenIdentifier:
+		return p.parseIdentiferExpr()
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected and expression but found '%v'", p.currentToken())
+	}
+	return nil
 }
 
 func (p *Parser) parseLiteralExpr() *LiteralExpr {
@@ -91,6 +111,18 @@ func (p *Parser) parseLiteralExpr() *LiteralExpr {
 		}
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
+	}
+	return nil
+}
+
+func (p *Parser) parseIdentiferExpr() *IdentifierExpr {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		return &IdentifierExpr{
+			Token: p.eatToken(),
+		}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
 	}
 	return nil
 }

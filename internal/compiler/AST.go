@@ -31,11 +31,24 @@ func (e *LiteralExpr) Visit(v NodeVisitor) {
 	v.VisitLiteralExpr(e)
 }
 
+type IdentifierExpr struct {
+	NodeBase
+	Token Token
+}
+
+func (e *IdentifierExpr) exprNode()                {}
+func (e *IdentifierExpr) SourceRange() SourceRange { return e.Token.SourceRange() }
+func (e *IdentifierExpr) Visit(v NodeVisitor) {
+	v.VisitIdentifierExpr(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr) bool
+	VisitIdentifierExpr(n *IdentifierExpr) bool
 }
 
 type DefaultVisitor struct{}
 
-func (v *DefaultVisitor) VisitLiteralExpr() bool { return true }
+func (v *DefaultVisitor) VisitLiteralExpr(n *LiteralExpr) bool       { return true }
+func (v *DefaultVisitor) VisitIdentifierExpr(n *IdentifierExpr) bool { return true }
