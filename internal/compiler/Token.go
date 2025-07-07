@@ -354,6 +354,20 @@ func (r SourceRange) End() SourceLocation {
 	}
 }
 
+func (r SourceRange) Merge(b SourceRange) SourceRange {
+	begin := r.Begin()
+	if begin.BeginOffset > b.Begin().BeginOffset {
+		begin = b.Begin()
+	}
+
+	end := r.End()
+	if end.BeginOffset < b.End().BeginOffset {
+		end = b.End()
+	}
+
+	return NewSourceRange(begin, end)
+}
+
 func (r SourceRange) String() string {
 	if r.File != nil {
 		return fmt.Sprintf("%v:%v:%v", r.File.path, r.BeginPosition, r.EndPosition)

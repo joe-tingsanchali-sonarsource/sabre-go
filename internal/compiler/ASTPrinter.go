@@ -18,3 +18,15 @@ func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) bool {
 	fmt.Fprintf(v.out, "(LiteralExpr %v)", n.Token)
 	return true
 }
+
+func (v *ASTPrinter) VisitIdentifierExpr(n *IdentifierExpr) bool {
+	fmt.Fprintf(v.out, "(IdentifierExpr %v)", n.Token)
+	return true
+}
+
+func (v *ASTPrinter) VisitParenExpr(n *ParenExpr) bool {
+	fmt.Fprint(v.out, "(ParenExpr ")
+	n.Base.Visit(v)
+	fmt.Fprint(v.out, ")")
+	return true
+}
