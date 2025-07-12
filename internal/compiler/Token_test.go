@@ -106,7 +106,7 @@ func TestSourceRange_HighlightCodeRange(t *testing.T) {
 			},
 			expected: concatLines(
 				">> 	add(x, y) = z;",
-				">> 	^^^           ",
+				">> 	^^^            ",
 			),
 		},
 		{
@@ -122,7 +122,7 @@ func TestSourceRange_HighlightCodeRange(t *testing.T) {
 			},
 			expected: concatLines(
 				">> 	add(x, y) = z;",
-				">> 	    ^^^^      ",
+				">> 	    ^^^^       ",
 			),
 		},
 		{
@@ -138,7 +138,7 @@ func TestSourceRange_HighlightCodeRange(t *testing.T) {
 			},
 			expected: concatLines(
 				">> 		add(x, y);",
-				">> 		^^^       ",
+				">> 		^^^        ",
 			),
 		},
 		{
@@ -191,7 +191,7 @@ func TestSourceRange_HighlightCodeRange(t *testing.T) {
 			},
 			expected: concatLines(
 				">> 	hello world",
-				">> 	     ^     ",
+				">> 	     ^      ",
 			),
 		},
 		{
@@ -207,7 +207,7 @@ func TestSourceRange_HighlightCodeRange(t *testing.T) {
 			},
 			expected: concatLines(
 				">> 	second line",
-				">> 	^^^^^^     ",
+				">> 	^^^^^^      ",
 			),
 		},
 	}

@@ -1,1 +1,3 @@
-(ParenExpr (IdentifierExpr IDENTIFIER(_identifier3432)))
+(ParenExpr
+  (IdentifierExpr IDENTIFIER(_identifier3432))
+)

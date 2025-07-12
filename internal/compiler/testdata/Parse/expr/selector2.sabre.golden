@@ -1,0 +1,6 @@
+(SelectorExpr
+  (ParenExpr
+    (IdentifierExpr IDENTIFIER(a))
+  )
+  (IdentifierExpr IDENTIFIER(b))
+)

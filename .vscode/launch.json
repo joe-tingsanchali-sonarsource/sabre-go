@@ -13,7 +13,7 @@
 			"cwd": "${workspaceFolder}",
 			"args": [
 				"parse-expr",
-				"./example/test.sabre"
+				"./internal/compiler/testdata/Parse/expr/selector6.sabre"
 			]
 		}
 	]

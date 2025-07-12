@@ -57,15 +57,38 @@ func (e *ParenExpr) Visit(v NodeVisitor) {
 	v.VisitParenExpr(e)
 }
 
+type SelectorExpr struct {
+	NodeBase
+	Base     Expr
+	Selector *IdentifierExpr
+}
+
+func (e *SelectorExpr) exprNode() {}
+func (e *SelectorExpr) SourceRange() SourceRange {
+	return e.Base.SourceRange().Merge(e.Selector.SourceRange())
+}
+func (e *SelectorExpr) Visit(v NodeVisitor) {
+	v.VisitSelectorExpr(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr) bool
 	VisitIdentifierExpr(n *IdentifierExpr) bool
 	VisitParenExpr(n *ParenExpr) bool
+	VisitSelectorExpr(n *SelectorExpr) bool
 }
 
 type DefaultVisitor struct{}
 
 func (v *DefaultVisitor) VisitLiteralExpr(n *LiteralExpr) bool       { return true }
 func (v *DefaultVisitor) VisitIdentifierExpr(n *IdentifierExpr) bool { return true }
-func (v *DefaultVisitor) VisitParenExpr(n *ParenExpr) bool           { return true }
+func (v *DefaultVisitor) VisitParenExpr(n *ParenExpr) bool {
+	n.Base.Visit(v)
+	return true
+}
+func (v *DefaultVisitor) VisitSelectorExpr(n *SelectorExpr) bool {
+	n.Base.Visit(v)
+	n.Selector.Visit(v)
+	return true
+}

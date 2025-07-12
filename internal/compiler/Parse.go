@@ -31,13 +31,20 @@ func (p *Parser) lookahead(k int) Token {
 		return p.tokens[p.currentTokenIndex+k]
 	}
 
+	var invalidRange SourceRange
+	if len(p.tokens) > 0 {
+		loc := p.tokens[len(p.tokens)-1].SourceRange().End()
+		invalidRange = NewSourceRange(loc, loc)
+	}
+
 	return Token{
-		kind: TokenInvalid,
+		kind:        TokenInvalid,
+		sourceRange: invalidRange,
 	}
 }
 
 func (p *Parser) currentToken() Token {
-	return p.tokens[p.currentTokenIndex]
+	return p.lookahead(0)
 }
 
 func (p *Parser) eatToken() Token {
@@ -72,7 +79,7 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 }
 
 func (p *Parser) ParseExpr() Expr {
-	return p.parseAtom()
+	return p.parseBaseExpr()
 }
 
 func (p *Parser) parseAtom() Expr {
@@ -95,6 +102,20 @@ func (p *Parser) parseAtom() Expr {
 		p.file.errorf(p.currentToken().SourceRange(), "expected and expression but found '%v'", p.currentToken())
 	}
 	return nil
+}
+
+func (p *Parser) parseBaseExpr() Expr {
+	expr := p.parseAtom()
+	for {
+		switch p.currentToken().Kind() {
+		case TokenDot:
+			if selector := p.parseSelectorExpr(expr); selector != nil {
+				expr = selector
+			}
+		default:
+			return expr
+		}
+	}
 }
 
 func (p *Parser) parseLiteralExpr() *LiteralExpr {
@@ -141,4 +162,16 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
 	}
 	return nil
+}
+
+func (p *Parser) parseSelectorExpr(base Expr) *SelectorExpr {
+	dot := p.eatTokenOrError(TokenDot)
+	if !dot.valid() {
+		return nil
+	}
+
+	return &SelectorExpr{
+		Base:     base,
+		Selector: p.parseIdentiferExpr(),
+	}
 }

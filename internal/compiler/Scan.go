@@ -201,6 +201,11 @@ func (s *Scanner) readOctalDigits() {
 
 func (s *Scanner) readString() Token {
 	start := s.currentLocation
+	if s.currentChar() != '"' {
+		panic("strings should start with \"")
+	}
+
+	s.readChar()
 
 	for !s.isEOF() {
 		if s.currentChar() == '"' {
@@ -213,10 +218,10 @@ func (s *Scanner) readString() Token {
 		s.readChar()
 	}
 
-	token := s.createTokenFromLocationPoint(TokenLiteralString, start)
 	if s.currentChar() == '"' {
 		s.readChar() // consume closing quote
 	}
+	token := s.createTokenFromLocationPoint(TokenLiteralString, start)
 
 	return token
 }
@@ -429,7 +434,6 @@ func (s *Scanner) Scan() Token {
 		return s.createTokenFromLocationPoint(TokenXor, start)
 
 	case '"':
-		s.readChar()
 		return s.readString()
 
 	default:
