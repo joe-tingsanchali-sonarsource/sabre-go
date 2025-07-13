@@ -1,0 +1,6 @@
+(CallExpr
+  (IdentifierExpr IDENTIFIER(foo))
+  (IdentifierExpr IDENTIFIER(bar))
+  (IdentifierExpr IDENTIFIER(baz))
+  (LiteralExpr LITERAL_INT(1))
+)

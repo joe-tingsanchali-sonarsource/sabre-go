@@ -1,0 +1,3 @@
+>> 	a(
+>> 	  ^
+Error[internal/compiler/testdata/Parse/expr/call6.sabre:1:3]: expected ')' but found 'INVALID'

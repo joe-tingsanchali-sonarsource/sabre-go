@@ -1,0 +1,8 @@
+(CallExpr
+  (IndexExpr
+    (IdentifierExpr IDENTIFIER(a))
+    (LiteralExpr LITERAL_INT(3))
+  )
+  (LiteralExpr LITERAL_INT(1))
+  (IdentifierExpr IDENTIFIER(bar))
+)
