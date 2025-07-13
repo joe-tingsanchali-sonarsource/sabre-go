@@ -242,7 +242,7 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 			Rparen: p.eatTokenOrError(TokenRParen),
 		}
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		p.file.errorf(p.currentToken().SourceRange(), "expected a left parenthesis but found '%v'", p.currentToken())
 	}
 	return nil
 }
