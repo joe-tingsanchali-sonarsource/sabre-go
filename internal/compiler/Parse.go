@@ -95,7 +95,7 @@ func (p *Parser) parseAtom() Expr {
 	case TokenFalse:
 		return p.parseLiteralExpr()
 	case TokenIdentifier:
-		return p.parseIdentiferExpr()
+		return p.parseIdentifierExpr()
 	case TokenLParen:
 		return p.parseParenExpr()
 	default:
@@ -138,7 +138,7 @@ func (p *Parser) parseLiteralExpr() *LiteralExpr {
 	return nil
 }
 
-func (p *Parser) parseIdentiferExpr() *IdentifierExpr {
+func (p *Parser) parseIdentifierExpr() *IdentifierExpr {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
 		return &IdentifierExpr{
@@ -172,6 +172,6 @@ func (p *Parser) parseSelectorExpr(base Expr) *SelectorExpr {
 
 	return &SelectorExpr{
 		Base:     base,
-		Selector: p.parseIdentiferExpr(),
+		Selector: p.parseIdentifierExpr(),
 	}
 }
