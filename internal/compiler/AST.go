@@ -87,6 +87,22 @@ func (e *IndexExpr) Visit(v NodeVisitor) {
 	v.VisitIndexExpr(e)
 }
 
+type CallExpr struct {
+	NodeBase
+	Base   Expr
+	LParen Token
+	Args   []Expr
+	RParen Token
+}
+
+func (e *CallExpr) exprNode() {}
+func (e *CallExpr) SourceRange() SourceRange {
+	return e.Base.SourceRange().Merge(e.RParen.SourceRange())
+}
+func (e *CallExpr) Visit(v NodeVisitor) {
+	v.VisitCallExpr(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr) bool
@@ -94,6 +110,7 @@ type NodeVisitor interface {
 	VisitParenExpr(n *ParenExpr) bool
 	VisitSelectorExpr(n *SelectorExpr) bool
 	VisitIndexExpr(n *IndexExpr) bool
+	VisitCallExpr(n *CallExpr) bool
 }
 
 type DefaultVisitor struct{}
@@ -112,5 +129,12 @@ func (v *DefaultVisitor) VisitSelectorExpr(n *SelectorExpr) bool {
 func (v *DefaultVisitor) VisitIndexExpr(n *IndexExpr) bool {
 	n.Base.Visit(v)
 	n.Index.Visit(v)
+	return true
+}
+func (v *DefaultVisitor) VisitCallExpr(n *CallExpr) bool {
+	n.Base.Visit(v)
+	for _, arg := range n.Args {
+		arg.Visit(v)
+	}
 	return true
 }

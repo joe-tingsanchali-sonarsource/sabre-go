@@ -105,3 +105,20 @@ func (v *ASTPrinter) VisitIndexExpr(n *IndexExpr) bool {
 	v.indentor.print(")")
 	return true
 }
+
+func (v *ASTPrinter) VisitCallExpr(n *CallExpr) bool {
+	v.indentor.print("(CallExpr")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Base.Visit(v)
+	for _, arg := range n.Args {
+		v.indentor.NewLine()
+		arg.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+	return true
+}

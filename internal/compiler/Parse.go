@@ -26,11 +26,7 @@ func (t Token) valid() bool {
 	return t.kind != TokenEOF && t.kind != TokenInvalid
 }
 
-func (p *Parser) lookahead(k int) Token {
-	if p.currentTokenIndex+k < len(p.tokens) {
-		return p.tokens[p.currentTokenIndex+k]
-	}
-
+func (p *Parser) invalidTokenAtEOF() Token {
 	var invalidRange SourceRange
 	if len(p.tokens) > 0 {
 		loc := p.tokens[len(p.tokens)-1].SourceRange().End()
@@ -43,15 +39,21 @@ func (p *Parser) lookahead(k int) Token {
 	}
 }
 
+func (p *Parser) lookahead(k int) Token {
+	if p.currentTokenIndex+k < len(p.tokens) {
+		return p.tokens[p.currentTokenIndex+k]
+	}
+
+	return p.invalidTokenAtEOF()
+}
+
 func (p *Parser) currentToken() Token {
 	return p.lookahead(0)
 }
 
 func (p *Parser) eatToken() Token {
 	if p.currentTokenIndex >= len(p.tokens) {
-		return Token{
-			kind: TokenInvalid,
-		}
+		return p.invalidTokenAtEOF()
 	}
 	tkn := p.tokens[p.currentTokenIndex]
 	p.currentTokenIndex++
@@ -73,9 +75,7 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 		return tkn
 	}
 	p.file.errorf(tkn.SourceRange(), "expected '%v' but found '%v'", kind, tkn.Kind())
-	return Token{
-		kind: TokenInvalid,
-	}
+	return tkn
 }
 
 func (p *Parser) ParseExpr() Expr {
@@ -115,6 +115,10 @@ func (p *Parser) parseBaseExpr() Expr {
 		case TokenLBracket:
 			if index := p.parseIndexExpr(expr); index != nil {
 				expr = index
+			}
+		case TokenLParen:
+			if call := p.parseCallExpr(expr); call != nil {
+				expr = call
 			}
 		default:
 			return expr
@@ -202,4 +206,39 @@ func (p *Parser) parseIndexExpr(base Expr) *IndexExpr {
 		Index:    index,
 		RBracket: rBracket,
 	}
+}
+
+func (p *Parser) parseCallExpr(base Expr) *CallExpr {
+	lParen, args, rParen, ok := p.parseExprList()
+	if !ok {
+		return nil
+	}
+
+	return &CallExpr{
+		Base:   base,
+		LParen: lParen,
+		Args:   args,
+		RParen: rParen,
+	}
+}
+
+func (p *Parser) parseExprList() (lParen Token, exprs []Expr, rParen Token, ok bool) {
+	lParen = p.eatTokenIfKind(TokenLParen)
+	if !lParen.valid() {
+		ok = false
+		return
+	}
+
+	for p.currentToken().valid() && p.currentToken().Kind() != TokenRParen {
+		e := p.ParseExpr()
+		if e == nil {
+			ok = false
+			return
+		}
+		exprs = append(exprs, e)
+		p.eatTokenIfKind(TokenComma)
+	}
+
+	rParen = p.eatTokenOrError(TokenRParen)
+	return lParen, exprs, rParen, true
 }

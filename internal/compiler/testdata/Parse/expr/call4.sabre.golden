@@ -1,0 +1,8 @@
+(CallExpr
+  (SelectorExpr
+    (IdentifierExpr IDENTIFIER(a))
+    (IdentifierExpr IDENTIFIER(b))
+  )
+  (LiteralExpr LITERAL_INT(1))
+  (LiteralExpr LITERAL_FLOAT(2.3))
+)
