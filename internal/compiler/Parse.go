@@ -79,29 +79,19 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 }
 
 func (p *Parser) ParseExpr() Expr {
-	return p.parseBaseExpr()
+	return p.parseUnaryExpr()
 }
 
-func (p *Parser) parseAtom() Expr {
+func (p *Parser) parseUnaryExpr() Expr {
 	switch p.currentToken().Kind() {
-	case TokenLiteralInt:
-		fallthrough
-	case TokenLiteralFloat:
-		fallthrough
-	case TokenLiteralString:
-		fallthrough
-	case TokenTrue:
-		fallthrough
-	case TokenFalse:
-		return p.parseLiteralExpr()
-	case TokenIdentifier:
-		return p.parseIdentifierExpr()
-	case TokenLParen:
-		return p.parseParenExpr()
+	case TokenAdd, TokenSub, TokenNot, TokenXor:
+		return &UnaryExpr{
+			Operator: p.eatToken(),
+			Base:     p.parseUnaryExpr(),
+		}
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected and expression but found '%v'", p.currentToken())
+		return p.parseBaseExpr()
 	}
-	return nil
 }
 
 func (p *Parser) parseBaseExpr() Expr {
@@ -126,24 +116,16 @@ func (p *Parser) parseBaseExpr() Expr {
 	}
 }
 
-func (p *Parser) parseLiteralExpr() *LiteralExpr {
-	switch p.currentToken().Kind() {
-	case TokenLiteralInt:
-		fallthrough
-	case TokenLiteralFloat:
-		fallthrough
-	case TokenLiteralString:
-		fallthrough
-	case TokenTrue:
-		fallthrough
-	case TokenFalse:
-		return &LiteralExpr{
-			Token: p.eatToken(),
-		}
-	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
+func (p *Parser) parseSelectorExpr(base Expr) *SelectorExpr {
+	dot := p.eatTokenOrError(TokenDot)
+	if !dot.valid() {
+		return nil
 	}
-	return nil
+
+	return &SelectorExpr{
+		Base:     base,
+		Selector: p.parseIdentifierExpr(),
+	}
 }
 
 func (p *Parser) parseIdentifierExpr() *IdentifierExpr {
@@ -156,32 +138,6 @@ func (p *Parser) parseIdentifierExpr() *IdentifierExpr {
 		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
 	}
 	return nil
-}
-
-func (p *Parser) parseParenExpr() *ParenExpr {
-	switch p.currentToken().Kind() {
-	case TokenLParen:
-		return &ParenExpr{
-			Lparen: p.eatToken(),
-			Base:   p.ParseExpr(),
-			Rparen: p.eatTokenOrError(TokenRParen),
-		}
-	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
-	}
-	return nil
-}
-
-func (p *Parser) parseSelectorExpr(base Expr) *SelectorExpr {
-	dot := p.eatTokenOrError(TokenDot)
-	if !dot.valid() {
-		return nil
-	}
-
-	return &SelectorExpr{
-		Base:     base,
-		Selector: p.parseIdentifierExpr(),
-	}
 }
 
 func (p *Parser) parseIndexExpr(base Expr) *IndexExpr {
@@ -241,4 +197,52 @@ func (p *Parser) parseExprList() (lParen Token, exprs []Expr, rParen Token, ok b
 
 	rParen = p.eatTokenOrError(TokenRParen)
 	return lParen, exprs, rParen, true
+}
+
+func (p *Parser) parseAtom() Expr {
+	switch p.currentToken().Kind() {
+	case TokenLiteralInt, TokenLiteralFloat, TokenLiteralString, TokenTrue, TokenFalse:
+		return p.parseLiteralExpr()
+	case TokenIdentifier:
+		return p.parseIdentifierExpr()
+	case TokenLParen:
+		return p.parseParenExpr()
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
+	}
+	return nil
+}
+
+func (p *Parser) parseLiteralExpr() *LiteralExpr {
+	switch p.currentToken().Kind() {
+	case TokenLiteralInt:
+		fallthrough
+	case TokenLiteralFloat:
+		fallthrough
+	case TokenLiteralString:
+		fallthrough
+	case TokenTrue:
+		fallthrough
+	case TokenFalse:
+		return &LiteralExpr{
+			Token: p.eatToken(),
+		}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
+	}
+	return nil
+}
+
+func (p *Parser) parseParenExpr() *ParenExpr {
+	switch p.currentToken().Kind() {
+	case TokenLParen:
+		return &ParenExpr{
+			Lparen: p.eatToken(),
+			Base:   p.ParseExpr(),
+			Rparen: p.eatTokenOrError(TokenRParen),
+		}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected a left parenthesis but found '%v'", p.currentToken())
+	}
+	return nil
 }

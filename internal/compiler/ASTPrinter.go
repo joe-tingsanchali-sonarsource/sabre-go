@@ -122,3 +122,16 @@ func (v *ASTPrinter) VisitCallExpr(n *CallExpr) bool {
 	v.indentor.print(")")
 	return true
 }
+
+func (v *ASTPrinter) VisitUnaryExpr(n *UnaryExpr) bool {
+	v.indentor.printf("(UnaryExpr %v", n.Operator)
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Base.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+	return true
+}
