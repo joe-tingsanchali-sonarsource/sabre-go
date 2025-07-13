@@ -90,3 +90,18 @@ func (v *ASTPrinter) VisitSelectorExpr(n *SelectorExpr) bool {
 	v.indentor.print(")")
 	return true
 }
+
+func (v *ASTPrinter) VisitIndexExpr(n *IndexExpr) bool {
+	v.indentor.print("(IndexExpr")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Base.Visit(v)
+	v.indentor.NewLine()
+	n.Index.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+	return true
+}

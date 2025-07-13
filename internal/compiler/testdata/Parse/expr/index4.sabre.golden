@@ -1,0 +1,3 @@
+>> 	a[
+>> 	  ^
+Error[internal/compiler/testdata/Parse/expr/index4.sabre:1:3]: expected and expression but found 'INVALID'

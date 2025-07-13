@@ -1,0 +1,4 @@
+(IndexExpr
+  (IdentifierExpr IDENTIFIER(a))
+  (LiteralExpr LITERAL_INT(12))
+)

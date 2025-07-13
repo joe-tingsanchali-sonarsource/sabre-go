@@ -1,0 +1,4 @@
+(IndexExpr
+  (IdentifierExpr IDENTIFIER(a))
+  (IdentifierExpr IDENTIFIER(b))
+)
