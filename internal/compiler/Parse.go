@@ -112,6 +112,10 @@ func (p *Parser) parseBaseExpr() Expr {
 			if selector := p.parseSelectorExpr(expr); selector != nil {
 				expr = selector
 			}
+		case TokenLBracket:
+			if index := p.parseIndexExpr(expr); index != nil {
+				expr = index
+			}
 		default:
 			return expr
 		}
@@ -173,5 +177,29 @@ func (p *Parser) parseSelectorExpr(base Expr) *SelectorExpr {
 	return &SelectorExpr{
 		Base:     base,
 		Selector: p.parseIdentifierExpr(),
+	}
+}
+
+func (p *Parser) parseIndexExpr(base Expr) *IndexExpr {
+	lBracket := p.eatTokenOrError(TokenLBracket)
+	if !lBracket.valid() {
+		return nil
+	}
+
+	index := p.ParseExpr()
+	if index == nil {
+		return nil
+	}
+
+	rBracket := p.eatTokenOrError(TokenRBracket)
+	if !rBracket.valid() {
+		return nil
+	}
+
+	return &IndexExpr{
+		Base:     base,
+		LBracket: lBracket,
+		Index:    index,
+		RBracket: rBracket,
 	}
 }
