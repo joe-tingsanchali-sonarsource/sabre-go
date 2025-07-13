@@ -1,1 +1,3 @@
-(ParenExpr (LiteralExpr LITERAL_FLOAT(1.23)))
+(ParenExpr
+  (LiteralExpr LITERAL_FLOAT(1.23))
+)

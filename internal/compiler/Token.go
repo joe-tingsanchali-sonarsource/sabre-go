@@ -375,17 +375,26 @@ func (r SourceRange) String() string {
 	return fmt.Sprintf("<nil>:%v:%v", r.BeginPosition, r.EndPosition)
 }
 
+func (r SourceRange) isInside(offset int) bool {
+	if r.BeginOffset == r.EndOffset {
+		return offset == int(r.BeginOffset)
+	} else {
+		return offset >= int(r.BeginOffset) && offset < int(r.EndOffset)
+	}
+}
+
 func (r SourceRange) highlightLine(builder *strings.Builder, line string, byteOffset int) int {
 	builder.WriteString(">> \t")
 	builder.WriteString(line)
 	builder.WriteString("\n")
 	builder.WriteString(">> \t")
 
-	for i := 0; i < len(line); i++ {
-		if byteOffset+i >= int(r.BeginOffset) && byteOffset+i < int(r.EndOffset) {
+	// +1 for the option to highlight end of file
+	for i := 0; i < len(line)+1; i++ {
+		if r.isInside(byteOffset + i) {
 			builder.WriteByte('^')
 		} else {
-			if line[i] == '\t' {
+			if i < len(line) && line[i] == '\t' {
 				builder.WriteByte('\t')
 			} else {
 				builder.WriteByte(' ')

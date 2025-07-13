@@ -1,1 +1,3 @@
-(ParenExpr (LiteralExpr true))
+(ParenExpr
+  (LiteralExpr true)
+)

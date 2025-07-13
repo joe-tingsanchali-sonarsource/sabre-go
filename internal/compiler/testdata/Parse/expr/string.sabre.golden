@@ -1,1 +1,1 @@
-(LiteralExpr LITERAL_STRING(string))
+(LiteralExpr LITERAL_STRING("string"))

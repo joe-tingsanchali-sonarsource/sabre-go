@@ -5,28 +5,88 @@ import (
 	"io"
 )
 
+type Indentor struct {
+	indentLevel int
+	out         io.Writer
+}
+
+func NewIndentor(out io.Writer) Indentor {
+	return Indentor{
+		indentLevel: 0,
+		out:         out,
+	}
+}
+
+func (ind Indentor) indent() {
+	for i := 0; i < ind.indentLevel; i++ {
+		fmt.Fprint(ind.out, "  ")
+	}
+}
+
+func (ind Indentor) NewLine() {
+	fmt.Fprint(ind.out, "\n")
+	ind.indent()
+}
+
+func (ind *Indentor) Push() {
+	ind.indentLevel++
+}
+
+func (ind *Indentor) Pop() {
+	ind.indentLevel--
+}
+
+func (ind *Indentor) printf(format string, a ...any) {
+	fmt.Fprintf(ind.out, format, a...)
+}
+
+func (ind *Indentor) print(a ...any) {
+	fmt.Fprint(ind.out, a...)
+}
+
 type ASTPrinter struct {
 	DefaultVisitor
-	out io.Writer
+	indentor Indentor
 }
 
 func NewASTPrinter(out io.Writer) *ASTPrinter {
-	return &ASTPrinter{out: out}
+	return &ASTPrinter{indentor: NewIndentor(out)}
 }
 
 func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) bool {
-	fmt.Fprintf(v.out, "(LiteralExpr %v)", n.Token)
+	v.indentor.printf("(LiteralExpr %v)", n.Token)
 	return true
 }
 
 func (v *ASTPrinter) VisitIdentifierExpr(n *IdentifierExpr) bool {
-	fmt.Fprintf(v.out, "(IdentifierExpr %v)", n.Token)
+	v.indentor.printf("(IdentifierExpr %v)", n.Token)
 	return true
 }
 
 func (v *ASTPrinter) VisitParenExpr(n *ParenExpr) bool {
-	fmt.Fprint(v.out, "(ParenExpr ")
+	v.indentor.print("(ParenExpr")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
 	n.Base.Visit(v)
-	fmt.Fprint(v.out, ")")
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+	return true
+}
+
+func (v *ASTPrinter) VisitSelectorExpr(n *SelectorExpr) bool {
+	v.indentor.print("(SelectorExpr")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Base.Visit(v)
+	v.indentor.NewLine()
+	n.Selector.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
 	return true
 }

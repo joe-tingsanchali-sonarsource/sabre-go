@@ -1,0 +1,3 @@
+>> 	(a)."asd"
+>> 	    ^^^^^ 
+Error[internal/compiler/testdata/Parse/expr/selector4.sabre:1:5]: expected an identifier but found 'LITERAL_STRING("asd")'
