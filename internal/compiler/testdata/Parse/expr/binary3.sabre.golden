@@ -1,0 +1,16 @@
+(BinaryExpr ||
+  (IdentifierExpr IDENTIFIER(a))
+  (BinaryExpr &&
+    (IdentifierExpr IDENTIFIER(b))
+    (BinaryExpr <
+      (IdentifierExpr IDENTIFIER(c))
+      (BinaryExpr +
+        (IdentifierExpr IDENTIFIER(d))
+        (BinaryExpr *
+          (IdentifierExpr IDENTIFIER(e))
+          (IdentifierExpr IDENTIFIER(f))
+        )
+      )
+    )
+  )
+)

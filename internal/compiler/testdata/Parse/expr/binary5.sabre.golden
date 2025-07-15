@@ -1,0 +1,8 @@
+(BinaryExpr +
+  (UnaryExpr -
+    (IdentifierExpr IDENTIFIER(a))
+  )
+  (UnaryExpr +
+    (IdentifierExpr IDENTIFIER(b))
+  )
+)

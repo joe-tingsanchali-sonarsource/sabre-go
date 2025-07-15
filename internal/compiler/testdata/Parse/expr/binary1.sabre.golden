@@ -1,0 +1,4 @@
+(BinaryExpr +
+  (LiteralExpr LITERAL_INT(1))
+  (LiteralExpr LITERAL_INT(2))
+)
