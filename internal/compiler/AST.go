@@ -117,6 +117,21 @@ func (e *UnaryExpr) Visit(v NodeVisitor) {
 	v.VisitUnaryExpr(e)
 }
 
+type BinaryExpr struct {
+	NodeBase
+	LHS      Expr
+	Operator Token
+	RHS      Expr
+}
+
+func (e *BinaryExpr) exprNode() {}
+func (e *BinaryExpr) SourceRange() SourceRange {
+	return e.LHS.SourceRange().Merge(e.RHS.SourceRange())
+}
+func (e *BinaryExpr) Visit(v NodeVisitor) {
+	v.VisitBinaryExpr(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr) bool
@@ -126,6 +141,7 @@ type NodeVisitor interface {
 	VisitIndexExpr(n *IndexExpr) bool
 	VisitCallExpr(n *CallExpr) bool
 	VisitUnaryExpr(n *UnaryExpr) bool
+	VisitBinaryExpr(n *BinaryExpr) bool
 }
 
 type DefaultVisitor struct{}
@@ -155,5 +171,10 @@ func (v *DefaultVisitor) VisitCallExpr(n *CallExpr) bool {
 }
 func (v *DefaultVisitor) VisitUnaryExpr(n *UnaryExpr) bool {
 	n.Base.Visit(v)
+	return true
+}
+func (v *DefaultVisitor) VisitBinaryExpr(n *BinaryExpr) bool {
+	n.LHS.Visit(v)
+	n.RHS.Visit(v)
 	return true
 }

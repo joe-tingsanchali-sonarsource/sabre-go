@@ -135,3 +135,18 @@ func (v *ASTPrinter) VisitUnaryExpr(n *UnaryExpr) bool {
 	v.indentor.print(")")
 	return true
 }
+
+func (v *ASTPrinter) VisitBinaryExpr(n *BinaryExpr) bool {
+	v.indentor.printf("(BinaryExpr %v", n.Operator)
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.LHS.Visit(v)
+	v.indentor.NewLine()
+	n.RHS.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+	return true
+}

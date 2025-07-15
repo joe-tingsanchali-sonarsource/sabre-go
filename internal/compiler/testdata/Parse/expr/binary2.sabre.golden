@@ -1,0 +1,7 @@
+(BinaryExpr +
+  (IdentifierExpr IDENTIFIER(a))
+  (BinaryExpr *
+    (LiteralExpr LITERAL_INT(2))
+    (LiteralExpr LITERAL_INT(3))
+  )
+)

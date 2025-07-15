@@ -1,0 +1,6 @@
+>> 	a +
+>> 	   ^
+Error[internal/compiler/testdata/Parse/expr/binary6.sabre:1:4]: expected an expression but found 'INVALID'
+>> 	a +
+>> 	  ^ 
+Error[internal/compiler/testdata/Parse/expr/binary6.sabre:1:3]: missing right handside

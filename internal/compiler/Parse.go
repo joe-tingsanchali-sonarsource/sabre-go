@@ -79,7 +79,40 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 }
 
 func (p *Parser) ParseExpr() Expr {
-	return p.parseUnaryExpr()
+	return p.parseBinaryExpr()
+}
+
+func (p *Parser) parseBinaryExpr() Expr {
+	var precedences = [][]TokenKind{
+		{TokenLOr},
+		{TokenLAnd},
+		{TokenLT, TokenGT, TokenLE, TokenGE, TokenEQ, TokenNE},
+		{TokenAdd, TokenSub, TokenXor, TokenOr},
+		{TokenMul, TokenDiv, TokenMod, TokenAnd, TokenShl, TokenShr},
+	}
+	return p.parseBinaryExprWithPrecedenceLevels(precedences)
+}
+
+func (p *Parser) parseBinaryExprWithPrecedenceLevels(levels [][]TokenKind) Expr {
+	if len(levels) == 0 {
+		return p.parseUnaryExpr()
+	}
+
+	expr := p.parseBinaryExprWithPrecedenceLevels(levels[1:])
+	for slices.Contains(levels[0], p.currentToken().Kind()) {
+		op := p.eatToken()
+		rhs := p.parseBinaryExprWithPrecedenceLevels(levels[1:])
+		if rhs == nil {
+			p.file.errorf(op.SourceRange(), "missing right handside")
+			break
+		}
+		expr = &BinaryExpr{
+			LHS:      expr,
+			Operator: op,
+			RHS:      rhs,
+		}
+	}
+	return expr
 }
 
 func (p *Parser) parseUnaryExpr() Expr {
