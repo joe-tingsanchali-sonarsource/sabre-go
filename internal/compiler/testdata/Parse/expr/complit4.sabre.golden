@@ -1,0 +1,14 @@
+(BinaryExpr ==
+  (ComplitExpr
+    (NamedType IDENTIFIER(Foo))
+    (Element
+      (LiteralExpr LITERAL_INT(1))
+    )
+  )
+  (ComplitExpr
+    (NamedType IDENTIFIER(Bar))
+    (Element
+      (LiteralExpr LITERAL_INT(1))
+    )
+  )
+)

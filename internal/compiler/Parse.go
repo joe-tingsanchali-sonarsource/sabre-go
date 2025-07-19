@@ -143,6 +143,15 @@ func (p *Parser) parseBaseExpr() Expr {
 			if call := p.parseCallExpr(expr); call != nil {
 				expr = call
 			}
+		case TokenLBrace:
+			t := p.convertParsedExprToType(expr)
+			if t == nil {
+				p.file.errorf(expr.SourceRange(), "failed to parse type")
+				return nil
+			}
+			if complit := p.parseComplitExpr(t); complit != nil {
+				expr = complit
+			}
 		default:
 			return expr
 		}
@@ -278,4 +287,65 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 		p.file.errorf(p.currentToken().SourceRange(), "expected a left parenthesis but found '%v'", p.currentToken())
 	}
 	return nil
+}
+
+func (p *Parser) convertParsedExprToType(e Expr) Type {
+	switch n := e.(type) {
+	case *IdentifierExpr:
+		return &NamedType{
+			TypeName: n.Token,
+		}
+	case *SelectorExpr:
+		if base, ok := n.Base.(*IdentifierExpr); ok {
+			return &NamedType{
+				Package:  base.Token,
+				TypeName: n.Selector.Token,
+			}
+		}
+	}
+	return nil
+}
+
+func (p *Parser) parseComplitExpr(t Type) *ComplitExpr {
+	lBrace := p.eatTokenOrError(TokenLBrace)
+	if !lBrace.valid() {
+		return nil
+	}
+
+	var elements []ComplitElement
+	for p.currentToken().valid() && p.currentToken().Kind() != TokenRBrace {
+		var element ComplitElement
+		element.Name = p.ParseExpr()
+		if element.Name == nil {
+			return nil
+		}
+
+		if colon := p.eatTokenIfKind(TokenColon); colon.valid() {
+			element.Colon = colon
+
+			element.Value = p.ParseExpr()
+			if element.Value == nil {
+				return nil
+			}
+		} else {
+			element.Value = element.Name
+			element.Name = nil
+		}
+
+		p.eatTokenIfKind(TokenComma)
+
+		elements = append(elements, element)
+	}
+
+	rBrace := p.eatTokenOrError(TokenRBrace)
+	if !rBrace.valid() {
+		return nil
+	}
+
+	return &ComplitExpr{
+		Type:     t,
+		LBrace:   lBrace,
+		Elements: elements,
+		RBrace:   rBrace,
+	}
 }

@@ -150,3 +150,44 @@ func (v *ASTPrinter) VisitBinaryExpr(n *BinaryExpr) bool {
 	v.indentor.print(")")
 	return true
 }
+
+func (v *ASTPrinter) VisitComplitExpr(n *ComplitExpr) bool {
+	v.indentor.print("(ComplitExpr")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Type.Visit(v)
+	for _, element := range n.Elements {
+		v.indentor.NewLine()
+		v.indentor.print("(Element")
+		v.indentor.Push()
+
+		if element.Name != nil {
+			v.indentor.NewLine()
+			element.Name.Visit(v)
+		}
+
+		if element.Value != nil {
+			v.indentor.NewLine()
+			element.Value.Visit(v)
+		}
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+	return true
+}
+
+func (v *ASTPrinter) VisitNamedType(n *NamedType) bool {
+	if n.Package.valid() {
+		v.indentor.printf("(NamedType %v.%v)", n.Package, n.TypeName)
+	} else {
+		v.indentor.printf("(NamedType %v)", n.TypeName)
+	}
+	return true
+}

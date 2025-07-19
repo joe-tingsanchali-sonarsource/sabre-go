@@ -1,0 +1,17 @@
+(ComplitExpr
+  (NamedType IDENTIFIER(Foo).IDENTIFIER(Bar))
+  (Element
+    (SelectorExpr
+      (SelectorExpr
+        (IdentifierExpr IDENTIFIER(x))
+        (IdentifierExpr IDENTIFIER(y))
+      )
+      (IdentifierExpr IDENTIFIER(z))
+    )
+    (LiteralExpr LITERAL_INT(1))
+  )
+  (Element
+    (IdentifierExpr IDENTIFIER(x))
+    (LiteralExpr LITERAL_INT(2))
+  )
+)

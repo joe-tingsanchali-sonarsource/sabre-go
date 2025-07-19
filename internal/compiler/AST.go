@@ -132,6 +132,54 @@ func (e *BinaryExpr) Visit(v NodeVisitor) {
 	v.VisitBinaryExpr(e)
 }
 
+type ComplitElement struct {
+	Name  Expr
+	Colon Token
+	Value Expr
+}
+
+type ComplitExpr struct {
+	NodeBase
+	Type     Type
+	LBrace   Token
+	Elements []ComplitElement
+	RBrace   Token
+}
+
+func (e *ComplitExpr) exprNode() {}
+func (e *ComplitExpr) SourceRange() SourceRange {
+	return e.Type.SourceRange().Merge(e.RBrace.SourceRange())
+}
+func (e *ComplitExpr) Visit(v NodeVisitor) {
+	v.VisitComplitExpr(e)
+}
+
+// Type expressions
+type Type interface {
+	Expr
+	typeExpr()
+}
+
+type NamedType struct {
+	NodeBase
+	Package  Token
+	TypeName Token
+}
+
+func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
+func (e *NamedType) exprNode()                {}
+func (e *NamedType) SourceRange() SourceRange {
+	if e.IsPackageQualified() {
+		return e.Package.SourceRange().Merge(e.TypeName.SourceRange())
+	} else {
+		return e.TypeName.SourceRange()
+	}
+}
+func (e *NamedType) Visit(v NodeVisitor) {
+	v.VisitNamedType(e)
+}
+func (e *NamedType) typeExpr() {}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr) bool
@@ -142,6 +190,9 @@ type NodeVisitor interface {
 	VisitCallExpr(n *CallExpr) bool
 	VisitUnaryExpr(n *UnaryExpr) bool
 	VisitBinaryExpr(n *BinaryExpr) bool
+	VisitComplitExpr(n *ComplitExpr) bool
+
+	VisitNamedType(n *NamedType) bool
 }
 
 type DefaultVisitor struct{}
@@ -178,3 +229,15 @@ func (v *DefaultVisitor) VisitBinaryExpr(n *BinaryExpr) bool {
 	n.RHS.Visit(v)
 	return true
 }
+func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) bool {
+	n.Type.Visit(v)
+	for _, element := range n.Elements {
+		if element.Name != nil {
+			element.Name.Visit(v)
+		}
+		element.Value.Visit(v)
+	}
+	return true
+}
+
+func (v *DefaultVisitor) VisitNamedType(n *NamedType) bool { return true }
