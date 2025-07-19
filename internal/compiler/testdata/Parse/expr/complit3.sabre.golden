@@ -1,0 +1,12 @@
+(ComplitExpr
+  (NamedType IDENTIFIER(Foo))
+  (Element
+    (LiteralExpr LITERAL_INT(1))
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(2))
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(3))
+  )
+)
