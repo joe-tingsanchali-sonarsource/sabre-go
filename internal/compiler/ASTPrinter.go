@@ -53,17 +53,15 @@ func NewASTPrinter(out io.Writer) *ASTPrinter {
 	return &ASTPrinter{indentor: NewIndentor(out)}
 }
 
-func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) bool {
+func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) {
 	v.indentor.printf("(LiteralExpr %v)", n.Token)
-	return true
 }
 
-func (v *ASTPrinter) VisitIdentifierExpr(n *IdentifierExpr) bool {
+func (v *ASTPrinter) VisitIdentifierExpr(n *IdentifierExpr) {
 	v.indentor.printf("(IdentifierExpr %v)", n.Token)
-	return true
 }
 
-func (v *ASTPrinter) VisitParenExpr(n *ParenExpr) bool {
+func (v *ASTPrinter) VisitParenExpr(n *ParenExpr) {
 	v.indentor.print("(ParenExpr")
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -73,10 +71,9 @@ func (v *ASTPrinter) VisitParenExpr(n *ParenExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitSelectorExpr(n *SelectorExpr) bool {
+func (v *ASTPrinter) VisitSelectorExpr(n *SelectorExpr) {
 	v.indentor.print("(SelectorExpr")
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -88,10 +85,9 @@ func (v *ASTPrinter) VisitSelectorExpr(n *SelectorExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitIndexExpr(n *IndexExpr) bool {
+func (v *ASTPrinter) VisitIndexExpr(n *IndexExpr) {
 	v.indentor.print("(IndexExpr")
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -103,10 +99,9 @@ func (v *ASTPrinter) VisitIndexExpr(n *IndexExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitCallExpr(n *CallExpr) bool {
+func (v *ASTPrinter) VisitCallExpr(n *CallExpr) {
 	v.indentor.print("(CallExpr")
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -120,10 +115,9 @@ func (v *ASTPrinter) VisitCallExpr(n *CallExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitUnaryExpr(n *UnaryExpr) bool {
+func (v *ASTPrinter) VisitUnaryExpr(n *UnaryExpr) {
 	v.indentor.printf("(UnaryExpr %v", n.Operator)
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -133,10 +127,9 @@ func (v *ASTPrinter) VisitUnaryExpr(n *UnaryExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitBinaryExpr(n *BinaryExpr) bool {
+func (v *ASTPrinter) VisitBinaryExpr(n *BinaryExpr) {
 	v.indentor.printf("(BinaryExpr %v", n.Operator)
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -148,10 +141,9 @@ func (v *ASTPrinter) VisitBinaryExpr(n *BinaryExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitComplitExpr(n *ComplitExpr) bool {
+func (v *ASTPrinter) VisitComplitExpr(n *ComplitExpr) {
 	v.indentor.print("(ComplitExpr")
 	v.indentor.Push()
 	v.indentor.NewLine()
@@ -180,14 +172,12 @@ func (v *ASTPrinter) VisitComplitExpr(n *ComplitExpr) bool {
 	v.indentor.Pop()
 	v.indentor.NewLine()
 	v.indentor.print(")")
-	return true
 }
 
-func (v *ASTPrinter) VisitNamedType(n *NamedType) bool {
+func (v *ASTPrinter) VisitNamedType(n *NamedType) {
 	if n.Package.valid() {
 		v.indentor.printf("(NamedType %v.%v)", n.Package, n.TypeName)
 	} else {
 		v.indentor.printf("(NamedType %v)", n.TypeName)
 	}
-	return true
 }

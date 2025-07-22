@@ -2,18 +2,8 @@ package compiler
 
 type Node interface {
 	SourceRange() SourceRange
-	Parent() Node
-	Children() []Node
 	Visit(NodeVisitor)
 }
-
-type NodeBase struct {
-	parent   Node
-	children []Node
-}
-
-func (n *NodeBase) Parent() Node     { return n.parent }
-func (n *NodeBase) Children() []Node { return n.children }
 
 type Expr interface {
 	Node
@@ -21,7 +11,6 @@ type Expr interface {
 }
 
 type LiteralExpr struct {
-	NodeBase
 	Token Token
 }
 
@@ -32,7 +21,6 @@ func (e *LiteralExpr) Visit(v NodeVisitor) {
 }
 
 type IdentifierExpr struct {
-	NodeBase
 	Token Token
 }
 
@@ -43,7 +31,6 @@ func (e *IdentifierExpr) Visit(v NodeVisitor) {
 }
 
 type ParenExpr struct {
-	NodeBase
 	Lparen Token
 	Base   Expr
 	Rparen Token
@@ -58,7 +45,6 @@ func (e *ParenExpr) Visit(v NodeVisitor) {
 }
 
 type SelectorExpr struct {
-	NodeBase
 	Base     Expr
 	Selector *IdentifierExpr
 }
@@ -72,7 +58,6 @@ func (e *SelectorExpr) Visit(v NodeVisitor) {
 }
 
 type IndexExpr struct {
-	NodeBase
 	Base     Expr
 	LBracket Token
 	Index    Expr
@@ -88,7 +73,6 @@ func (e *IndexExpr) Visit(v NodeVisitor) {
 }
 
 type CallExpr struct {
-	NodeBase
 	Base   Expr
 	LParen Token
 	Args   []Expr
@@ -104,7 +88,6 @@ func (e *CallExpr) Visit(v NodeVisitor) {
 }
 
 type UnaryExpr struct {
-	NodeBase
 	Operator Token
 	Base     Expr
 }
@@ -118,7 +101,6 @@ func (e *UnaryExpr) Visit(v NodeVisitor) {
 }
 
 type BinaryExpr struct {
-	NodeBase
 	LHS      Expr
 	Operator Token
 	RHS      Expr
@@ -139,7 +121,6 @@ type ComplitElement struct {
 }
 
 type ComplitExpr struct {
-	NodeBase
 	Type     Type
 	LBrace   Token
 	Elements []ComplitElement
@@ -161,7 +142,6 @@ type Type interface {
 }
 
 type NamedType struct {
-	NodeBase
 	Package  Token
 	TypeName Token
 }
@@ -182,54 +162,48 @@ func (e *NamedType) typeExpr() {}
 
 // Visitor Interface
 type NodeVisitor interface {
-	VisitLiteralExpr(n *LiteralExpr) bool
-	VisitIdentifierExpr(n *IdentifierExpr) bool
-	VisitParenExpr(n *ParenExpr) bool
-	VisitSelectorExpr(n *SelectorExpr) bool
-	VisitIndexExpr(n *IndexExpr) bool
-	VisitCallExpr(n *CallExpr) bool
-	VisitUnaryExpr(n *UnaryExpr) bool
-	VisitBinaryExpr(n *BinaryExpr) bool
-	VisitComplitExpr(n *ComplitExpr) bool
+	VisitLiteralExpr(n *LiteralExpr)
+	VisitIdentifierExpr(n *IdentifierExpr)
+	VisitParenExpr(n *ParenExpr)
+	VisitSelectorExpr(n *SelectorExpr)
+	VisitIndexExpr(n *IndexExpr)
+	VisitCallExpr(n *CallExpr)
+	VisitUnaryExpr(n *UnaryExpr)
+	VisitBinaryExpr(n *BinaryExpr)
+	VisitComplitExpr(n *ComplitExpr)
 
-	VisitNamedType(n *NamedType) bool
+	VisitNamedType(n *NamedType)
 }
 
 type DefaultVisitor struct{}
 
-func (v *DefaultVisitor) VisitLiteralExpr(n *LiteralExpr) bool       { return true }
-func (v *DefaultVisitor) VisitIdentifierExpr(n *IdentifierExpr) bool { return true }
-func (v *DefaultVisitor) VisitParenExpr(n *ParenExpr) bool {
+func (v *DefaultVisitor) VisitLiteralExpr(n *LiteralExpr)       {}
+func (v *DefaultVisitor) VisitIdentifierExpr(n *IdentifierExpr) {}
+func (v *DefaultVisitor) VisitParenExpr(n *ParenExpr) {
 	n.Base.Visit(v)
-	return true
 }
-func (v *DefaultVisitor) VisitSelectorExpr(n *SelectorExpr) bool {
+func (v *DefaultVisitor) VisitSelectorExpr(n *SelectorExpr) {
 	n.Base.Visit(v)
 	n.Selector.Visit(v)
-	return true
 }
-func (v *DefaultVisitor) VisitIndexExpr(n *IndexExpr) bool {
+func (v *DefaultVisitor) VisitIndexExpr(n *IndexExpr) {
 	n.Base.Visit(v)
 	n.Index.Visit(v)
-	return true
 }
-func (v *DefaultVisitor) VisitCallExpr(n *CallExpr) bool {
+func (v *DefaultVisitor) VisitCallExpr(n *CallExpr) {
 	n.Base.Visit(v)
 	for _, arg := range n.Args {
 		arg.Visit(v)
 	}
-	return true
 }
-func (v *DefaultVisitor) VisitUnaryExpr(n *UnaryExpr) bool {
+func (v *DefaultVisitor) VisitUnaryExpr(n *UnaryExpr) {
 	n.Base.Visit(v)
-	return true
 }
-func (v *DefaultVisitor) VisitBinaryExpr(n *BinaryExpr) bool {
+func (v *DefaultVisitor) VisitBinaryExpr(n *BinaryExpr) {
 	n.LHS.Visit(v)
 	n.RHS.Visit(v)
-	return true
 }
-func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) bool {
+func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) {
 	n.Type.Visit(v)
 	for _, element := range n.Elements {
 		if element.Name != nil {
@@ -237,7 +211,6 @@ func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) bool {
 		}
 		element.Value.Visit(v)
 	}
-	return true
 }
 
-func (v *DefaultVisitor) VisitNamedType(n *NamedType) bool { return true }
+func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
