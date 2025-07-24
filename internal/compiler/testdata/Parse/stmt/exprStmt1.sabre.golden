@@ -1,0 +1,6 @@
+(ExprStmt
+  (CallExpr
+    (IdentifierExpr IDENTIFIER(foo))
+    (IdentifierExpr IDENTIFIER(bar))
+  )
+)

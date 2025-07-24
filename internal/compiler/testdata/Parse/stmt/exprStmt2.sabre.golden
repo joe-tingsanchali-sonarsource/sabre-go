@@ -1,0 +1,9 @@
+(ExprStmt
+  (BinaryExpr +
+    (IdentifierExpr IDENTIFIER(a))
+    (SelectorExpr
+      (IdentifierExpr IDENTIFIER(b))
+      (IdentifierExpr IDENTIFIER(c))
+    )
+  )
+)

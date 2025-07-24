@@ -5,6 +5,7 @@ type Node interface {
 	Visit(NodeVisitor)
 }
 
+// Expr Nodes
 type Expr interface {
 	Node
 	exprNode()
@@ -160,6 +161,22 @@ func (e *NamedType) Visit(v NodeVisitor) {
 }
 func (e *NamedType) typeExpr() {}
 
+// Stmt Nodes
+type Stmt interface {
+	Node
+	stmtNode()
+}
+
+type ExprStmt struct {
+	Expr Expr
+}
+
+func (e *ExprStmt) stmtNode()                {}
+func (e *ExprStmt) SourceRange() SourceRange { return e.Expr.SourceRange() }
+func (e *ExprStmt) Visit(v NodeVisitor) {
+	v.VisitExprStmt(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -173,6 +190,8 @@ type NodeVisitor interface {
 	VisitComplitExpr(n *ComplitExpr)
 
 	VisitNamedType(n *NamedType)
+
+	VisitExprStmt(n *ExprStmt)
 }
 
 type DefaultVisitor struct{}
@@ -214,3 +233,7 @@ func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) {
 }
 
 func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
+
+func (v *DefaultVisitor) VisitExprStmt(n *ExprStmt) {
+	n.Expr.Visit(v)
+}
