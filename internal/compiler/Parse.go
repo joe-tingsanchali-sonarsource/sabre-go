@@ -349,3 +349,17 @@ func (p *Parser) parseComplitExpr(t Type) *ComplitExpr {
 		RBrace:   rBrace,
 	}
 }
+
+func (p *Parser) ParseStmt() Stmt {
+	return p.parseExprStmt()
+}
+
+func (p *Parser) parseExprStmt() *ExprStmt {
+	expr := p.ParseExpr()
+	if expr == nil {
+		return nil
+	}
+	return &ExprStmt{
+		Expr: expr,
+	}
+}

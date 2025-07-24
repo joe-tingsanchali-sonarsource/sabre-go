@@ -181,3 +181,15 @@ func (v *ASTPrinter) VisitNamedType(n *NamedType) {
 		v.indentor.printf("(NamedType %v)", n.TypeName)
 	}
 }
+
+func (v *ASTPrinter) VisitExprStmt(n *ExprStmt) {
+	v.indentor.print("(ExprStmt")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Expr.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
