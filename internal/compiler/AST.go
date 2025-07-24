@@ -177,6 +177,23 @@ func (e *ExprStmt) Visit(v NodeVisitor) {
 	v.VisitExprStmt(e)
 }
 
+type ReturnStmt struct {
+	Return Token
+	Exprs  []Expr
+}
+
+func (e *ReturnStmt) stmtNode() {}
+func (e *ReturnStmt) SourceRange() SourceRange {
+	res := e.Return.SourceRange()
+	if len(e.Exprs) > 0 {
+		res = res.Merge(e.Exprs[len(e.Exprs)-1].SourceRange())
+	}
+	return res
+}
+func (e *ReturnStmt) Visit(v NodeVisitor) {
+	v.VisitReturnStmt(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -192,6 +209,7 @@ type NodeVisitor interface {
 	VisitNamedType(n *NamedType)
 
 	VisitExprStmt(n *ExprStmt)
+	VisitReturnStmt(n *ReturnStmt)
 }
 
 type DefaultVisitor struct{}
@@ -236,4 +254,9 @@ func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
 
 func (v *DefaultVisitor) VisitExprStmt(n *ExprStmt) {
 	n.Expr.Visit(v)
+}
+func (v *DefaultVisitor) VisitReturnStmt(n *ReturnStmt) {
+	for _, e := range n.Exprs {
+		e.Visit(v)
+	}
 }

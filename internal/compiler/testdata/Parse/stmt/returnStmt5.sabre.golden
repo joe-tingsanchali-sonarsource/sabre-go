@@ -1,0 +1,3 @@
+>> 	return ,
+>> 	       ^ 
+Error[internal/compiler/testdata/Parse/stmt/returnStmt5.sabre:1:8]: expected an expression but found ','
