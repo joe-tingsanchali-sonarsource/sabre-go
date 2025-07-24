@@ -351,7 +351,12 @@ func (p *Parser) parseComplitExpr(t Type) *ComplitExpr {
 }
 
 func (p *Parser) ParseStmt() Stmt {
-	return p.parseExprStmt()
+	switch p.currentToken().Kind() {
+	case TokenReturn:
+		return p.parseReturnStmt()
+	default:
+		return p.parseExprStmt()
+	}
 }
 
 func (p *Parser) parseExprStmt() *ExprStmt {
@@ -361,5 +366,34 @@ func (p *Parser) parseExprStmt() *ExprStmt {
 	}
 	return &ExprStmt{
 		Expr: expr,
+	}
+}
+
+func (p *Parser) parseReturnStmt() *ReturnStmt {
+	returnToken := p.eatTokenOrError(TokenReturn)
+	if !returnToken.valid() {
+		return nil
+	}
+
+	var exprs []Expr
+	// TODO: Work on automatic semicolon placement/injection in token stream
+	if p.currentToken().valid() {
+		initialExpr := p.ParseExpr()
+		if initialExpr == nil {
+			return nil
+		}
+		exprs = append(exprs, initialExpr)
+		for p.eatTokenIfKind(TokenComma).valid() {
+			expr := p.ParseExpr()
+			if expr == nil {
+				return nil
+			}
+			exprs = append(exprs, expr)
+		}
+	}
+
+	return &ReturnStmt{
+		Return: returnToken,
+		Exprs:  exprs,
 	}
 }

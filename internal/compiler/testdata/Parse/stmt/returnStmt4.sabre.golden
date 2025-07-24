@@ -1,0 +1,3 @@
+>> 	return a,
+>> 	         ^
+Error[internal/compiler/testdata/Parse/stmt/returnStmt4.sabre:1:10]: expected an expression but found 'INVALID'

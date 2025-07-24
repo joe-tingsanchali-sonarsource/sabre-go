@@ -12,8 +12,8 @@
 			"program": "${workspaceFolder}/cmd/sabre",
 			"cwd": "${workspaceFolder}",
 			"args": [
-				"parse-expr",
-				"./internal/compiler/testdata/Parse/expr/selector6.sabre"
+				"parse-stmt",
+				"./internal/compiler/testdata/Parse/stmt/returnStmt1.sabre"
 			]
 		}
 	]

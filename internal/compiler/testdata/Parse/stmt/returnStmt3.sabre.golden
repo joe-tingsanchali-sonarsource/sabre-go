@@ -1,0 +1,5 @@
+(ReturnStmt
+  (IdentifierExpr IDENTIFIER(a))
+  (IdentifierExpr IDENTIFIER(b))
+  (IdentifierExpr IDENTIFIER(c))
+)

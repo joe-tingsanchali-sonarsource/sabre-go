@@ -193,3 +193,19 @@ func (v *ASTPrinter) VisitExprStmt(n *ExprStmt) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitReturnStmt(n *ReturnStmt) {
+	v.indentor.print("(ReturnStmt")
+	if len(n.Exprs) > 0 {
+		v.indentor.Push()
+
+		for _, e := range n.Exprs {
+			v.indentor.NewLine()
+			e.Visit(v)
+		}
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+	}
+	v.indentor.print(")")
+}
