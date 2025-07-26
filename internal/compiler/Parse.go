@@ -376,8 +376,7 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 	}
 
 	var exprs []Expr
-	// TODO: Work on automatic semicolon placement/injection in token stream
-	if p.currentToken().valid() {
+	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().Kind() != TokenRBrace {
 		initialExpr := p.ParseExpr()
 		if initialExpr == nil {
 			return nil
