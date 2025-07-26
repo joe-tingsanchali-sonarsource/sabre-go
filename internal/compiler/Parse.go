@@ -376,7 +376,7 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 	}
 
 	var exprs []Expr
-	if p.currentToken().Kind() != TokenSemicolon || p.currentToken().Kind() == TokenRBrace {
+	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().Kind() != TokenRBrace {
 		initialExpr := p.ParseExpr()
 		if initialExpr == nil {
 			return nil
