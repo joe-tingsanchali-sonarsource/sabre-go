@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/MoustaphaSaad/sabre-go/internal/compiler"
@@ -61,7 +62,7 @@ func scan(args []string, out io.Writer) error {
 	for _, token := range unit.RootFile().Tokens() {
 		fmt.Fprintf(out, "%-15s %-20s %4d:%-4d %4d:%-4d [%d-%d]\n",
 			token.Kind().String(),
-			fmt.Sprintf(`"%s"`, token.Value()),
+			strconv.Quote(token.Value()),
 			token.SourceRange().BeginPosition.Line,
 			token.SourceRange().BeginPosition.Column,
 			token.SourceRange().EndPosition.Line,

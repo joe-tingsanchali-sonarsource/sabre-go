@@ -19,10 +19,13 @@ func NewLocationPoint() LocationPoint {
 	}
 }
 
+const eof = utf8.RuneError
+
 type Scanner struct {
 	file             *UnitFile
 	currentLocation  LocationPoint
 	currentCharCache rune
+	insertSemi       bool
 
 	keywords map[string]TokenKind
 }
@@ -31,6 +34,7 @@ func NewScanner(file *UnitFile) *Scanner {
 	scanner := &Scanner{
 		file:            file,
 		currentLocation: NewLocationPoint(),
+		insertSemi:      false,
 		keywords:        make(map[string]TokenKind),
 	}
 
@@ -75,7 +79,7 @@ func (s *Scanner) initKeywords() {
 
 func (s *Scanner) readChar() rune {
 	if s.isEOF() {
-		s.currentCharCache = utf8.RuneError
+		s.currentCharCache = eof
 	} else {
 		ch, size := utf8.DecodeRuneInString(s.file.content[s.currentLocation.pos:])
 		s.currentLocation.pos += int32(size)
@@ -93,7 +97,7 @@ func (s *Scanner) readChar() rune {
 
 func (s *Scanner) peekChar(l int) rune {
 	if s.isEOF() {
-		return utf8.RuneError
+		return eof
 	}
 
 	pos, char := s.currentLocation.pos, s.currentCharCache
@@ -114,7 +118,10 @@ func (s *Scanner) isEOF() bool {
 }
 
 func (s *Scanner) skipWhitespace() {
-	for unicode.IsSpace(s.currentChar()) {
+	for s.currentChar() == ' ' ||
+		s.currentChar() == '\t' ||
+		s.currentChar() == '\n' && !s.insertSemi ||
+		s.currentChar() == '\r' {
 		s.readChar()
 	}
 }
@@ -243,14 +250,10 @@ func (s *Scanner) readComment(start LocationPoint) Token {
 func (s *Scanner) Scan() Token {
 	s.skipWhitespace()
 
-	// Handle EOF
-	if s.isEOF() {
-		return Token{
-			kind:        TokenEOF,
-			value:       "",
-			sourceRange: s.createSourceRange(s.currentLocation, s.currentLocation),
-		}
-	}
+	insertSemi := false
+	defer func() {
+		s.insertSemi = insertSemi
+	}()
 
 	// Handle identifiers and keywords
 	if unicode.IsLetter(s.currentChar()) || s.currentChar() == '_' {
@@ -261,32 +264,60 @@ func (s *Scanner) Scan() Token {
 			token.kind = keywordKind
 		}
 
+		switch token.kind {
+		// TODO: Add TokenFallthrough later
+		case TokenIdentifier, TokenBreak, TokenContinue, TokenReturn:
+			insertSemi = true
+		}
+
 		return token
 	}
 
 	// Handle numbers
 	if unicode.IsDigit(s.currentChar()) {
+		insertSemi = true
 		return s.readNumber()
 	}
 
 	start := s.currentLocation
 	switch s.currentChar() {
+	case eof:
+		if s.insertSemi {
+			s.insertSemi = false
+			return Token{
+				kind:        TokenSemicolon,
+				value:       "\n",
+				sourceRange: s.createSourceRange(s.currentLocation, s.currentLocation),
+			}
+		}
+		return Token{
+			kind:        TokenEOF,
+			value:       "",
+			sourceRange: s.createSourceRange(s.currentLocation, s.currentLocation),
+		}
+	case '\n':
+		s.insertSemi = false
+		s.readChar()
+		return s.createTokenFromLocationPoint(TokenSemicolon, start)
 	case '(':
 		s.readChar()
 		return s.createTokenFromLocationPoint(TokenLParen, start)
 	case ')':
+		insertSemi = true
 		s.readChar()
 		return s.createTokenFromLocationPoint(TokenRParen, start)
 	case '{':
 		s.readChar()
 		return s.createTokenFromLocationPoint(TokenLBrace, start)
 	case '}':
+		insertSemi = true
 		s.readChar()
 		return s.createTokenFromLocationPoint(TokenRBrace, start)
 	case '[':
 		s.readChar()
 		return s.createTokenFromLocationPoint(TokenLBracket, start)
 	case ']':
+		insertSemi = true
 		s.readChar()
 		return s.createTokenFromLocationPoint(TokenRBracket, start)
 	case ';':
@@ -352,6 +383,7 @@ func (s *Scanner) Scan() Token {
 			s.readChar()
 			return s.createTokenFromLocationPoint(TokenAddAssign, start)
 		} else if s.currentChar() == '+' {
+			insertSemi = true
 			s.readChar()
 			return s.createTokenFromLocationPoint(TokenInc, start)
 		}
@@ -363,6 +395,7 @@ func (s *Scanner) Scan() Token {
 			s.readChar()
 			return s.createTokenFromLocationPoint(TokenSubAssign, start)
 		} else if s.currentChar() == '-' {
+			insertSemi = true
 			s.readChar()
 			return s.createTokenFromLocationPoint(TokenDec, start)
 		}
@@ -382,6 +415,7 @@ func (s *Scanner) Scan() Token {
 			s.readChar()
 			return s.createTokenFromLocationPoint(TokenDivAssign, start)
 		} else if s.currentChar() == '/' {
+			insertSemi = true
 			s.readChar() // consume second '/'
 			return s.readComment(start)
 		}
@@ -434,9 +468,12 @@ func (s *Scanner) Scan() Token {
 		return s.createTokenFromLocationPoint(TokenXor, start)
 
 	case '"':
+		insertSemi = true
 		return s.readString()
 
 	default:
+		// revert insertSemi
+		insertSemi = s.insertSemi
 		s.readChar()
 		s.file.error(Error{s.createSourceRange(start, s.currentLocation), "unknown token"})
 		return s.createTokenFromLocationPoint(TokenInvalid, start)
