@@ -1,0 +1,6 @@
+>> 	
+>> 	^
+Error[internal/compiler/testdata/Parse/stmt/blockStmt5.sabre:3:1]: expected '}' but found 'INVALID'
+>> 	
+>> 	^
+Error[internal/compiler/testdata/Parse/stmt/blockStmt5.sabre:3:1]: expected ';' but found 'INVALID'

@@ -354,8 +354,14 @@ func (p *Parser) ParseStmt() Stmt {
 	switch p.currentToken().Kind() {
 	case TokenReturn:
 		return p.parseReturnStmt()
+	case TokenLBrace:
+		stmt := p.parseBlockStmt()
+		p.eatTokenOrError(TokenSemicolon)
+		return stmt
 	default:
-		return p.parseSimpleStmt()
+		stmt := p.parseSimpleStmt()
+		p.eatTokenOrError(TokenSemicolon)
+		return stmt
 	}
 }
 
@@ -408,9 +414,39 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 			exprs = append(exprs, expr)
 		}
 	}
+	p.eatTokenOrError(TokenSemicolon)
 
 	return &ReturnStmt{
 		Return: returnToken,
 		Exprs:  exprs,
 	}
+}
+
+func (p *Parser) parseBlockStmt() *BlockStmt {
+	lBrace := p.eatTokenOrError(TokenLBrace)
+	if !lBrace.valid() {
+		return nil
+	}
+
+	stmts := p.parseStmtList()
+
+	rBrace := p.eatTokenOrError(TokenRBrace)
+	if !rBrace.valid() {
+		return nil
+	}
+
+	return &BlockStmt{
+		LBrace: lBrace,
+		Stmts:  stmts,
+		RBrace: rBrace,
+	}
+}
+
+func (p *Parser) parseStmtList() []Stmt {
+	var list []Stmt
+	// TODO: Add != case and != default to this list when you work on switch
+	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
+		list = append(list, p.ParseStmt())
+	}
+	return list
 }

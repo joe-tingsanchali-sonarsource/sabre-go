@@ -1,0 +1,11 @@
+(Block 3
+  (ExprStmt
+    (IdentifierExpr IDENTIFIER(foo))
+  )
+  (IncDecStmt ++
+    (IdentifierExpr IDENTIFIER(a))
+  )
+  (ReturnStmt
+    (LiteralExpr LITERAL_INT(2))
+  )
+)

@@ -221,3 +221,19 @@ func (v *ASTPrinter) VisitIncDecStmt(n *IncDecStmt) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitBlockStmt(n *BlockStmt) {
+	v.indentor.printf("(Block %v", len(n.Stmts))
+	if len(n.Stmts) > 0 {
+		v.indentor.Push()
+
+		for _, s := range n.Stmts {
+			v.indentor.NewLine()
+			s.Visit(v)
+		}
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+	}
+	v.indentor.print(")")
+}
