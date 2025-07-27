@@ -210,6 +210,10 @@ func (v *ASTPrinter) VisitReturnStmt(n *ReturnStmt) {
 	v.indentor.print(")")
 }
 
+func (v *ASTPrinter) VisitBreakStmt(n *BreakStmt) {
+	v.indentor.print("(BreakStmt)")
+}
+
 func (v *ASTPrinter) VisitIncDecStmt(n *IncDecStmt) {
 	v.indentor.printf("(IncDecStmt %v", n.Operator.Value())
 	v.indentor.Push()

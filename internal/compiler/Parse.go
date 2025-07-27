@@ -354,6 +354,8 @@ func (p *Parser) ParseStmt() Stmt {
 	switch p.currentToken().Kind() {
 	case TokenReturn:
 		return p.parseReturnStmt()
+	case TokenBreak:
+		return p.parseBreakStmt()
 	case TokenLBrace:
 		stmt := p.parseBlockStmt()
 		p.eatTokenOrError(TokenSemicolon)
@@ -419,6 +421,17 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 	return &ReturnStmt{
 		Return: returnToken,
 		Exprs:  exprs,
+	}
+}
+
+func (p *Parser) parseBreakStmt() *BreakStmt {
+	breakToken := p.eatTokenOrError(TokenBreak)
+	if !breakToken.valid() {
+		return nil
+	}
+
+	return &BreakStmt{
+		Break: breakToken,
 	}
 }
 
