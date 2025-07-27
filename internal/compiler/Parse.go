@@ -355,7 +355,7 @@ func (p *Parser) ParseStmt() Stmt {
 	case TokenReturn:
 		return p.parseReturnStmt()
 	default:
-		return p.parseExprStmt()
+		return p.parseSimpleStmt()
 	}
 }
 
@@ -366,6 +366,24 @@ func (p *Parser) parseExprStmt() *ExprStmt {
 	}
 	return &ExprStmt{
 		Expr: expr,
+	}
+}
+
+func (p *Parser) parseSimpleStmt() Stmt {
+	exprStmt := p.parseExprStmt()
+	if exprStmt == nil {
+		return nil
+	}
+
+	switch p.currentToken().Kind() {
+	case TokenInc, TokenDec:
+		op := p.eatToken()
+		return &IncDecStmt{
+			Expr:     exprStmt.Expr,
+			Operator: op,
+		}
+	default:
+		return exprStmt
 	}
 }
 
