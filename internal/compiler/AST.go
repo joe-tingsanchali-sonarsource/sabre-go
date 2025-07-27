@@ -194,6 +194,19 @@ func (e *ReturnStmt) Visit(v NodeVisitor) {
 	v.VisitReturnStmt(e)
 }
 
+type IncDecStmt struct {
+	Expr     Expr
+	Operator Token
+}
+
+func (e *IncDecStmt) stmtNode() {}
+func (e *IncDecStmt) SourceRange() SourceRange {
+	return e.Expr.SourceRange().Merge(e.Operator.SourceRange())
+}
+func (e *IncDecStmt) Visit(v NodeVisitor) {
+	v.VisitIncDecStmt(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -210,6 +223,7 @@ type NodeVisitor interface {
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
+	VisitIncDecStmt(n *IncDecStmt)
 }
 
 type DefaultVisitor struct{}
@@ -259,4 +273,7 @@ func (v *DefaultVisitor) VisitReturnStmt(n *ReturnStmt) {
 	for _, e := range n.Exprs {
 		e.Visit(v)
 	}
+}
+func (v *DefaultVisitor) VisitIncDecStmt(n *IncDecStmt) {
+	n.Expr.Visit(v)
 }

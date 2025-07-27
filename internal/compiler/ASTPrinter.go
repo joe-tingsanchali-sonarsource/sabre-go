@@ -209,3 +209,15 @@ func (v *ASTPrinter) VisitReturnStmt(n *ReturnStmt) {
 	}
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitIncDecStmt(n *IncDecStmt) {
+	v.indentor.printf("(IncDecStmt %v", n.Operator.Value())
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Expr.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
