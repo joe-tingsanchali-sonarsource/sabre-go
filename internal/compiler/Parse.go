@@ -356,6 +356,8 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseReturnStmt()
 	case TokenBreak:
 		return p.parseBreakStmt()
+	case TokenContinue:
+		return p.parseContinueStmt()
 	case TokenLBrace:
 		stmt := p.parseBlockStmt()
 		p.eatTokenOrError(TokenSemicolon)
@@ -432,6 +434,21 @@ func (p *Parser) parseBreakStmt() *BreakStmt {
 
 	return &BreakStmt{
 		Break: breakToken,
+	}
+}
+
+func (p *Parser) parseContinueStmt() *ContinueStmt {
+	continueToken := p.eatTokenOrError(TokenContinue)
+	if !continueToken.valid() {
+		return nil
+	}
+
+	labelToken := p.eatTokenIfKind(TokenIdentifier)
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &ContinueStmt{
+		Continue: continueToken,
+		Label:    labelToken,
 	}
 }
 
