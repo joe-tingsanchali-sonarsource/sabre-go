@@ -194,6 +194,18 @@ func (e *ReturnStmt) Visit(v NodeVisitor) {
 	v.VisitReturnStmt(e)
 }
 
+type BreakStmt struct {
+	Break Token
+}
+
+func (e *BreakStmt) stmtNode() {}
+func (e *BreakStmt) SourceRange() SourceRange {
+	return e.Break.SourceRange()
+}
+func (e *BreakStmt) Visit(v NodeVisitor) {
+	v.VisitBreakStmt(e)
+}
+
 type IncDecStmt struct {
 	Expr     Expr
 	Operator Token
@@ -237,6 +249,7 @@ type NodeVisitor interface {
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
+	VisitBreakStmt(n *BreakStmt)
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
 }
@@ -289,6 +302,7 @@ func (v *DefaultVisitor) VisitReturnStmt(n *ReturnStmt) {
 		e.Visit(v)
 	}
 }
+func (v *DefaultVisitor) VisitBreakStmt(n *BreakStmt) {}
 func (v *DefaultVisitor) VisitIncDecStmt(n *IncDecStmt) {
 	n.Expr.Visit(v)
 }
