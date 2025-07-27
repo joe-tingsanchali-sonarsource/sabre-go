@@ -1,0 +1,5 @@
+(Block 1
+  (ReturnStmt
+    (LiteralExpr LITERAL_INT(1))
+  )
+)

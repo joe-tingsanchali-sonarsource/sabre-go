@@ -207,6 +207,20 @@ func (e *IncDecStmt) Visit(v NodeVisitor) {
 	v.VisitIncDecStmt(e)
 }
 
+type BlockStmt struct {
+	LBrace Token
+	Stmts  []Stmt
+	RBrace Token
+}
+
+func (e *BlockStmt) stmtNode() {}
+func (e *BlockStmt) SourceRange() SourceRange {
+	return e.LBrace.SourceRange().Merge(e.RBrace.SourceRange())
+}
+func (e *BlockStmt) Visit(v NodeVisitor) {
+	v.VisitBlockStmt(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -224,6 +238,7 @@ type NodeVisitor interface {
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
 	VisitIncDecStmt(n *IncDecStmt)
+	VisitBlockStmt(n *BlockStmt)
 }
 
 type DefaultVisitor struct{}
@@ -276,4 +291,9 @@ func (v *DefaultVisitor) VisitReturnStmt(n *ReturnStmt) {
 }
 func (v *DefaultVisitor) VisitIncDecStmt(n *IncDecStmt) {
 	n.Expr.Visit(v)
+}
+func (v *DefaultVisitor) VisitBlockStmt(n *BlockStmt) {
+	for _, s := range n.Stmts {
+		s.Visit(v)
+	}
 }
