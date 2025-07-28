@@ -409,9 +409,18 @@ func (p *Parser) parseSimpleStmt() Stmt {
 }
 
 func (p *Parser) parseExprList() (list []Expr) {
-	list = append(list, p.ParseExpr())
+	e := p.ParseExpr()
+	if e == nil {
+		return nil
+	}
+
+	list = append(list, e)
 	for p.eatTokenIfKind(TokenComma).valid() {
-		list = append(list, p.ParseExpr())
+		e = p.ParseExpr()
+		if e == nil {
+			return nil
+		}
+		list = append(list, e)
 	}
 	return
 }
