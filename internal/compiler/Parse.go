@@ -475,6 +475,8 @@ func (p *Parser) parseFallthroughStmt() *FallthroughStmt {
 		return nil
 	}
 
+	p.eatTokenOrError(TokenSemicolon)
+
 	return &FallthroughStmt{
 		Fallthrough: fallthroughToken,
 	}
