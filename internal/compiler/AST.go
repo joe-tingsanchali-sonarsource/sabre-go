@@ -244,7 +244,7 @@ type AssignStmt struct {
 func (e *AssignStmt) stmtNode() {}
 func (e *AssignStmt) SourceRange() SourceRange {
 	if len(e.LHS) == 0 || len(e.RHS) == 0 {
-		panic("AssignStmt LHS shouldn't be empty")
+		panic("AssignStmt LHS and RHS shouldn't be empty")
 	}
 	return e.LHS[0].SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
 }
