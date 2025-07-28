@@ -357,8 +357,7 @@ func (p *Parser) ParseStmt() Stmt {
 	case TokenBreak:
 		return p.parseBreakStmt()
 	case TokenContinue:
-		stmt := p.parseContinueStmt()
-		return stmt
+		return p.parseContinueStmt()
 	case TokenLBrace:
 		stmt := p.parseBlockStmt()
 		p.eatTokenOrError(TokenSemicolon)
@@ -446,12 +445,11 @@ func (p *Parser) parseContinueStmt() *ContinueStmt {
 
 	labelToken := p.eatTokenIfKind(TokenIdentifier)
 
-	if p.currentToken().Kind() != TokenSemicolon {
+	semicolonToken := p.eatTokenIfKind(TokenSemicolon)
+	if !semicolonToken.valid() {
 		p.file.errorf(p.currentToken().SourceRange(), "expected a label but found '%v'", p.currentToken())
 		return nil
 	}
-
-	p.eatToken()
 
 	return &ContinueStmt{
 		Continue: continueToken,
