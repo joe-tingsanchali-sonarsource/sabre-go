@@ -76,6 +76,7 @@ const (
 	TokenReturn
 	TokenContinue
 	TokenBreak
+	TokenFallthrough
 	TokenImport
 	TokenIf
 	TokenElse
@@ -224,6 +225,8 @@ func (tk TokenKind) String() string {
 		return "continue"
 	case TokenBreak:
 		return "break"
+	case TokenFallthrough:
+		return "fallthrough"
 	case TokenImport:
 		return "import"
 	case TokenIf:

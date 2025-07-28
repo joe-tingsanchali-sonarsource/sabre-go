@@ -206,6 +206,18 @@ func (e *BreakStmt) Visit(v NodeVisitor) {
 	v.VisitBreakStmt(e)
 }
 
+type FallthroughStmt struct {
+	Fallthrough Token
+}
+
+func (e *FallthroughStmt) stmtNode() {}
+func (e *FallthroughStmt) SourceRange() SourceRange {
+	return e.Fallthrough.SourceRange()
+}
+func (e *FallthroughStmt) Visit(v NodeVisitor) {
+	v.VisitFallthroughStmt(e)
+}
+
 type ContinueStmt struct {
 	Continue Token
 	Label    Token
@@ -289,6 +301,7 @@ type NodeVisitor interface {
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
 	VisitBreakStmt(n *BreakStmt)
+	VisitFallthroughStmt(n *FallthroughStmt)
 	VisitContinueStmt(n *ContinueStmt)
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
@@ -343,8 +356,9 @@ func (v *DefaultVisitor) VisitReturnStmt(n *ReturnStmt) {
 		e.Visit(v)
 	}
 }
-func (v *DefaultVisitor) VisitBreakStmt(n *BreakStmt)       {}
-func (v *DefaultVisitor) VisitContinueStmt(n *ContinueStmt) {}
+func (v *DefaultVisitor) VisitBreakStmt(n *BreakStmt)             {}
+func (v *DefaultVisitor) VisitFallthroughStmt(n *FallthroughStmt) {}
+func (v *DefaultVisitor) VisitContinueStmt(n *ContinueStmt)       {}
 func (v *DefaultVisitor) VisitIncDecStmt(n *IncDecStmt) {
 	n.Expr.Visit(v)
 }
