@@ -445,11 +445,7 @@ func (p *Parser) parseContinueStmt() *ContinueStmt {
 
 	labelToken := p.eatTokenIfKind(TokenIdentifier)
 
-	semicolonToken := p.eatTokenIfKind(TokenSemicolon)
-	if !semicolonToken.valid() {
-		p.file.errorf(p.currentToken().SourceRange(), "expected a label but found '%v'", p.currentToken())
-		return nil
-	}
+	p.eatTokenOrError(TokenSemicolon)
 
 	return &ContinueStmt{
 		Continue: continueToken,
