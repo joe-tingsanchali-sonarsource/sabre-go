@@ -432,8 +432,13 @@ func (p *Parser) parseBreakStmt() *BreakStmt {
 		return nil
 	}
 
+	labelToken := p.eatTokenIfKind(TokenIdentifier)
+
+	p.eatTokenOrError(TokenSemicolon)
+
 	return &BreakStmt{
 		Break: breakToken,
+		Label: labelToken,
 	}
 }
 
