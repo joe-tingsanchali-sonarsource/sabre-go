@@ -249,3 +249,24 @@ func (v *ASTPrinter) VisitBlockStmt(n *BlockStmt) {
 	}
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
+	v.indentor.print("(AssignStmt")
+	v.indentor.Push()
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	v.indentor.print(n.Operator)
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}

@@ -253,6 +253,25 @@ func (e *BlockStmt) Visit(v NodeVisitor) {
 	v.VisitBlockStmt(e)
 }
 
+// AssignStmt represents assignment statements as well as short
+// variable declarations
+type AssignStmt struct {
+	LHS      []Expr
+	Operator Token
+	RHS      []Expr
+}
+
+func (e *AssignStmt) stmtNode() {}
+func (e *AssignStmt) SourceRange() SourceRange {
+	if len(e.LHS) == 0 || len(e.RHS) == 0 {
+		panic("AssignStmt LHS and RHS shouldn't be empty")
+	}
+	return e.LHS[0].SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+}
+func (e *AssignStmt) Visit(v NodeVisitor) {
+	v.VisitAssignStmt(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -273,6 +292,7 @@ type NodeVisitor interface {
 	VisitContinueStmt(n *ContinueStmt)
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
+	VisitAssignStmt(n *AssignStmt)
 }
 
 type DefaultVisitor struct{}
@@ -331,5 +351,13 @@ func (v *DefaultVisitor) VisitIncDecStmt(n *IncDecStmt) {
 func (v *DefaultVisitor) VisitBlockStmt(n *BlockStmt) {
 	for _, s := range n.Stmts {
 		s.Visit(v)
+	}
+}
+func (v *DefaultVisitor) VisitAssignStmt(n *AssignStmt) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+	for _, e := range n.RHS {
+		e.Visit(v)
 	}
 }

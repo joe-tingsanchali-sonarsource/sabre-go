@@ -207,7 +207,7 @@ func (p *Parser) parseIndexExpr(base Expr) *IndexExpr {
 }
 
 func (p *Parser) parseCallExpr(base Expr) *CallExpr {
-	lParen, args, rParen, ok := p.parseExprList()
+	lParen, args, rParen, ok := p.parseArgList()
 	if !ok {
 		return nil
 	}
@@ -220,7 +220,7 @@ func (p *Parser) parseCallExpr(base Expr) *CallExpr {
 	}
 }
 
-func (p *Parser) parseExprList() (lParen Token, exprs []Expr, rParen Token, ok bool) {
+func (p *Parser) parseArgList() (lParen Token, exprs []Expr, rParen Token, ok bool) {
 	lParen = p.eatTokenIfKind(TokenLParen)
 	if !lParen.valid() {
 		ok = false
@@ -369,32 +369,62 @@ func (p *Parser) ParseStmt() Stmt {
 	}
 }
 
-func (p *Parser) parseExprStmt() *ExprStmt {
-	expr := p.ParseExpr()
-	if expr == nil {
-		return nil
-	}
-	return &ExprStmt{
-		Expr: expr,
-	}
-}
-
 func (p *Parser) parseSimpleStmt() Stmt {
-	exprStmt := p.parseExprStmt()
-	if exprStmt == nil {
+	exprs := p.parseExprList()
+	if len(exprs) == 0 {
 		return nil
 	}
+
+	switch p.currentToken().Kind() {
+	// TODO: Add &^ and not assignment
+	case TokenColonAssign, TokenAssign, TokenAddAssign, TokenSubAssign,
+		TokenMulAssign, TokenDivAssign, TokenModAssign, TokenAndAssign,
+		TokenOrAssign, TokenXorAssign, TokenShlAssign, TokenShrAssign:
+		operator := p.eatToken()
+		rhs := p.parseExprList()
+		return &AssignStmt{
+			LHS:      exprs,
+			Operator: operator,
+			RHS:      rhs,
+		}
+	}
+
+	if len(exprs) > 1 {
+		p.file.errorf(exprs[0].SourceRange().Merge(exprs[len(exprs)-1].SourceRange()), "Expected 1 expression but found %v", len(exprs))
+		// continue with first expression
+	}
+
+	expr := exprs[0]
 
 	switch p.currentToken().Kind() {
 	case TokenInc, TokenDec:
 		op := p.eatToken()
 		return &IncDecStmt{
-			Expr:     exprStmt.Expr,
+			Expr:     expr,
 			Operator: op,
 		}
 	default:
-		return exprStmt
+		return &ExprStmt{
+			Expr: expr,
+		}
 	}
+}
+
+func (p *Parser) parseExprList() (list []Expr) {
+	e := p.ParseExpr()
+	if e == nil {
+		return nil
+	}
+
+	list = append(list, e)
+	for p.eatTokenIfKind(TokenComma).valid() {
+		e = p.ParseExpr()
+		if e == nil {
+			return nil
+		}
+		list = append(list, e)
+	}
+	return
 }
 
 func (p *Parser) parseReturnStmt() *ReturnStmt {

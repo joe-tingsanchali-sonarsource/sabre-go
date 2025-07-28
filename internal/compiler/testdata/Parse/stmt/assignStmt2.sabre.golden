@@ -1,0 +1,9 @@
+(AssignStmt
+  (IdentifierExpr IDENTIFIER(a))
+  :=
+  (CallExpr
+    (IdentifierExpr IDENTIFIER(foo))
+    (LiteralExpr LITERAL_INT(1))
+    (LiteralExpr LITERAL_INT(2))
+  )
+)
