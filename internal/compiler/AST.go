@@ -206,6 +206,26 @@ func (e *BreakStmt) Visit(v NodeVisitor) {
 	v.VisitBreakStmt(e)
 }
 
+type ContinueStmt struct {
+	Continue Token
+	Label    Token
+}
+
+func (e *ContinueStmt) IsLabeled() bool {
+	return e.Label.Kind() == TokenIdentifier
+}
+func (e *ContinueStmt) stmtNode() {}
+func (e *ContinueStmt) SourceRange() SourceRange {
+	if e.IsLabeled() {
+		return e.Continue.SourceRange().Merge(e.Label.SourceRange())
+	} else {
+		return e.Continue.SourceRange()
+	}
+}
+func (e *ContinueStmt) Visit(v NodeVisitor) {
+	v.VisitContinueStmt(e)
+}
+
 type IncDecStmt struct {
 	Expr     Expr
 	Operator Token
@@ -250,6 +270,7 @@ type NodeVisitor interface {
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
 	VisitBreakStmt(n *BreakStmt)
+	VisitContinueStmt(n *ContinueStmt)
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
 }
@@ -302,7 +323,8 @@ func (v *DefaultVisitor) VisitReturnStmt(n *ReturnStmt) {
 		e.Visit(v)
 	}
 }
-func (v *DefaultVisitor) VisitBreakStmt(n *BreakStmt) {}
+func (v *DefaultVisitor) VisitBreakStmt(n *BreakStmt)       {}
+func (v *DefaultVisitor) VisitContinueStmt(n *ContinueStmt) {}
 func (v *DefaultVisitor) VisitIncDecStmt(n *IncDecStmt) {
 	n.Expr.Visit(v)
 }
