@@ -369,6 +369,9 @@ func (p *Parser) ParseStmt() Stmt {
 
 func (p *Parser) parseSimpleStmt() Stmt {
 	exprs := p.parseExprList()
+	if len(exprs) == 0 {
+		return nil
+	}
 
 	switch p.currentToken().Kind() {
 	// TODO: Add &^ and not assignment
