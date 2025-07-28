@@ -1,0 +1,7 @@
+(AssignStmt
+  (IdentifierExpr IDENTIFIER(a))
+  (IdentifierExpr IDENTIFIER(b))
+  :=
+  (IdentifierExpr IDENTIFIER(b))
+  (IdentifierExpr IDENTIFIER(a))
+)

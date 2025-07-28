@@ -1,0 +1,6 @@
+>> 	a :=
+>> 	    ^
+Error[internal/compiler/testdata/Parse/stmt/assignStmt7.sabre:1:5]: expected an expression but found 'INVALID'
+>> 	a :=
+>> 	    ^
+Error[internal/compiler/testdata/Parse/stmt/assignStmt7.sabre:1:5]: expected ';' but found 'INVALID'
