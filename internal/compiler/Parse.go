@@ -534,7 +534,11 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 		return nil
 	}
 
-	rhs := p.parseStmtList()
+	// TODO: Figure out a way to collapse it with p.parseStmtList()
+	var rhs []Stmt
+	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
+		rhs = append(rhs, p.ParseStmt())
+	}
 
 	return &SwitchCaseStmt{
 		Case:  defaultToken,

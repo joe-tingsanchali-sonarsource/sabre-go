@@ -280,7 +280,12 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 }
 
 func (v *ASTPrinter) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
-	v.indentor.print("(SwitchCaseStmt")
+	if len(n.LHS) > 0 {
+		v.indentor.print("(SwitchCaseStmt")
+	} else {
+		v.indentor.print("(DefaultCaseStmt")
+	}
+
 	v.indentor.Push()
 	for _, e := range n.LHS {
 		v.indentor.NewLine()
