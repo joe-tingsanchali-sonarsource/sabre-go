@@ -145,10 +145,12 @@ func (p *Parser) parseBaseExpr() Expr {
 				expr = call
 			}
 		case TokenLBrace:
-			lastStmt := p.Stmts[len(p.Stmts)-1]
-			switch lastStmt.(type) {
-			case *SwitchStmt:
-				return expr
+			if len(p.Stmts) > 0 {
+				lastStmt := p.Stmts[len(p.Stmts)-1]
+				switch lastStmt.(type) {
+				case *SwitchStmt:
+					return expr
+				}
 			}
 
 			t := p.convertParsedExprToType(expr)
