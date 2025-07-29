@@ -278,3 +278,44 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
+	v.indentor.print("(SwitchCaseStmt")
+	v.indentor.Push()
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	v.indentor.print(n.Colon)
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitSwitchStmt(n *SwitchStmt) {
+	v.indentor.print("(SwitchStmt")
+	v.indentor.Push()
+
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	if n.Tag != nil {
+		n.Tag.Visit(v)
+	}
+
+	n.Body.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}

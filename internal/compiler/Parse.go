@@ -358,6 +358,10 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseBreakStmt()
 	case TokenFallthrough:
 		return p.parseFallthroughStmt()
+	case TokenCase, TokenDefault:
+		return p.parseSwitchCaseStmt()
+	case TokenSwitch:
+		return p.parseSwitchStmt()
 	case TokenContinue:
 		return p.parseContinueStmt()
 	case TokenLBrace:
@@ -487,6 +491,67 @@ func (p *Parser) parseFallthroughStmt() *FallthroughStmt {
 	}
 }
 
+func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
+	caseToken := p.eatTokenIfKind(TokenCase)
+	if caseToken.valid() {
+		lhs := p.parseExprList()
+
+		colonToken := p.eatTokenOrError(TokenColon)
+		if !colonToken.valid() {
+			return nil
+		}
+
+		// TODO: Figure out a way to collapse it with p.parseStmtList()
+		var rhs []Stmt
+		for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
+			rhs = append(rhs, p.ParseStmt())
+		}
+
+		return &SwitchCaseStmt{
+			Case:  caseToken,
+			LHS:   lhs,
+			Colon: colonToken,
+			RHS:   rhs,
+		}
+	}
+
+	defaultToken := p.eatTokenOrError(TokenDefault)
+	if !defaultToken.valid() {
+		return nil
+	}
+
+	colonToken := p.eatTokenOrError(TokenColon)
+	if !colonToken.valid() {
+		return nil
+	}
+
+	rhs := p.parseStmtList()
+
+	return &SwitchCaseStmt{
+		Case:  defaultToken,
+		Colon: colonToken,
+		RHS:   rhs,
+	}
+}
+
+func (p *Parser) parseSwitchStmt() *SwitchStmt {
+	switchToken := p.eatTokenOrError(TokenSwitch)
+	if !switchToken.valid() {
+		return nil
+	}
+
+	// TODO:
+	// init := p.parseSimpleStmt()
+	// tag := p.ParseExpr()
+
+	return &SwitchStmt{
+		Switch: switchToken,
+		// Init:   init,
+		// Tag:  tag,
+		Body: p.ParseStmt(),
+	}
+}
+
 func (p *Parser) parseContinueStmt() *ContinueStmt {
 	continueToken := p.eatTokenOrError(TokenContinue)
 	if !continueToken.valid() {
@@ -525,7 +590,6 @@ func (p *Parser) parseBlockStmt() *BlockStmt {
 
 func (p *Parser) parseStmtList() []Stmt {
 	var list []Stmt
-	// TODO: Add != case and != default to this list when you work on switch
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
 		list = append(list, p.ParseStmt())
 	}
