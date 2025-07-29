@@ -196,11 +196,19 @@ func (e *ReturnStmt) Visit(v NodeVisitor) {
 
 type BreakStmt struct {
 	Break Token
+	Label Token
 }
 
+func (e *BreakStmt) IsLabeled() bool {
+	return e.Label.Kind() == TokenIdentifier
+}
 func (e *BreakStmt) stmtNode() {}
 func (e *BreakStmt) SourceRange() SourceRange {
-	return e.Break.SourceRange()
+	if e.IsLabeled() {
+		return e.Break.SourceRange().Merge(e.Label.SourceRange())
+	} else {
+		return e.Break.SourceRange()
+	}
 }
 func (e *BreakStmt) Visit(v NodeVisitor) {
 	v.VisitBreakStmt(e)

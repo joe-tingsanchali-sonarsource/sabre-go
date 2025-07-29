@@ -211,7 +211,11 @@ func (v *ASTPrinter) VisitReturnStmt(n *ReturnStmt) {
 }
 
 func (v *ASTPrinter) VisitBreakStmt(n *BreakStmt) {
-	v.indentor.print("(BreakStmt)")
+	if n.IsLabeled() {
+		v.indentor.printf("(BreakStmt %v)", n.Label)
+	} else {
+		v.indentor.print("(BreakStmt)")
+	}
 }
 
 func (v *ASTPrinter) VisitContinueStmt(n *ContinueStmt) {

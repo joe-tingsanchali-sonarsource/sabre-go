@@ -1,0 +1,3 @@
+>> 	break 123
+>> 	      ^^^ 
+Error[internal/compiler/testdata/Parse/stmt/breakStmt3.sabre:1:7]: expected ';' but found 'LITERAL_INT'
