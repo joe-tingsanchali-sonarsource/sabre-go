@@ -265,8 +265,7 @@ func (s *Scanner) Scan() Token {
 		}
 
 		switch token.kind {
-		// TODO: Add TokenFallthrough later
-		case TokenIdentifier, TokenBreak, TokenContinue, TokenReturn:
+		case TokenIdentifier, TokenBreak, TokenFallthrough, TokenContinue, TokenReturn:
 			insertSemi = true
 		}
 
