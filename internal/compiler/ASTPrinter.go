@@ -305,14 +305,16 @@ func (v *ASTPrinter) VisitSwitchStmt(n *SwitchStmt) {
 	v.indentor.Push()
 
 	if n.Init != nil {
+		v.indentor.NewLine()
 		n.Init.Visit(v)
 	}
 
-	v.indentor.NewLine()
 	if n.Tag != nil {
+		v.indentor.NewLine()
 		n.Tag.Visit(v)
 	}
 
+	v.indentor.NewLine()
 	n.Body.Visit(v)
 
 	v.indentor.Pop()

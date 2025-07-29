@@ -1,10 +1,4 @@
 (SwitchStmt
-  (AssignStmt
-    (IdentifierExpr IDENTIFIER(x))
-    :=
-    (LiteralExpr LITERAL_INT(5))
-  )
-  (IdentifierExpr IDENTIFIER(y))
   (Block 3
     (SwitchCaseStmt
       (LiteralExpr LITERAL_INT(1))

@@ -2,25 +2,16 @@
   (AssignStmt
     (IdentifierExpr IDENTIFIER(x))
     :=
-    (LiteralExpr LITERAL_INT(5))
+    (LiteralExpr LITERAL_INT(2))
   )
-  (IdentifierExpr IDENTIFIER(y))
-  (Block 3
+  (Block 2
     (SwitchCaseStmt
       (LiteralExpr LITERAL_INT(1))
-      :
-      (ExprStmt
-        (CallExpr
-          (IdentifierExpr IDENTIFIER(f1))
-        )
-      )
-    )
-    (SwitchCaseStmt
       (LiteralExpr LITERAL_INT(2))
       :
       (ExprStmt
         (CallExpr
-          (IdentifierExpr IDENTIFIER(f2))
+          (IdentifierExpr IDENTIFIER(f12))
         )
       )
     )

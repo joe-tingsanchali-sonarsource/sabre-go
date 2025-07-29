@@ -1,4 +1,4 @@
-switch x := 5; y {
+switch {
 case 1: f1()
 case 2: f2()
 case 3: f3()
