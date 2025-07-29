@@ -1,0 +1,3 @@
+>> 	case 1:
+>> 	      ^ 
+Error[internal/compiler/testdata/Parse/stmt/switchStmt8.sabre:2:7]: missing rhs statements

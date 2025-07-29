@@ -516,6 +516,10 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 			rhs = append(rhs, p.ParseStmt())
 		}
 
+		if len(rhs) == 0 {
+			p.file.errorf(colonToken.SourceRange(), "missing rhs statements")
+		}
+
 		return &SwitchCaseStmt{
 			Case:  caseToken,
 			LHS:   lhs,
@@ -538,6 +542,10 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 	var rhs []Stmt
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
 		rhs = append(rhs, p.ParseStmt())
+	}
+
+	if len(rhs) == 0 {
+		p.file.errorf(colonToken.SourceRange(), "missing rhs statements")
 	}
 
 	return &SwitchCaseStmt{

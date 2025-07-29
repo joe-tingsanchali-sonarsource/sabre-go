@@ -1,0 +1,6 @@
+>> 	case:
+>> 	    ^ 
+Error[internal/compiler/testdata/Parse/stmt/switchStmt9.sabre:2:5]: expected an expression but found ':'
+>> 	case:
+>> 	    ^ 
+Error[internal/compiler/testdata/Parse/stmt/switchStmt9.sabre:2:5]: missing rhs statements
