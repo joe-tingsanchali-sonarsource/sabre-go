@@ -8,7 +8,6 @@ type Parser struct {
 	file              *UnitFile
 	tokens            []Token
 	currentTokenIndex int
-	stmts             []Stmt
 }
 
 func NewParser(file *UnitFile) *Parser {
@@ -148,20 +147,11 @@ func (p *Parser) parseBaseExpr() Expr {
 			t := p.convertParsedExprToType(expr)
 
 			if t == nil {
-				if len(p.stmts) > 0 {
-					lastStmt := p.stmts[len(p.stmts)-1]
-					switch lastStmt.(type) {
-					case *SwitchStmt:
-						return expr
-					}
-				}
-
 				p.file.errorf(expr.SourceRange(), "failed to parse type")
 				return nil
 			}
 
-			complit := p.parseComplitExpr(t)
-			if complit != nil {
+			if complit := p.parseComplitExpr(t); complit != nil {
 				return complit
 			}
 
@@ -170,13 +160,7 @@ func (p *Parser) parseBaseExpr() Expr {
 			p.currentTokenIndex--
 			p.file.errors = p.file.errors[:len(p.file.errors)-1]
 
-			if len(p.stmts) > 0 {
-				lastStmt := p.stmts[len(p.stmts)-1]
-				switch lastStmt.(type) {
-				case *SwitchStmt:
-					return expr
-				}
-			}
+			return expr
 		default:
 			return expr
 		}
@@ -552,10 +536,6 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 }
 
 func (p *Parser) parseSwitchStmt() *SwitchStmt {
-	// TODO:
-	// Think about a better solution other than having a mockup stack of statements to check against
-	p.stmts = append(p.stmts, &SwitchStmt{})
-
 	switchToken := p.eatTokenOrError(TokenSwitch)
 	if !switchToken.valid() {
 		return nil
@@ -572,8 +552,6 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 		tag = p.ParseExpr()
 		p.eatTokenIfKind(TokenSemicolon)
 	}
-
-	p.stmts = p.stmts[:len(p.stmts)-1]
 
 	body := p.ParseStmt()
 
