@@ -1,0 +1,20 @@
+(SwitchStmt
+  (AssignStmt
+    (IdentifierExpr IDENTIFIER(x))
+    :=
+    (ComplitExpr
+      (NamedType IDENTIFIER(v3))
+    )
+  )
+  (Block 1
+    (SwitchCaseStmt
+      (LiteralExpr LITERAL_INT(2))
+      :
+      (ExprStmt
+        (CallExpr
+          (IdentifierExpr IDENTIFIER(f2))
+        )
+      )
+    )
+  )
+)

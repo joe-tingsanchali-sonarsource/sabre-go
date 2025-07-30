@@ -8,7 +8,7 @@ type Parser struct {
 	file              *UnitFile
 	tokens            []Token
 	currentTokenIndex int
-	Stmts             []Stmt
+	stmts             []Stmt
 }
 
 func NewParser(file *UnitFile) *Parser {
@@ -145,21 +145,37 @@ func (p *Parser) parseBaseExpr() Expr {
 				expr = call
 			}
 		case TokenLBrace:
-			if len(p.Stmts) > 0 {
-				lastStmt := p.Stmts[len(p.Stmts)-1]
+			t := p.convertParsedExprToType(expr)
+
+			if t == nil {
+				if len(p.stmts) > 0 {
+					lastStmt := p.stmts[len(p.stmts)-1]
+					switch lastStmt.(type) {
+					case *SwitchStmt:
+						return expr
+					}
+				}
+
+				p.file.errorf(expr.SourceRange(), "failed to parse type")
+				return nil
+			}
+
+			complit := p.parseComplitExpr(t)
+			if complit != nil {
+				return complit
+			}
+
+			// TODO:
+			// This is a hacky way to unwind parseComplitExpr() as if we are rewriting the tree, we can discuss this later
+			p.currentTokenIndex--
+			p.file.errors = p.file.errors[:len(p.file.errors)-1]
+
+			if len(p.stmts) > 0 {
+				lastStmt := p.stmts[len(p.stmts)-1]
 				switch lastStmt.(type) {
 				case *SwitchStmt:
 					return expr
 				}
-			}
-
-			t := p.convertParsedExprToType(expr)
-			if t == nil {
-				p.file.errorf(expr.SourceRange(), "failed to parse type")
-				return nil
-			}
-			if complit := p.parseComplitExpr(t); complit != nil {
-				expr = complit
 			}
 		default:
 			return expr
@@ -538,7 +554,7 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 func (p *Parser) parseSwitchStmt() *SwitchStmt {
 	// TODO:
 	// Think about a better solution other than having a mockup stack of statements to check against
-	p.Stmts = append(p.Stmts, &SwitchStmt{})
+	p.stmts = append(p.stmts, &SwitchStmt{})
 
 	switchToken := p.eatTokenOrError(TokenSwitch)
 	if !switchToken.valid() {
@@ -548,23 +564,24 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 	var init Stmt = nil
 	if p.currentToken().Kind() != TokenLBrace {
 		init = p.parseSimpleStmt()
-		if p.currentToken().Kind() == TokenSemicolon {
-			p.eatToken()
-		}
+		p.eatTokenIfKind(TokenSemicolon)
 	}
 
 	var tag Expr = nil
 	if p.currentToken().Kind() != TokenLBrace {
 		tag = p.ParseExpr()
+		p.eatTokenIfKind(TokenSemicolon)
 	}
 
-	p.Stmts = p.Stmts[:len(p.Stmts)-1]
+	p.stmts = p.stmts[:len(p.stmts)-1]
+
+	body := p.ParseStmt()
 
 	return &SwitchStmt{
 		Switch: switchToken,
 		Init:   init,
 		Tag:    tag,
-		Body:   p.ParseStmt(),
+		Body:   body,
 	}
 }
 
