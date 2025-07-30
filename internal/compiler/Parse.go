@@ -502,35 +502,15 @@ func (p *Parser) parseFallthroughStmt() *FallthroughStmt {
 
 func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 	caseToken := p.eatTokenIfKind(TokenCase)
-	if caseToken.valid() {
-		lhs := p.parseExprList()
 
-		colonToken := p.eatTokenOrError(TokenColon)
-		if !colonToken.valid() {
+	var lhs []Expr
+	if caseToken.valid() {
+		lhs = p.parseExprList()
+	} else {
+		caseToken = p.eatTokenOrError(TokenDefault)
+		if !caseToken.valid() {
 			return nil
 		}
-
-		// TODO: Figure out a way to collapse it with p.parseStmtList()
-		var rhs []Stmt
-		for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
-			rhs = append(rhs, p.ParseStmt())
-		}
-
-		if len(rhs) == 0 {
-			p.file.errorf(colonToken.SourceRange(), "missing rhs statements")
-		}
-
-		return &SwitchCaseStmt{
-			Case:  caseToken,
-			LHS:   lhs,
-			Colon: colonToken,
-			RHS:   rhs,
-		}
-	}
-
-	defaultToken := p.eatTokenOrError(TokenDefault)
-	if !defaultToken.valid() {
-		return nil
 	}
 
 	colonToken := p.eatTokenOrError(TokenColon)
@@ -538,7 +518,6 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 		return nil
 	}
 
-	// TODO: Figure out a way to collapse it with p.parseStmtList()
 	var rhs []Stmt
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
 		rhs = append(rhs, p.ParseStmt())
@@ -549,7 +528,8 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 	}
 
 	return &SwitchCaseStmt{
-		Case:  defaultToken,
+		Case:  caseToken,
+		LHS:   lhs,
 		Colon: colonToken,
 		RHS:   rhs,
 	}
