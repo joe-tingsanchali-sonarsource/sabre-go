@@ -1,7 +1,5 @@
 (SwitchStmt
-  (ExprStmt
-    (IdentifierExpr IDENTIFIER(x))
-  )
+  (IdentifierExpr IDENTIFIER(x))
   (Block 2
     (SwitchCaseStmt
       (LiteralExpr LITERAL_INT(1))

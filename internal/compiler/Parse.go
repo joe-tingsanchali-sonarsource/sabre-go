@@ -544,13 +544,22 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 	var init Stmt = nil
 	if p.currentToken().Kind() != TokenLBrace {
 		init = p.parseSimpleStmt()
-		p.eatTokenIfKind(TokenSemicolon)
 	}
 
 	var tag Expr = nil
-	if p.currentToken().Kind() != TokenLBrace {
-		tag = p.ParseExpr()
-		p.eatTokenIfKind(TokenSemicolon)
+	switch init.(type) {
+	case *ExprStmt:
+		tag = init.(*ExprStmt).Expr
+		init = nil
+	default:
+		if init != nil {
+			p.eatTokenOrError(TokenSemicolon)
+		}
+
+		if p.currentToken().Kind() != TokenLBrace {
+			tag = p.ParseExpr()
+			p.eatTokenIfKind(TokenSemicolon)
+		}
 	}
 
 	body := p.ParseStmt()

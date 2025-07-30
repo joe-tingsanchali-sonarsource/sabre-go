@@ -301,11 +301,10 @@ type SwitchCaseStmt struct {
 
 func (e *SwitchCaseStmt) stmtNode() {}
 func (e *SwitchCaseStmt) SourceRange() SourceRange {
-	if len(e.LHS) > 0 {
-		return e.Case.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
-	} else {
-		return e.Case.SourceRange()
+	if len(e.RHS) == 0 {
+		panic("SwitchCaseStmt RHS shouldn't be empty")
 	}
+	return e.Case.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
 }
 func (e *SwitchCaseStmt) Visit(v NodeVisitor) {
 	v.VisitSwitchCaseStmt(e)
