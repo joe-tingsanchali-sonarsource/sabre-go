@@ -1,0 +1,3 @@
+>> 	if {
+>> 	   ^ 
+Error[internal/compiler/testdata/Parse/stmt/ifStmt7.sabre:1:4]: Missing condition in if statement

@@ -292,6 +292,26 @@ func (e *AssignStmt) Visit(v NodeVisitor) {
 	v.VisitAssignStmt(e)
 }
 
+type IfStmt struct {
+	If   Token
+	Init Stmt // init statement or nil
+	Cond Expr
+	Body *BlockStmt
+	Else Stmt // else branch or nil
+}
+
+func (e *IfStmt) stmtNode() {}
+func (e *IfStmt) SourceRange() SourceRange {
+	if e.Else != nil {
+		return e.If.SourceRange().Merge(e.Else.SourceRange())
+	} else {
+		return e.If.SourceRange().Merge(e.Body.SourceRange())
+	}
+}
+func (e *IfStmt) Visit(v NodeVisitor) {
+	v.VisitIfStmt(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -314,6 +334,7 @@ type NodeVisitor interface {
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
 	VisitAssignStmt(n *AssignStmt)
+	VisitIfStmt(n *IfStmt)
 }
 
 type DefaultVisitor struct{}
@@ -381,5 +402,15 @@ func (v *DefaultVisitor) VisitAssignStmt(n *AssignStmt) {
 	}
 	for _, e := range n.RHS {
 		e.Visit(v)
+	}
+}
+func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
+	n.Cond.Visit(v)
+	n.Body.Visit(v)
+	if n.Else != nil {
+		n.Else.Visit(v)
 	}
 }

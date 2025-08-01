@@ -1,0 +1,45 @@
+(IfStmt
+  (IfStmt-Cond
+    (BinaryExpr ==
+      (IdentifierExpr IDENTIFIER(a))
+      (IdentifierExpr IDENTIFIER(b))
+    )
+  )
+  (IfStmt-Body
+    (Block 1
+      (AssignStmt
+        (IdentifierExpr IDENTIFIER(a))
+        =
+        (IdentifierExpr IDENTIFIER(c))
+      )
+    )
+  )
+  (IfStmt-Else
+    (IfStmt
+      (IfStmt-Cond
+        (BinaryExpr ==
+          (IdentifierExpr IDENTIFIER(a))
+          (IdentifierExpr IDENTIFIER(d))
+        )
+      )
+      (IfStmt-Body
+        (Block 1
+          (AssignStmt
+            (IdentifierExpr IDENTIFIER(a))
+            =
+            (IdentifierExpr IDENTIFIER(e))
+          )
+        )
+      )
+      (IfStmt-Else
+        (Block 1
+          (AssignStmt
+            (IdentifierExpr IDENTIFIER(a))
+            =
+            (IdentifierExpr IDENTIFIER(f))
+          )
+        )
+      )
+    )
+  )
+)
