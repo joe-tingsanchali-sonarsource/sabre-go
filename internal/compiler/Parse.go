@@ -402,8 +402,9 @@ func (p *Parser) ParseStmt() Stmt {
 		p.eatTokenOrError(TokenSemicolon)
 		return stmt
 	case TokenIf:
-		stmt := p.parseIfStmt()
-		return stmt
+		return p.parseIfStmt()
+	case TokenFor:
+		return p.parseForStmt()
 	default:
 		stmt := p.parseSimpleStmt()
 		p.eatTokenOrError(TokenSemicolon)
@@ -644,4 +645,43 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 	}
 
 	return
+}
+
+func (p *Parser) parseForStmt() *ForStmt {
+	forToken := p.eatTokenOrError(TokenFor)
+	if !forToken.valid() {
+		return nil
+	}
+
+	// 1.
+	// for a < b {
+	// 	a *= 2
+	// }
+
+	// 2.
+	// for i := 0; i < 10; i++ {
+	// 	f(i)
+	// }
+
+	// 3.
+	// for i := range 10 {
+	// 	f(i)
+	// }
+
+	// 4.
+	// for {}
+
+	var body Stmt
+	if p.currentToken().Kind() == TokenLBrace {
+		body = p.ParseStmt()
+	}
+
+	return &ForStmt{
+		For: forToken,
+
+		// Cond   Expr
+		// Clause ForStmtClause
+		// Range  ForStmtRange
+		Body: body,
+	}
 }
