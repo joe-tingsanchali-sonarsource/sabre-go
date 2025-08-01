@@ -582,11 +582,10 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 	}
 
 	var tag Expr = nil
-	switch init.(type) {
-	case *ExprStmt:
-		tag = init.(*ExprStmt).Expr
+	if exprStmt, ok := init.(*ExprStmt); ok {
+		tag = exprStmt.Expr
 		init = nil
-	default:
+	} else {
 		if init != nil {
 			p.eatTokenOrError(TokenSemicolon)
 		}
