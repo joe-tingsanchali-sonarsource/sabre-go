@@ -670,16 +670,22 @@ func (p *Parser) parseForStmt() *ForStmt {
 
 	// 4.
 	// for {}
+	exprLevel := p.pushExprLevelAsControlStmt()
+	defer p.popExprLevelFromControlStmt(exprLevel)
 
-	var body Stmt
 	if p.currentToken().Kind() == TokenLBrace {
-		body = p.ParseStmt()
+		return &ForStmt{
+			For:  forToken,
+			Body: p.ParseStmt(),
+		}
 	}
 
-	return &ForStmt{
-		For: forToken,
+	cond := p.ParseExpr()
+	body := p.ParseStmt()
 
-		// Cond   Expr
+	return &ForStmt{
+		For:  forToken,
+		Cond: cond,
 		// Clause ForStmtClause
 		// Range  ForStmtRange
 		Body: body,

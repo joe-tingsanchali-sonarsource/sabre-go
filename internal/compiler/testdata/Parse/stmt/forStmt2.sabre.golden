@@ -1,0 +1,11 @@
+(ForStmt
+  (ForStmt-Cond
+    (BinaryExpr <
+      (IdentifierExpr IDENTIFIER(x))
+      (LiteralExpr LITERAL_INT(5))
+    )
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)
