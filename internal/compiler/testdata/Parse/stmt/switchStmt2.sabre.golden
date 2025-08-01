@@ -1,8 +1,10 @@
 (SwitchStmt
-  (AssignStmt
-    (IdentifierExpr IDENTIFIER(x))
-    :=
-    (LiteralExpr LITERAL_INT(2))
+  (SwitchStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(x))
+      :=
+      (LiteralExpr LITERAL_INT(2))
+    )
   )
   (Block 2
     (SwitchCaseStmt

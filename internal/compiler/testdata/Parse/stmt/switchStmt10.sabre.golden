@@ -1,9 +1,13 @@
 (SwitchStmt
-  (AssignStmt
-    (IdentifierExpr IDENTIFIER(x))
-    :=
-    (ComplitExpr
-      (NamedType IDENTIFIER(v3))
+  (SwitchStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(x))
+      :=
+      (ParenExpr
+        (ComplitExpr
+          (NamedType IDENTIFIER(v3))
+        )
+      )
     )
   )
   (Block 1

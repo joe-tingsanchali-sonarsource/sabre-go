@@ -1,0 +1,14 @@
+(IfStmt
+  (IfStmt-Cond
+    (IdentifierExpr IDENTIFIER(cond))
+  )
+  (IfStmt-Body
+    (Block 1
+      (AssignStmt
+        (IdentifierExpr IDENTIFIER(a))
+        =
+        (IdentifierExpr IDENTIFIER(b))
+      )
+    )
+  )
+)

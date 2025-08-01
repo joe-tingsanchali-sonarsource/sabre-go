@@ -1,0 +1,28 @@
+(IfStmt
+  (IfStmt-Cond
+    (ParenExpr
+      (BinaryExpr ==
+        (IdentifierExpr IDENTIFIER(a))
+        (IdentifierExpr IDENTIFIER(b))
+      )
+    )
+  )
+  (IfStmt-Body
+    (Block 1
+      (AssignStmt
+        (IdentifierExpr IDENTIFIER(a))
+        =
+        (IdentifierExpr IDENTIFIER(c))
+      )
+    )
+  )
+  (IfStmt-Else
+    (Block 1
+      (AssignStmt
+        (IdentifierExpr IDENTIFIER(a))
+        =
+        (IdentifierExpr IDENTIFIER(e))
+      )
+    )
+  )
+)

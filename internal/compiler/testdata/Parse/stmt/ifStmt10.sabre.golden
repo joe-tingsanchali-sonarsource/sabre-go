@@ -1,0 +1,34 @@
+(IfStmt
+  (IfStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(i))
+      :=
+      (ParenExpr
+        (ComplitExpr
+          (NamedType IDENTIFIER(Point))
+          (Element
+            (LiteralExpr LITERAL_INT(1))
+          )
+          (Element
+            (LiteralExpr LITERAL_INT(2))
+          )
+        )
+      )
+    )
+  )
+  (IfStmt-Cond
+    (BinaryExpr ==
+      (IdentifierExpr IDENTIFIER(i))
+      (IdentifierExpr IDENTIFIER(b))
+    )
+  )
+  (IfStmt-Body
+    (Block 1
+      (AssignStmt
+        (IdentifierExpr IDENTIFIER(a))
+        =
+        (IdentifierExpr IDENTIFIER(b))
+      )
+    )
+  )
+)
