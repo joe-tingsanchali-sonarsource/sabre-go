@@ -278,3 +278,62 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
+	v.indentor.print("(IfStmt")
+	v.indentor.Push()
+
+	if n.Init != nil {
+		v.indentor.NewLine()
+		v.indentor.print("(IfStmt-Init")
+		v.indentor.Push()
+		v.indentor.NewLine()
+
+		n.Init.Visit(v)
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
+	}
+
+	// Condition
+	v.indentor.NewLine()
+	v.indentor.print("(IfStmt-Cond")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Cond.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+
+	// Body
+	v.indentor.NewLine()
+	v.indentor.print("(IfStmt-Body")
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Body.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+
+	if n.Else != nil {
+		v.indentor.NewLine()
+		v.indentor.print("(IfStmt-Else")
+		v.indentor.Push()
+		v.indentor.NewLine()
+
+		n.Else.Visit(v)
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}

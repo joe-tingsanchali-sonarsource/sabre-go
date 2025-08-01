@@ -1,0 +1,28 @@
+(IfStmt
+  (IfStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(i))
+      :=
+      (CallExpr
+        (IdentifierExpr IDENTIFIER(call))
+        (LiteralExpr LITERAL_INT(1))
+        (LiteralExpr LITERAL_INT(2))
+      )
+    )
+  )
+  (IfStmt-Cond
+    (BinaryExpr ==
+      (IdentifierExpr IDENTIFIER(i))
+      (LiteralExpr LITERAL_INT(3))
+    )
+  )
+  (IfStmt-Body
+    (Block 1
+      (AssignStmt
+        (IdentifierExpr IDENTIFIER(a))
+        =
+        (IdentifierExpr IDENTIFIER(b))
+      )
+    )
+  )
+)

@@ -1,0 +1,7 @@
+if a == b {
+	a = c
+} else if a == d {
+	a = e
+} else {
+	a = f
+}

@@ -1,0 +1,9 @@
+>> 	if a == Point{1, 2} {
+>> 	              ^^^^    
+Error[internal/compiler/testdata/Parse/stmt/ifStmt5.sabre:1:15]: Expected 1 expression but found 2
+>> 	if a == Point{1, 2} {
+>> 	                  ^   
+Error[internal/compiler/testdata/Parse/stmt/ifStmt5.sabre:1:19]: expected ';' but found '}'
+>> 	}
+>> 	 ^
+Error[internal/compiler/testdata/Parse/stmt/ifStmt5.sabre:3:2]: expected '}' but found 'INVALID'

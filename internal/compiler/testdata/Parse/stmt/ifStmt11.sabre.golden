@@ -1,0 +1,3 @@
+>> 	if x := call(1, 2) {
+>> 	   ^^^^^^^^^^^^^^^   
+Error[internal/compiler/testdata/Parse/stmt/ifStmt11.sabre:1:4]: Expected boolean expression as condition in if statement

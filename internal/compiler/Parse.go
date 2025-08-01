@@ -8,6 +8,7 @@ type Parser struct {
 	file              *UnitFile
 	tokens            []Token
 	currentTokenIndex int
+	exprLevel         int
 }
 
 func NewParser(file *UnitFile) *Parser {
@@ -17,6 +18,7 @@ func NewParser(file *UnitFile) *Parser {
 			return t.Kind() == TokenComment || t.Kind() == TokenEOF || t.Kind() == TokenInvalid
 		}),
 		currentTokenIndex: 0,
+		exprLevel:         0,
 	}
 
 	return parser
@@ -24,6 +26,32 @@ func NewParser(file *UnitFile) *Parser {
 
 func (t Token) valid() bool {
 	return t.kind != TokenEOF && t.kind != TokenInvalid
+}
+
+func (p *Parser) isInExpr() bool {
+	return p.exprLevel >= 0
+}
+
+func (p *Parser) isInControlStmt() bool {
+	return !p.isInExpr()
+}
+
+func (p *Parser) pushExprLevel() {
+	p.exprLevel++
+}
+
+func (p *Parser) popExprLevel() {
+	p.exprLevel--
+}
+
+func (p *Parser) pushExprLevelAsControlStmt() (prev int) {
+	prev = p.exprLevel
+	p.exprLevel = -1
+	return
+}
+
+func (p *Parser) popExprLevelFromControlStmt(prev int) {
+	p.exprLevel = prev
 }
 
 func (p *Parser) invalidTokenAtEOF() Token {
@@ -144,13 +172,17 @@ func (p *Parser) parseBaseExpr() Expr {
 				expr = call
 			}
 		case TokenLBrace:
-			t := p.convertParsedExprToType(expr)
-			if t == nil {
-				p.file.errorf(expr.SourceRange(), "failed to parse type")
-				return nil
-			}
-			if complit := p.parseComplitExpr(t); complit != nil {
-				expr = complit
+			if p.isInControlStmt() {
+				return expr
+			} else {
+				t := p.convertParsedExprToType(expr)
+				if t == nil {
+					p.file.errorf(expr.SourceRange(), "failed to parse type")
+					return nil
+				}
+				if complit := p.parseComplitExpr(t); complit != nil {
+					expr = complit
+				}
 			}
 		default:
 			return expr
@@ -207,6 +239,9 @@ func (p *Parser) parseIndexExpr(base Expr) *IndexExpr {
 }
 
 func (p *Parser) parseCallExpr(base Expr) *CallExpr {
+	p.pushExprLevel()
+	defer p.popExprLevel()
+
 	lParen, args, rParen, ok := p.parseArgList()
 	if !ok {
 		return nil
@@ -278,6 +313,8 @@ func (p *Parser) parseLiteralExpr() *LiteralExpr {
 func (p *Parser) parseParenExpr() *ParenExpr {
 	switch p.currentToken().Kind() {
 	case TokenLParen:
+		p.pushExprLevel()
+		defer p.popExprLevel()
 		return &ParenExpr{
 			Lparen: p.eatToken(),
 			Base:   p.ParseExpr(),
@@ -363,6 +400,9 @@ func (p *Parser) ParseStmt() Stmt {
 	case TokenLBrace:
 		stmt := p.parseBlockStmt()
 		p.eatTokenOrError(TokenSemicolon)
+		return stmt
+	case TokenIf:
+		stmt := p.parseIfStmt()
 		return stmt
 	default:
 		stmt := p.parseSimpleStmt()
@@ -530,4 +570,78 @@ func (p *Parser) parseStmtList() []Stmt {
 		list = append(list, p.ParseStmt())
 	}
 	return list
+}
+
+func (p *Parser) parseIfStmt() *IfStmt {
+	ifToken := p.eatTokenOrError(TokenIf)
+	if !ifToken.valid() {
+		return nil
+	}
+
+	init, cond := p.parseIfHeader()
+	if cond == nil {
+		return nil
+	}
+
+	body := p.parseBlockStmt()
+	if body == nil {
+		return nil
+	}
+
+	var elseStmt Stmt
+	if p.eatTokenIfKind(TokenElse).valid() {
+		switch p.currentToken().Kind() {
+		case TokenIf:
+			elseStmt = p.parseIfStmt()
+		case TokenLBrace:
+			elseStmt = p.parseBlockStmt()
+			p.eatTokenOrError(TokenSemicolon)
+		default:
+			p.file.errorf(p.currentToken().SourceRange(), "Expected if statement or block")
+		}
+	} else {
+		p.eatTokenOrError(TokenSemicolon)
+	}
+
+	return &IfStmt{
+		If:   ifToken,
+		Init: init,
+		Cond: cond,
+		Body: body,
+		Else: elseStmt,
+	}
+}
+
+func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
+
+	exprLevel := p.pushExprLevelAsControlStmt()
+	defer p.popExprLevelFromControlStmt(exprLevel)
+
+	// handle direct {
+	if p.currentToken().Kind() != TokenLBrace && p.currentToken().Kind() != TokenSemicolon {
+		init = p.parseSimpleStmt()
+	}
+
+	var condStmt Stmt
+	if p.currentToken().Kind() != TokenLBrace {
+		p.eatTokenOrError(TokenSemicolon)
+		if p.currentToken().Kind() != TokenLBrace {
+			condStmt = p.parseSimpleStmt()
+		}
+	} else {
+		condStmt = init
+		init = nil
+	}
+
+	if condStmt != nil {
+		if exprStmt, ok := condStmt.(*ExprStmt); ok {
+			cond = exprStmt.Expr
+		} else {
+			p.file.errorf(condStmt.SourceRange(), "Expected boolean expression as condition in if statement")
+		}
+	} else {
+		p.file.errorf(p.currentToken().SourceRange(), "Missing condition in if statement")
+	}
+
+	return
 }
