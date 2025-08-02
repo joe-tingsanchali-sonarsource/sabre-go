@@ -326,7 +326,6 @@ type ForStmtRange struct {
 
 type ForStmt struct {
 	For    Token
-	Cond   Expr
 	Clause ForStmtClause
 	Range  ForStmtRange
 	Body   Stmt
@@ -445,9 +444,7 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 }
 
 func (v *DefaultVisitor) VisitForStmt(n *ForStmt) {
-	if n.Cond != nil {
-		n.Cond.Visit(v)
-	} else if n.Range.Init != nil {
+	if n.Range.Init != nil {
 		n.Range.Init.Visit(v)
 		n.Range.Expr.Visit(v)
 	} else {

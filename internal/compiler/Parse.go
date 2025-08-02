@@ -699,9 +699,9 @@ func (p *Parser) parseForStmt() *ForStmt {
 			// for cond {}
 			if exprStmt, ok := cond.(*ExprStmt); ok {
 				return &ForStmt{
-					For:  forToken,
-					Cond: exprStmt.Expr,
-					Body: p.parseBlockStmt(),
+					For:    forToken,
+					Clause: ForStmtClause{Cond: exprStmt.Expr},
+					Body:   p.parseBlockStmt(),
 				}
 				// for i, [_] := range 10 {}
 			} else if assignStmt, ok := cond.(*AssignStmt); ok && isRange {

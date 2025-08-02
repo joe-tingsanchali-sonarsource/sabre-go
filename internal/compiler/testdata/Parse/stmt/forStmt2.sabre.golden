@@ -1,5 +1,5 @@
 (ForStmt
-  (ForStmt-Cond
+  (ForStmt-Clause-Cond
     (BinaryExpr <
       (IdentifierExpr IDENTIFIER(x))
       (LiteralExpr LITERAL_INT(5))

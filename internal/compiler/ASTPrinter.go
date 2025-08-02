@@ -344,19 +344,7 @@ func (v *ASTPrinter) VisitForStmt(n *ForStmt) {
 	v.indentor.print("(ForStmt")
 	v.indentor.Push()
 
-	if n.Cond != nil {
-		// Condition
-		v.indentor.NewLine()
-		v.indentor.print("(ForStmt-Cond")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Cond.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
-	} else if n.Range.Init != nil {
+	if n.Range.Init != nil {
 		// Range
 		v.indentor.NewLine()
 		v.indentor.print("(ForStmt-Range-Init")
