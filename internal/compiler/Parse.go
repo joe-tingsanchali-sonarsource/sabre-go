@@ -653,41 +653,66 @@ func (p *Parser) parseForStmt() *ForStmt {
 		return nil
 	}
 
-	// 1.
-	// for a < b {
-	// 	a *= 2
-	// }
-
-	// 2.
-	// for i := 0; i < 10; i++ {
-	// 	f(i)
-	// }
-
-	// 3.
-	// for i := range 10 {
-	// 	f(i)
-	// }
-
-	// 4.
-	// for {}
 	exprLevel := p.pushExprLevelAsControlStmt()
 	defer p.popExprLevelFromControlStmt(exprLevel)
 
+	// for {}
 	if p.currentToken().Kind() == TokenLBrace {
 		return &ForStmt{
 			For:  forToken,
-			Body: p.ParseStmt(),
+			Body: p.parseBlockStmt(),
 		}
 	}
 
-	cond := p.ParseExpr()
-	body := p.ParseStmt()
-
-	return &ForStmt{
-		For:  forToken,
-		Cond: cond,
-		// Clause ForStmtClause
-		// Range  ForStmtRange
-		Body: body,
+	// for cond {}
+	cond := p.parseSimpleStmt()
+	if cond != nil {
+		if exprStmt, ok := cond.(*ExprStmt); ok {
+			return &ForStmt{
+				For:  forToken,
+				Cond: exprStmt.Expr,
+				Body: p.parseBlockStmt(),
+			}
+		}
 	}
+
+	init := cond
+	if initAssignStmt, ok := init.(*AssignStmt); ok {
+		// for i := range 10 {}
+		if p.currentToken().Kind() == TokenRange {
+			rangeToken := p.eatToken()
+
+			forRange := ForStmtRange{
+				Init:  initAssignStmt,
+				Range: rangeToken,
+				Expr:  p.ParseExpr(),
+			}
+
+			return &ForStmt{
+				For:   forToken,
+				Range: forRange,
+				Body:  p.parseBlockStmt(),
+			}
+		} else {
+			// for init; cond; post {}
+			p.eatTokenOrError(TokenSemicolon)
+
+			clauseCond := p.ParseExpr()
+			p.eatTokenOrError(TokenSemicolon)
+
+			forClause := ForStmtClause{
+				Init: init,
+				Cond: clauseCond,
+				Post: p.parseSimpleStmt(),
+			}
+
+			return &ForStmt{
+				For:    forToken,
+				Clause: forClause,
+				Body:   p.parseBlockStmt(),
+			}
+		}
+	}
+
+	return nil
 }

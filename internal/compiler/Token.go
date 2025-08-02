@@ -81,6 +81,7 @@ const (
 	TokenIf
 	TokenElse
 	TokenFor
+	TokenRange
 	TokenFalse
 	TokenTrue
 	TokenPackage
@@ -235,6 +236,8 @@ func (tk TokenKind) String() string {
 		return "else"
 	case TokenFor:
 		return "for"
+	case TokenRange:
+		return "range"
 	case TokenFalse:
 		return "false"
 	case TokenTrue:
