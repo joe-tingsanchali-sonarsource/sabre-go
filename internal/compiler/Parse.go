@@ -688,34 +688,21 @@ func (p *Parser) parseForStmt() *ForStmt {
 
 	init := cond
 	initAssignStmt := init.(*AssignStmt)
-	// for i := range 10 {}
 	if isRange {
-		// check lhs
-		// var key, value Expr
+		// for i := range 10 {}
 		switch len(initAssignStmt.LHS) {
 		case 0:
 			// nothing to do
 		case 1:
-			// key = initAssignStmt.LHS[0]
+			// nothing to do
 		case 2:
-			// key, value = initAssignStmt.LHS[0], initAssignStmt.LHS[1]
+			// nothin to do
 		default:
 			p.file.errorf(initAssignStmt.LHS[len(initAssignStmt.LHS)-1].SourceRange(), "expected at most 2 expressions")
 			return nil
 		}
-		// parseSimpleStmt returned a right-hand side that
-		// is a single unary expression of the form "range x"
+
 		rangeExpr := initAssignStmt.RHS[0].(*UnaryExpr)
-		// return &ast.RangeStmt{
-		// 	For:    pos,
-		// 	Key:    key,
-		// 	Value:  value,
-		// 	TokPos: as.TokPos,
-		// 	Tok:    as.Tok,
-		// 	Range:  as.Rhs[0].Pos(),
-		// 	X:      x,
-		// 	Body:   body,
-		// }
 
 		forRange := ForStmtRange{
 			Init:  initAssignStmt,
@@ -749,8 +736,5 @@ func (p *Parser) parseForStmt() *ForStmt {
 			Body:   p.parseBlockStmt(),
 		}
 	}
-
 	// TODO: for range x {}
-	// TODO: for i, _ range x {}
-
 }

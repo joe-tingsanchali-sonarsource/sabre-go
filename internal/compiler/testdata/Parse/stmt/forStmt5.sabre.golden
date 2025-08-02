@@ -2,9 +2,10 @@
   (ForStmt-Range-Init
     (AssignStmt
       (IdentifierExpr IDENTIFIER(i))
+      (IdentifierExpr IDENTIFIER(_))
       :=
       (UnaryExpr range
-        (LiteralExpr LITERAL_INT(10))
+        (IdentifierExpr IDENTIFIER(list))
       )
     )
   )
