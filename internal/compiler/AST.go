@@ -328,7 +328,7 @@ type ForStmt struct {
 	For    Token
 	Clause ForStmtClause
 	Range  ForStmtRange
-	Body   Stmt
+	Body   *BlockStmt
 }
 
 func (e *ForStmt) stmtNode() {}
