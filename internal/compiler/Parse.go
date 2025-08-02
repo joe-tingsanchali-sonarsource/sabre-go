@@ -145,7 +145,7 @@ func (p *Parser) parseBinaryExprWithPrecedenceLevels(levels [][]TokenKind) Expr 
 
 func (p *Parser) parseUnaryExpr() Expr {
 	switch p.currentToken().Kind() {
-	case TokenAdd, TokenSub, TokenNot, TokenXor, TokenRange:
+	case TokenAdd, TokenSub, TokenNot, TokenXor:
 		return &UnaryExpr{
 			Operator: p.eatToken(),
 			Base:     p.parseUnaryExpr(),
