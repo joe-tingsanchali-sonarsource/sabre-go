@@ -280,7 +280,7 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 }
 
 func (v *ASTPrinter) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
-	if len(n.LHS) > 0 {
+	if n.Case.Kind() == TokenCase {
 		v.indentor.print("(SwitchCaseStmt")
 	} else {
 		v.indentor.print("(DefaultCaseStmt")

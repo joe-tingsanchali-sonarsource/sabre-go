@@ -1,3 +1,17 @@
->> 	case 1:
->> 	      ^ 
-Error[internal/compiler/testdata/Parse/stmt/switchStmt8.sabre:2:7]: missing rhs statements
+(SwitchStmt
+  (Block 2
+    (SwitchCaseStmt
+      (LiteralExpr LITERAL_INT(1))
+      :
+    )
+    (SwitchCaseStmt
+      (LiteralExpr LITERAL_INT(2))
+      :
+      (ExprStmt
+        (CallExpr
+          (IdentifierExpr IDENTIFIER(f2))
+        )
+      )
+    )
+  )
+)

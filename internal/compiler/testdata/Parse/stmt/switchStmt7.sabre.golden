@@ -1,3 +1,7 @@
->> 	default:
->> 	       ^ 
-Error[internal/compiler/testdata/Parse/stmt/switchStmt7.sabre:2:8]: missing rhs statements
+(SwitchStmt
+  (Block 1
+    (DefaultCaseStmt
+      :
+    )
+  )
+)

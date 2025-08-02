@@ -550,10 +550,6 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 
 	rhs := p.parseStmtList()
 
-	if len(rhs) == 0 {
-		p.file.errorf(colonToken.SourceRange(), "missing rhs statements")
-	}
-
 	return &SwitchCaseStmt{
 		Case:  caseToken,
 		LHS:   lhs,
