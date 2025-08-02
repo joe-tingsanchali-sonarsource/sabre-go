@@ -273,6 +273,9 @@ func (t Token) SourceRange() SourceRange {
 // String returns a string representation of the token
 func (t Token) String() string {
 	if t.value != "" && t.value != t.kind.String() {
+		if t.value == "\n" {
+			t.value = "\\n"
+		}
 		return fmt.Sprintf("%s(%s)", t.kind.String(), t.value)
 	}
 	return t.kind.String()
@@ -420,7 +423,10 @@ func (r SourceRange) HighlightCodeRange() string {
 
 	// Build the highlight string
 	var result strings.Builder
-	for _, line := range lines {
+	for i, line := range lines {
+		if i > 0 {
+			fmt.Fprint(&result, "\n")
+		}
 		byteOffset = r.highlightLine(&result, line, byteOffset)
 	}
 
