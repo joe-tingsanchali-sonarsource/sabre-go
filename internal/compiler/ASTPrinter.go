@@ -266,8 +266,10 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 		e.Visit(v)
 	}
 
-	v.indentor.NewLine()
-	v.indentor.print(n.Operator)
+	if n.Operator.valid() {
+		v.indentor.NewLine()
+		v.indentor.print(n.Operator)
+	}
 
 	for _, e := range n.RHS {
 		v.indentor.NewLine()
@@ -342,8 +344,8 @@ func (v *ASTPrinter) VisitForStmt(n *ForStmt) {
 	v.indentor.print("(ForStmt")
 	v.indentor.Push()
 
-	// Condition
 	if n.Cond != nil {
+		// Condition
 		v.indentor.NewLine()
 		v.indentor.print("(ForStmt-Cond")
 		v.indentor.Push()
@@ -354,8 +356,8 @@ func (v *ASTPrinter) VisitForStmt(n *ForStmt) {
 		v.indentor.Pop()
 		v.indentor.NewLine()
 		v.indentor.print(")")
-	} else if n.Range.Init != nil { // Range
-		// Init
+	} else if n.Range.Init != nil {
+		// Range
 		v.indentor.NewLine()
 		v.indentor.print("(ForStmt-Range-Init")
 		v.indentor.Push()
@@ -366,7 +368,8 @@ func (v *ASTPrinter) VisitForStmt(n *ForStmt) {
 		v.indentor.Pop()
 		v.indentor.NewLine()
 		v.indentor.print(")")
-	} else { // Clause
+	} else {
+		// Clause
 		if n.Clause.Init != nil {
 			v.indentor.NewLine()
 			v.indentor.print("(ForStmt-Clause-Init")

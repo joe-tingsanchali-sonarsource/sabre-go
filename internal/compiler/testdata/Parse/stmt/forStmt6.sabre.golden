@@ -1,0 +1,12 @@
+(ForStmt
+  (ForStmt-Range-Init
+    (AssignStmt
+      (UnaryExpr range
+        (IdentifierExpr IDENTIFIER(list))
+      )
+    )
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)

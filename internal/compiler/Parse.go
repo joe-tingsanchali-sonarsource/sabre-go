@@ -666,18 +666,36 @@ func (p *Parser) parseForStmt() *ForStmt {
 	exprLevel := p.pushExprLevelAsControlStmt()
 	defer p.popExprLevelFromControlStmt(exprLevel)
 
-	// for {}
 	if p.currentToken().Kind() == TokenLBrace {
+		// for {}
 		return &ForStmt{
 			For:  forToken,
 			Body: p.parseBlockStmt(),
 		}
 	}
 
-	// for cond {}
+	if p.currentToken().Kind() == TokenRange {
+		rangeToken := p.eatToken()
+		rangeExpr := &UnaryExpr{Operator: rangeToken, Base: p.ParseExpr()}
+
+		forRange := ForStmtRange{
+			Init:  &AssignStmt{RHS: []Expr{rangeExpr}},
+			Range: rangeExpr.Operator,
+			Expr:  rangeExpr.Base,
+		}
+
+		// for range list {}
+		return &ForStmt{
+			For:   forToken,
+			Range: forRange,
+			Body:  p.parseBlockStmt(),
+		}
+	}
+
 	cond, isRange := p.parseSimpleStmt()
 	if cond != nil {
 		if exprStmt, ok := cond.(*ExprStmt); ok {
+			// for cond {}
 			return &ForStmt{
 				For:  forToken,
 				Cond: exprStmt.Expr,
@@ -689,7 +707,6 @@ func (p *Parser) parseForStmt() *ForStmt {
 	init := cond
 	initAssignStmt := init.(*AssignStmt)
 	if isRange {
-		// for i := range 10 {}
 		switch len(initAssignStmt.LHS) {
 		case 0:
 			// nothing to do
@@ -710,13 +727,13 @@ func (p *Parser) parseForStmt() *ForStmt {
 			Expr:  rangeExpr.Base,
 		}
 
+		// for i, _ := range 10 {}
 		return &ForStmt{
 			For:   forToken,
 			Range: forRange,
 			Body:  p.parseBlockStmt(),
 		}
 	} else {
-		// for init; cond; post {}
 		p.eatTokenOrError(TokenSemicolon)
 
 		clauseCond := p.ParseExpr()
@@ -730,11 +747,11 @@ func (p *Parser) parseForStmt() *ForStmt {
 			Post: post,
 		}
 
+		// for init; cond; post {}
 		return &ForStmt{
 			For:    forToken,
 			Clause: forClause,
 			Body:   p.parseBlockStmt(),
 		}
 	}
-	// TODO: for range x {}
 }
