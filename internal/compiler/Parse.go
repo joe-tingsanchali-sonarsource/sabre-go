@@ -705,8 +705,8 @@ func (p *Parser) parseForStmt() *ForStmt {
 	}
 
 	init := cond
-	initAssignStmt := init.(*AssignStmt)
-	if isRange {
+	if init != nil && isRange {
+		initAssignStmt := init.(*AssignStmt)
 		switch len(initAssignStmt.LHS) {
 		case 0:
 			// nothing to do
