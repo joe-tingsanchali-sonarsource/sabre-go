@@ -1,0 +1,10 @@
+(ComplitExpr
+  (ArrayType
+    (LiteralExpr LITERAL_INT(4))
+    (NamedType IDENTIFIER(a).IDENTIFIER(b))
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(1))
+    (LiteralExpr LITERAL_INT(42))
+  )
+)

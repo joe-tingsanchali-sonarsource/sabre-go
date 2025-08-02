@@ -1,0 +1,5 @@
+>> 		1: 42
+>> 		     ^
+>> 	}
+>> 	  
+Error[internal/compiler/testdata/Parse/expr/complit10.sabre:2:7]: expected an expression but found ';(\n)'
