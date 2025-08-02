@@ -1,0 +1,17 @@
+(ForStmt
+  (ForStmt-Range-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(i))
+      :=
+      (UnaryExpr range
+        (LiteralExpr LITERAL_INT(10))
+      )
+    )
+  )
+  (ForStmt-Range-Expr
+    (LiteralExpr LITERAL_INT(10))
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)
