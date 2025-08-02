@@ -284,6 +284,8 @@ func (p *Parser) parseAtom() Expr {
 		return p.parseIdentifierExpr()
 	case TokenLParen:
 		return p.parseParenExpr()
+	case TokenLBracket:
+		return p.parseArrayType()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
 	}
@@ -326,6 +328,67 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 	return nil
 }
 
+func (p *Parser) parseArrayType() *ArrayType {
+	lBracket := p.eatTokenOrError(TokenLBracket)
+	if !lBracket.valid() {
+		return nil
+	}
+
+	var length Expr
+	if p.currentToken().Kind() != TokenRBracket {
+		length = p.ParseExpr()
+		if length == nil {
+			return nil
+		}
+	}
+
+	rBracket := p.eatTokenOrError(TokenRBracket)
+	if !rBracket.valid() {
+		return nil
+	}
+
+	elementType := p.parseType()
+	if elementType == nil {
+		return nil
+	}
+
+	return &ArrayType{
+		LBracket:    lBracket,
+		Length:      length,
+		RBracket:    rBracket,
+		ElementType: elementType,
+	}
+}
+
+func (p *Parser) parseType() Type {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		identifier := p.parseIdentifierExpr()
+		if identifier == nil {
+			return nil
+		}
+		if p.eatTokenIfKind(TokenDot).valid() {
+			selector := p.parseIdentifierExpr()
+			if selector == nil {
+				return nil
+			}
+			return &NamedType{
+				Package:  identifier.Token,
+				TypeName: selector.Token,
+			}
+		} else {
+			return &NamedType{
+				TypeName: identifier.Token,
+			}
+		}
+	case TokenLBracket:
+		return p.parseArrayType()
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
+		return nil
+	}
+}
+
 func (p *Parser) convertParsedExprToType(e Expr) Type {
 	switch n := e.(type) {
 	case *IdentifierExpr:
@@ -339,6 +402,10 @@ func (p *Parser) convertParsedExprToType(e Expr) Type {
 				TypeName: n.Selector.Token,
 			}
 		}
+	case *NamedType:
+		return n
+	case *ArrayType:
+		return n
 	}
 	return nil
 }

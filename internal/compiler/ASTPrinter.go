@@ -182,6 +182,23 @@ func (v *ASTPrinter) VisitNamedType(n *NamedType) {
 	}
 }
 
+func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
+	v.indentor.print("(ArrayType")
+	v.indentor.Push()
+
+	if n.Length != nil {
+		v.indentor.NewLine()
+		n.Length.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	n.ElementType.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitExprStmt(n *ExprStmt) {
 	v.indentor.print("(ExprStmt")
 	v.indentor.Push()

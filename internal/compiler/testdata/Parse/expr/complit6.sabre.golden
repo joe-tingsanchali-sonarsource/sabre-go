@@ -1,0 +1,9 @@
+(ComplitExpr
+  (ArrayType
+    (NamedType IDENTIFIER(int))
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(5))
+    (LiteralExpr LITERAL_INT(1))
+  )
+)

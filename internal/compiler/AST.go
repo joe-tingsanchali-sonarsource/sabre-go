@@ -149,6 +149,7 @@ type NamedType struct {
 
 func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
 func (e *NamedType) exprNode()                {}
+func (e *NamedType) typeExpr()                {}
 func (e *NamedType) SourceRange() SourceRange {
 	if e.IsPackageQualified() {
 		return e.Package.SourceRange().Merge(e.TypeName.SourceRange())
@@ -159,7 +160,22 @@ func (e *NamedType) SourceRange() SourceRange {
 func (e *NamedType) Visit(v NodeVisitor) {
 	v.VisitNamedType(e)
 }
-func (e *NamedType) typeExpr() {}
+
+type ArrayType struct {
+	LBracket    Token
+	Length      Expr
+	RBracket    Token
+	ElementType Type
+}
+
+func (e *ArrayType) exprNode() {}
+func (e *ArrayType) typeExpr() {}
+func (e *ArrayType) SourceRange() SourceRange {
+	return e.LBracket.SourceRange().Merge(e.ElementType.SourceRange())
+}
+func (e *ArrayType) Visit(v NodeVisitor) {
+	v.VisitArrayType(e)
+}
 
 // Stmt Nodes
 type Stmt interface {
@@ -325,6 +341,7 @@ type NodeVisitor interface {
 	VisitComplitExpr(n *ComplitExpr)
 
 	VisitNamedType(n *NamedType)
+	VisitArrayType(n *ArrayType)
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
@@ -376,6 +393,10 @@ func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) {
 }
 
 func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
+func (v *DefaultVisitor) VisitArrayType(n *ArrayType) {
+	n.Length.Visit(v)
+	n.ElementType.Visit(v)
+}
 
 func (v *DefaultVisitor) VisitExprStmt(n *ExprStmt) {
 	n.Expr.Visit(v)
