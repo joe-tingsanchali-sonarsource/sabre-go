@@ -6,7 +6,10 @@ Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:15]: expected '
 Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:16]: expected an expression but found '}'
 >> 	switch x := v3{}; {
 >> 	               ^    
-Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:16]: expected an expression but found '}'
+Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:16]: expected '{' but found '}'
 >> 	switch x := v3{}; {
->> 	               ^    
-Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:16]: expected ';' but found '}'
+>> 	                ^   
+Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:17]: expected '}' but found ';'
+>> 	switch x := v3{}; {
+>> 	                  ^ 
+Error[internal/compiler/testdata/Parse/stmt/switchStmt11.sabre:1:19]: expected ';' but found '{'

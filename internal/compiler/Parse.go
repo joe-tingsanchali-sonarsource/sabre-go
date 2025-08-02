@@ -396,8 +396,6 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseBreakStmt()
 	case TokenFallthrough:
 		return p.parseFallthroughStmt()
-	case TokenCase, TokenDefault:
-		return p.parseSwitchCaseStmt()
 	case TokenSwitch:
 		return p.parseSwitchStmt()
 	case TokenContinue:
@@ -550,10 +548,7 @@ func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
 		return nil
 	}
 
-	var rhs []Stmt
-	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
-		rhs = append(rhs, p.ParseStmt())
-	}
+	rhs := p.parseStmtList()
 
 	if len(rhs) == 0 {
 		p.file.errorf(colonToken.SourceRange(), "missing rhs statements")
@@ -596,13 +591,19 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 		}
 	}
 
-	body := p.ParseStmt()
+	lBraceToken := p.eatTokenOrError(TokenLBrace)
+	var list []Stmt
+	for p.currentToken().Kind() == TokenCase || p.currentToken().Kind() == TokenDefault {
+		list = append(list, p.parseSwitchCaseStmt())
+	}
+	rBraceToken := p.eatTokenOrError(TokenRBrace)
+	p.eatTokenOrError(TokenSemicolon)
 
 	return &SwitchStmt{
 		Switch: switchToken,
 		Init:   init,
 		Tag:    tag,
-		Body:   body,
+		Body:   &BlockStmt{LBrace: lBraceToken, Stmts: list, RBrace: rBraceToken},
 	}
 }
 
@@ -644,7 +645,7 @@ func (p *Parser) parseBlockStmt() *BlockStmt {
 
 func (p *Parser) parseStmtList() []Stmt {
 	var list []Stmt
-	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
+	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
 		list = append(list, p.ParseStmt())
 	}
 	return list
