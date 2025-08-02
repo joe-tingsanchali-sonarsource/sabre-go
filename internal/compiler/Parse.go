@@ -666,14 +666,15 @@ func (p *Parser) parseForStmt() *ForStmt {
 	exprLevel := p.pushExprLevelAsControlStmt()
 	defer p.popExprLevelFromControlStmt(exprLevel)
 
+	// for {}
 	if p.currentToken().Kind() == TokenLBrace {
-		// for {}
 		return &ForStmt{
 			For:  forToken,
 			Body: p.parseBlockStmt(),
 		}
 	}
 
+	// for range list {}
 	if p.currentToken().Kind() == TokenRange {
 		rangeToken := p.eatToken()
 		rangeExpr := &UnaryExpr{Operator: rangeToken, Base: p.ParseExpr()}
@@ -684,7 +685,6 @@ func (p *Parser) parseForStmt() *ForStmt {
 			Expr:  rangeExpr.Base,
 		}
 
-		// for range list {}
 		return &ForStmt{
 			For:   forToken,
 			Range: forRange,
@@ -692,66 +692,74 @@ func (p *Parser) parseForStmt() *ForStmt {
 		}
 	}
 
-	cond, isRange := p.parseSimpleStmt()
-	if cond != nil {
-		if exprStmt, ok := cond.(*ExprStmt); ok {
+	var init Stmt
+	if p.currentToken().Kind() != TokenSemicolon {
+		cond, isRange := p.parseSimpleStmt()
+		if cond != nil {
 			// for cond {}
-			return &ForStmt{
-				For:  forToken,
-				Cond: exprStmt.Expr,
-				Body: p.parseBlockStmt(),
+			if exprStmt, ok := cond.(*ExprStmt); ok {
+				return &ForStmt{
+					For:  forToken,
+					Cond: exprStmt.Expr,
+					Body: p.parseBlockStmt(),
+				}
+				// for i, [_] := range 10 {}
+			} else if assignStmt, ok := cond.(*AssignStmt); ok && isRange {
+				switch len(assignStmt.LHS) {
+				case 0:
+					// nothing to do
+				case 1:
+					// nothing to do
+				case 2:
+					// nothing to do
+				default:
+					p.file.errorf(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most 2 expressions")
+					return nil
+				}
+
+				rangeExpr := assignStmt.RHS[0].(*UnaryExpr)
+
+				forRange := ForStmtRange{
+					Init:  assignStmt,
+					Range: rangeExpr.Operator,
+					Expr:  rangeExpr.Base,
+				}
+
+				return &ForStmt{
+					For:   forToken,
+					Range: forRange,
+					Body:  p.parseBlockStmt(),
+				}
 			}
+
+			init = cond
 		}
 	}
 
-	init := cond
-	if init != nil && isRange {
-		initAssignStmt := init.(*AssignStmt)
-		switch len(initAssignStmt.LHS) {
-		case 0:
-			// nothing to do
-		case 1:
-			// nothing to do
-		case 2:
-			// nothin to do
-		default:
-			p.file.errorf(initAssignStmt.LHS[len(initAssignStmt.LHS)-1].SourceRange(), "expected at most 2 expressions")
-			return nil
-		}
+	// for [init]; [cond]; [post] {}
+	var cond Expr
+	p.eatToken()
+	if p.currentToken().Kind() != TokenSemicolon {
+		cond = p.ParseExpr()
+	}
 
-		rangeExpr := initAssignStmt.RHS[0].(*UnaryExpr)
+	p.eatTokenOrError(TokenSemicolon)
 
-		forRange := ForStmtRange{
-			Init:  initAssignStmt,
-			Range: rangeExpr.Operator,
-			Expr:  rangeExpr.Base,
-		}
+	var post Stmt
+	if p.currentToken().Kind() != TokenLBrace {
+		postStmt, _ := p.parseSimpleStmt()
+		post = postStmt
+	}
 
-		// for i, _ := range 10 {}
-		return &ForStmt{
-			For:   forToken,
-			Range: forRange,
-			Body:  p.parseBlockStmt(),
-		}
-	} else {
-		p.eatTokenOrError(TokenSemicolon)
+	forClause := ForStmtClause{
+		Init: init,
+		Cond: cond,
+		Post: post,
+	}
 
-		clauseCond := p.ParseExpr()
-		p.eatTokenOrError(TokenSemicolon)
-
-		post, _ := p.parseSimpleStmt()
-
-		forClause := ForStmtClause{
-			Init: init,
-			Cond: clauseCond,
-			Post: post,
-		}
-
-		// for init; cond; post {}
-		return &ForStmt{
-			For:    forToken,
-			Clause: forClause,
-			Body:   p.parseBlockStmt(),
-		}
+	return &ForStmt{
+		For:    forToken,
+		Clause: forClause,
+		Body:   p.parseBlockStmt(),
 	}
 }

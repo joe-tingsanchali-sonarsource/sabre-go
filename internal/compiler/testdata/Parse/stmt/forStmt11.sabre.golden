@@ -1,0 +1,8 @@
+(ForStmt
+  (ForStmt-Clause-Cond
+    (IdentifierExpr IDENTIFIER(cond))
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)
