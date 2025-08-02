@@ -1,0 +1,93 @@
+(ComplitExpr
+  (ArrayType
+    (LiteralExpr LITERAL_INT(4))
+    (ArrayType
+      (LiteralExpr LITERAL_INT(4))
+      (NamedType IDENTIFIER(float))
+    )
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(0))
+    (ComplitExpr
+      (ArrayType
+        (LiteralExpr LITERAL_INT(4))
+        (NamedType IDENTIFIER(float))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(1))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+    )
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(1))
+    (ComplitExpr
+      (ArrayType
+        (LiteralExpr LITERAL_INT(4))
+        (NamedType IDENTIFIER(float))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(1))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+    )
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(2))
+    (ComplitExpr
+      (ArrayType
+        (LiteralExpr LITERAL_INT(4))
+        (NamedType IDENTIFIER(float))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(1))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+    )
+  )
+  (Element
+    (LiteralExpr LITERAL_INT(3))
+    (ComplitExpr
+      (ArrayType
+        (LiteralExpr LITERAL_INT(4))
+        (NamedType IDENTIFIER(float))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(0))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(1))
+      )
+    )
+  )
+)
