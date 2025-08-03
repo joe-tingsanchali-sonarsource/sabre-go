@@ -368,7 +368,7 @@ func (p *Parser) parseStructType() *StructType {
 		return nil
 	}
 
-	p.eatTokenOrError(TokenLBrace)
+	lBraceToken := p.eatTokenOrError(TokenLBrace)
 
 	var fields []StructTypeField
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
@@ -393,11 +393,13 @@ func (p *Parser) parseStructType() *StructType {
 		fields = append(fields, StructTypeField{Names: names, Type: fieldType, Tag: tag})
 	}
 
-	p.eatTokenOrError(TokenRBrace)
+	rBraceToken := p.eatTokenOrError(TokenRBrace)
 
 	return &StructType{
 		Struct: structToken,
+		LBrace: lBraceToken,
 		Fields: fields,
+		RBrace: rBraceToken,
 	}
 }
 

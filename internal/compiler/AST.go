@@ -185,17 +185,15 @@ type StructTypeField struct {
 
 type StructType struct {
 	Struct Token
+	LBrace Token
 	Fields []StructTypeField
+	RBrace Token
 }
 
 func (e *StructType) exprNode() {}
 func (e *StructType) typeExpr() {}
 func (e *StructType) SourceRange() SourceRange {
-	if len(e.Fields) > 0 {
-		return e.Struct.SourceRange().Merge(e.Fields[len(e.Fields)-1].Type.SourceRange())
-	} else {
-		return e.Struct.SourceRange()
-	}
+	return e.Struct.SourceRange().Merge(e.RBrace.SourceRange())
 }
 func (e *StructType) Visit(v NodeVisitor) {
 	v.VisitStructType(e)

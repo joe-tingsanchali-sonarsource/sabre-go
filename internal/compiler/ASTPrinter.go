@@ -218,8 +218,8 @@ func (v *ASTPrinter) VisitStructType(n *StructType) {
 			f.Type.Visit(v)
 
 			// Tag
-			v.indentor.NewLine()
 			if f.Tag.valid() {
+				v.indentor.NewLine()
 				v.indentor.printf("(Tag %v)", f.Tag)
 			}
 
