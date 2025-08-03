@@ -1,0 +1,4 @@
+switch x := 2; {
+case 1, 2: f12()
+case 3: f3()
+}

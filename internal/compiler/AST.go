@@ -308,6 +308,39 @@ func (e *AssignStmt) Visit(v NodeVisitor) {
 	v.VisitAssignStmt(e)
 }
 
+type SwitchCaseStmt struct {
+	Case  Token
+	LHS   []Expr
+	Colon Token
+	RHS   []Stmt
+}
+
+func (e *SwitchCaseStmt) stmtNode() {}
+func (e *SwitchCaseStmt) SourceRange() SourceRange {
+	if len(e.RHS) == 0 {
+		panic("SwitchCaseStmt RHS shouldn't be empty")
+	}
+	return e.Case.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+}
+func (e *SwitchCaseStmt) Visit(v NodeVisitor) {
+	v.VisitSwitchCaseStmt(e)
+}
+
+type SwitchStmt struct {
+	Switch Token
+	Init   Stmt
+	Tag    Expr
+	Body   Stmt
+}
+
+func (e *SwitchStmt) stmtNode() {}
+func (e *SwitchStmt) SourceRange() SourceRange {
+	return e.Switch.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *SwitchStmt) Visit(v NodeVisitor) {
+	v.VisitSwitchStmt(e)
+}
+
 type IfStmt struct {
 	If   Token
 	Init Stmt // init statement or nil
@@ -351,6 +384,8 @@ type NodeVisitor interface {
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
 	VisitAssignStmt(n *AssignStmt)
+	VisitSwitchCaseStmt(n *SwitchCaseStmt)
+	VisitSwitchStmt(n *SwitchStmt)
 	VisitIfStmt(n *IfStmt)
 }
 
@@ -424,6 +459,19 @@ func (v *DefaultVisitor) VisitAssignStmt(n *AssignStmt) {
 	for _, e := range n.RHS {
 		e.Visit(v)
 	}
+}
+func (v *DefaultVisitor) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
+}
+func (v *DefaultVisitor) VisitSwitchStmt(n *SwitchStmt) {
+	n.Init.Visit(v)
+	n.Tag.Visit(v)
+	n.Body.Visit(v)
 }
 func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	if n.Init != nil {

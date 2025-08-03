@@ -1,0 +1,31 @@
+(SwitchStmt
+  (Block 3
+    (SwitchCaseStmt
+      (LiteralExpr LITERAL_INT(1))
+      :
+      (ExprStmt
+        (CallExpr
+          (IdentifierExpr IDENTIFIER(f1))
+        )
+      )
+    )
+    (SwitchCaseStmt
+      (LiteralExpr LITERAL_INT(2))
+      :
+      (ExprStmt
+        (CallExpr
+          (IdentifierExpr IDENTIFIER(f2))
+        )
+      )
+    )
+    (SwitchCaseStmt
+      (LiteralExpr LITERAL_INT(3))
+      :
+      (ExprStmt
+        (CallExpr
+          (IdentifierExpr IDENTIFIER(f3))
+        )
+      )
+    )
+  )
+)
