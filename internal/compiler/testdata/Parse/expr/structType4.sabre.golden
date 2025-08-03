@@ -1,0 +1,5 @@
+>> 	    x, y
+>> 	        ^
+>> 	    u float32
+>> 	              
+Error[internal/compiler/testdata/Parse/expr/structType4.sabre:2:9]: expected type but found ;(\n)

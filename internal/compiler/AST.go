@@ -179,7 +179,7 @@ func (e *ArrayType) Visit(v NodeVisitor) {
 
 type StructTypeField struct {
 	Names []*IdentifierExpr
-	Type  Expr
+	Type  Type
 	Tag   string
 }
 

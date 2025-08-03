@@ -371,7 +371,7 @@ func (p *Parser) parseStructType() *StructType {
 	p.eatTokenOrError(TokenLBrace)
 
 	var Fields []StructTypeField
-	for p.currentToken().Kind() != TokenRBrace {
+	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
 		names := p.parseExprList()
 
 		var identifierNames []*IdentifierExpr
@@ -379,12 +379,12 @@ func (p *Parser) parseStructType() *StructType {
 			if identifierName, ok := name.(*IdentifierExpr); ok {
 				identifierNames = append(identifierNames, identifierName)
 			} else {
-				p.file.errorf(p.currentToken().SourceRange(), "expected identifier expression but found %v", p.currentToken())
+				p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found %v", p.currentToken())
 				return nil
 			}
 		}
 
-		fieldType := p.ParseExpr()
+		fieldType := p.parseType()
 		if fieldType == nil {
 			return nil
 		}
