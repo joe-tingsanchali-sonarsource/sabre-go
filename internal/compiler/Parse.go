@@ -372,16 +372,12 @@ func (p *Parser) parseStructType() *StructType {
 
 	var Fields []StructTypeField
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
-		names := p.parseExprList()
-
-		var identifierNames []*IdentifierExpr
-		for _, name := range names {
-			if identifierName, ok := name.(*IdentifierExpr); ok {
-				identifierNames = append(identifierNames, identifierName)
-			} else {
-				p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found %v", p.currentToken())
-				return nil
-			}
+		var names []*IdentifierExpr
+		name := p.parseIdentifierExpr()
+		names = append(names, name)
+		for p.currentToken().Kind() == TokenComma {
+			p.eatToken()
+			names = append(names, p.parseIdentifierExpr())
 		}
 
 		fieldType := p.parseType()
@@ -392,7 +388,7 @@ func (p *Parser) parseStructType() *StructType {
 		p.eatTokenOrError(TokenSemicolon)
 
 		// TODO: Tag.
-		Fields = append(Fields, StructTypeField{Names: identifierNames, Type: fieldType})
+		Fields = append(Fields, StructTypeField{Names: names, Type: fieldType})
 	}
 
 	p.eatTokenOrError(TokenRBrace)
