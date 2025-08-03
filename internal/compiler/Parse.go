@@ -412,7 +412,7 @@ func (p *Parser) ParseStmt() Stmt {
 	}
 }
 
-func (p *Parser) parseSimpleStmt() (Stmt, bool) {
+func (p *Parser) parseSimpleStmt() (stmt Stmt, isRange bool) {
 	exprs := p.parseExprList()
 	if len(exprs) == 0 {
 		return nil, false
