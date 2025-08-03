@@ -1,0 +1,7 @@
+(StructType 2
+  (IdentifierExpr IDENTIFIER(x))
+  (IdentifierExpr IDENTIFIER(y))
+    (IdentifierExpr IDENTIFIER(int))
+  (IdentifierExpr IDENTIFIER(u))
+    (IdentifierExpr IDENTIFIER(float32))
+)

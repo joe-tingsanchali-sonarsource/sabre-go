@@ -177,6 +177,30 @@ func (e *ArrayType) Visit(v NodeVisitor) {
 	v.VisitArrayType(e)
 }
 
+type StructTypeField struct {
+	Names []*IdentifierExpr
+	Type  Expr
+	Tag   string
+}
+
+type StructType struct {
+	Struct Token
+	Fields []StructTypeField
+}
+
+func (e *StructType) exprNode() {}
+func (e *StructType) typeExpr() {}
+func (e *StructType) SourceRange() SourceRange {
+	if len(e.Fields) > 0 {
+		return e.Struct.SourceRange().Merge(e.Fields[len(e.Fields)-1].Type.SourceRange())
+	} else {
+		return e.Struct.SourceRange()
+	}
+}
+func (e *StructType) Visit(v NodeVisitor) {
+	v.VisitStructType(e)
+}
+
 // Stmt Nodes
 type Stmt interface {
 	Node
@@ -342,6 +366,7 @@ type NodeVisitor interface {
 
 	VisitNamedType(n *NamedType)
 	VisitArrayType(n *ArrayType)
+	VisitStructType(n *StructType)
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
@@ -396,6 +421,14 @@ func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
 func (v *DefaultVisitor) VisitArrayType(n *ArrayType) {
 	n.Length.Visit(v)
 	n.ElementType.Visit(v)
+}
+func (v *DefaultVisitor) VisitStructType(n *StructType) {
+	for _, e := range n.Fields {
+		for _, name := range e.Names {
+			name.Visit(v)
+		}
+		e.Type.Visit(v)
+	}
 }
 
 func (v *DefaultVisitor) VisitExprStmt(n *ExprStmt) {

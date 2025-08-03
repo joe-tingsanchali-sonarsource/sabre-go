@@ -199,6 +199,29 @@ func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
 	v.indentor.print(")")
 }
 
+func (v *ASTPrinter) VisitStructType(n *StructType) {
+	v.indentor.printf("(StructType %v", len(n.Fields))
+
+	if len(n.Fields) > 0 {
+		v.indentor.Push()
+
+		for _, f := range n.Fields {
+			for _, name := range f.Names {
+				v.indentor.NewLine()
+				name.Visit(v)
+			}
+			v.indentor.Push()
+			v.indentor.NewLine()
+			f.Type.Visit(v)
+			v.indentor.Pop()
+		}
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+	}
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitExprStmt(n *ExprStmt) {
 	v.indentor.print("(ExprStmt")
 	v.indentor.Push()
