@@ -370,7 +370,7 @@ func (p *Parser) parseStructType() *StructType {
 
 	p.eatTokenOrError(TokenLBrace)
 
-	var Fields []StructTypeField
+	var fields []StructTypeField
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
 		for p.currentToken().Kind() == TokenComma {
@@ -383,17 +383,21 @@ func (p *Parser) parseStructType() *StructType {
 			return nil
 		}
 
+		var tag Token
+		if p.currentToken().Kind() == TokenLiteralString {
+			tag = p.eatToken()
+		}
+
 		p.eatTokenOrError(TokenSemicolon)
 
-		// TODO: Tag.
-		Fields = append(Fields, StructTypeField{Names: names, Type: fieldType})
+		fields = append(fields, StructTypeField{Names: names, Type: fieldType, Tag: tag})
 	}
 
 	p.eatTokenOrError(TokenRBrace)
 
 	return &StructType{
 		Struct: structToken,
-		Fields: Fields,
+		Fields: fields,
 	}
 }
 

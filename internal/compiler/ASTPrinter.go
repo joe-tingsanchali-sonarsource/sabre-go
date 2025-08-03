@@ -206,13 +206,23 @@ func (v *ASTPrinter) VisitStructType(n *StructType) {
 		v.indentor.Push()
 
 		for _, f := range n.Fields {
+			// Identifiers
 			for _, name := range f.Names {
 				v.indentor.NewLine()
 				name.Visit(v)
 			}
 			v.indentor.Push()
+
+			// Type
 			v.indentor.NewLine()
 			f.Type.Visit(v)
+
+			// Tag
+			v.indentor.NewLine()
+			if f.Tag.valid() {
+				v.indentor.printf("(Tag %v)", f.Tag)
+			}
+
 			v.indentor.Pop()
 		}
 
