@@ -1,0 +1,19 @@
+(ComplitExpr
+  (NamedType IDENTIFIER(Foo))
+  (Element
+    (SelectorExpr
+      (IdentifierExpr IDENTIFIER(x))
+      (IdentifierExpr IDENTIFIER(y))
+    )
+    (ComplitExpr
+      (ArrayType
+        (LiteralExpr LITERAL_INT(6))
+        (NamedType IDENTIFIER(int))
+      )
+      (Element
+        (LiteralExpr LITERAL_INT(1))
+        (LiteralExpr LITERAL_INT(42))
+      )
+    )
+  )
+)

@@ -184,6 +184,7 @@ func (p *Parser) parseBaseExpr() Expr {
 					expr = complit
 				}
 			}
+			return expr
 		default:
 			return expr
 		}
@@ -284,6 +285,8 @@ func (p *Parser) parseAtom() Expr {
 		return p.parseIdentifierExpr()
 	case TokenLParen:
 		return p.parseParenExpr()
+	case TokenLBracket:
+		return p.parseArrayType()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
 	}
@@ -326,6 +329,67 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 	return nil
 }
 
+func (p *Parser) parseArrayType() *ArrayType {
+	lBracket := p.eatTokenOrError(TokenLBracket)
+	if !lBracket.valid() {
+		return nil
+	}
+
+	var length Expr
+	if p.currentToken().Kind() != TokenRBracket {
+		length = p.ParseExpr()
+		if length == nil {
+			return nil
+		}
+	}
+
+	rBracket := p.eatTokenOrError(TokenRBracket)
+	if !rBracket.valid() {
+		return nil
+	}
+
+	elementType := p.parseType()
+	if elementType == nil {
+		return nil
+	}
+
+	return &ArrayType{
+		LBracket:    lBracket,
+		Length:      length,
+		RBracket:    rBracket,
+		ElementType: elementType,
+	}
+}
+
+func (p *Parser) parseType() Type {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		identifier := p.parseIdentifierExpr()
+		if identifier == nil {
+			return nil
+		}
+		if p.eatTokenIfKind(TokenDot).valid() {
+			selector := p.parseIdentifierExpr()
+			if selector == nil {
+				return nil
+			}
+			return &NamedType{
+				Package:  identifier.Token,
+				TypeName: selector.Token,
+			}
+		} else {
+			return &NamedType{
+				TypeName: identifier.Token,
+			}
+		}
+	case TokenLBracket:
+		return p.parseArrayType()
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
+		return nil
+	}
+}
+
 func (p *Parser) convertParsedExprToType(e Expr) Type {
 	switch n := e.(type) {
 	case *IdentifierExpr:
@@ -339,6 +403,10 @@ func (p *Parser) convertParsedExprToType(e Expr) Type {
 				TypeName: n.Selector.Token,
 			}
 		}
+	case *NamedType:
+		return n
+	case *ArrayType:
+		return n
 	}
 	return nil
 }
@@ -395,6 +463,8 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseBreakStmt()
 	case TokenFallthrough:
 		return p.parseFallthroughStmt()
+	case TokenSwitch:
+		return p.parseSwitchStmt()
 	case TokenContinue:
 		return p.parseContinueStmt()
 	case TokenLBrace:
@@ -538,6 +608,79 @@ func (p *Parser) parseFallthroughStmt() *FallthroughStmt {
 	}
 }
 
+func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
+	caseToken := p.eatTokenIfKind(TokenCase)
+
+	var lhs []Expr
+	if caseToken.valid() {
+		lhs = p.parseExprList()
+	} else {
+		caseToken = p.eatTokenOrError(TokenDefault)
+		if !caseToken.valid() {
+			return nil
+		}
+	}
+
+	colonToken := p.eatTokenOrError(TokenColon)
+	if !colonToken.valid() {
+		return nil
+	}
+
+	rhs := p.parseStmtList()
+
+	return &SwitchCaseStmt{
+		Case:  caseToken,
+		LHS:   lhs,
+		Colon: colonToken,
+		RHS:   rhs,
+	}
+}
+
+func (p *Parser) parseSwitchStmt() *SwitchStmt {
+	switchToken := p.eatTokenOrError(TokenSwitch)
+	if !switchToken.valid() {
+		return nil
+	}
+
+	exprLevel := p.pushExprLevelAsControlStmt()
+	defer p.popExprLevelFromControlStmt(exprLevel)
+
+	var init Stmt = nil
+	if p.currentToken().Kind() != TokenLBrace {
+		init = p.parseSimpleStmt()
+	}
+
+	var tag Expr = nil
+	if exprStmt, ok := init.(*ExprStmt); ok {
+		tag = exprStmt.Expr
+		init = nil
+	} else {
+		if init != nil {
+			p.eatTokenOrError(TokenSemicolon)
+		}
+
+		if p.currentToken().Kind() != TokenLBrace {
+			tag = p.ParseExpr()
+			p.eatTokenIfKind(TokenSemicolon)
+		}
+	}
+
+	lBraceToken := p.eatTokenOrError(TokenLBrace)
+	var list []Stmt
+	for p.currentToken().Kind() == TokenCase || p.currentToken().Kind() == TokenDefault {
+		list = append(list, p.parseSwitchCaseStmt())
+	}
+	rBraceToken := p.eatTokenOrError(TokenRBrace)
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &SwitchStmt{
+		Switch: switchToken,
+		Init:   init,
+		Tag:    tag,
+		Body:   &BlockStmt{LBrace: lBraceToken, Stmts: list, RBrace: rBraceToken},
+	}
+}
+
 func (p *Parser) parseContinueStmt() *ContinueStmt {
 	continueToken := p.eatTokenOrError(TokenContinue)
 	if !continueToken.valid() {
@@ -576,8 +719,7 @@ func (p *Parser) parseBlockStmt() *BlockStmt {
 
 func (p *Parser) parseStmtList() []Stmt {
 	var list []Stmt
-	// TODO: Add != case and != default to this list when you work on switch
-	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
+	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
 		list = append(list, p.ParseStmt())
 	}
 	return list

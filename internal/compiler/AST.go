@@ -149,6 +149,7 @@ type NamedType struct {
 
 func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
 func (e *NamedType) exprNode()                {}
+func (e *NamedType) typeExpr()                {}
 func (e *NamedType) SourceRange() SourceRange {
 	if e.IsPackageQualified() {
 		return e.Package.SourceRange().Merge(e.TypeName.SourceRange())
@@ -159,7 +160,22 @@ func (e *NamedType) SourceRange() SourceRange {
 func (e *NamedType) Visit(v NodeVisitor) {
 	v.VisitNamedType(e)
 }
-func (e *NamedType) typeExpr() {}
+
+type ArrayType struct {
+	LBracket    Token
+	Length      Expr
+	RBracket    Token
+	ElementType Type
+}
+
+func (e *ArrayType) exprNode() {}
+func (e *ArrayType) typeExpr() {}
+func (e *ArrayType) SourceRange() SourceRange {
+	return e.LBracket.SourceRange().Merge(e.ElementType.SourceRange())
+}
+func (e *ArrayType) Visit(v NodeVisitor) {
+	v.VisitArrayType(e)
+}
 
 // Stmt Nodes
 type Stmt interface {
@@ -292,6 +308,39 @@ func (e *AssignStmt) Visit(v NodeVisitor) {
 	v.VisitAssignStmt(e)
 }
 
+type SwitchCaseStmt struct {
+	Case  Token
+	LHS   []Expr
+	Colon Token
+	RHS   []Stmt
+}
+
+func (e *SwitchCaseStmt) stmtNode() {}
+func (e *SwitchCaseStmt) SourceRange() SourceRange {
+	if len(e.RHS) == 0 {
+		panic("SwitchCaseStmt RHS shouldn't be empty")
+	}
+	return e.Case.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+}
+func (e *SwitchCaseStmt) Visit(v NodeVisitor) {
+	v.VisitSwitchCaseStmt(e)
+}
+
+type SwitchStmt struct {
+	Switch Token
+	Init   Stmt
+	Tag    Expr
+	Body   Stmt
+}
+
+func (e *SwitchStmt) stmtNode() {}
+func (e *SwitchStmt) SourceRange() SourceRange {
+	return e.Switch.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *SwitchStmt) Visit(v NodeVisitor) {
+	v.VisitSwitchStmt(e)
+}
+
 type IfStmt struct {
 	If   Token
 	Init Stmt // init statement or nil
@@ -352,6 +401,7 @@ type NodeVisitor interface {
 	VisitComplitExpr(n *ComplitExpr)
 
 	VisitNamedType(n *NamedType)
+	VisitArrayType(n *ArrayType)
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
@@ -361,6 +411,8 @@ type NodeVisitor interface {
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
 	VisitAssignStmt(n *AssignStmt)
+	VisitSwitchCaseStmt(n *SwitchCaseStmt)
+	VisitSwitchStmt(n *SwitchStmt)
 	VisitIfStmt(n *IfStmt)
 	VisitForStmt(n *ForStmt)
 }
@@ -404,6 +456,10 @@ func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) {
 }
 
 func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
+func (v *DefaultVisitor) VisitArrayType(n *ArrayType) {
+	n.Length.Visit(v)
+	n.ElementType.Visit(v)
+}
 
 func (v *DefaultVisitor) VisitExprStmt(n *ExprStmt) {
 	n.Expr.Visit(v)
@@ -431,6 +487,19 @@ func (v *DefaultVisitor) VisitAssignStmt(n *AssignStmt) {
 	for _, e := range n.RHS {
 		e.Visit(v)
 	}
+}
+func (v *DefaultVisitor) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
+}
+func (v *DefaultVisitor) VisitSwitchStmt(n *SwitchStmt) {
+	n.Init.Visit(v)
+	n.Tag.Visit(v)
+	n.Body.Visit(v)
 }
 func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	if n.Init != nil {

@@ -210,6 +210,22 @@ func TestSourceRange_HighlightCodeRange(t *testing.T) {
 				">> 	^^^^^^      ",
 			),
 		},
+		{
+			name: "multiline file, select second line",
+			sourceRange: SourceRange{
+				BeginPosition: SourcePosition{Line: 2, Column: 12},
+				EndPosition:   SourcePosition{Line: 2, Column: 12},
+				BeginOffset:   22,
+				EndOffset:     22,
+				File: &UnitFile{
+					lines: []string{"first line", "second line", "third line"},
+				},
+			},
+			expected: concatLines(
+				">> 	second line",
+				">> 	           ^",
+			),
+		},
 	}
 
 	for _, tt := range tests {

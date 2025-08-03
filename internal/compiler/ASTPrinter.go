@@ -182,6 +182,23 @@ func (v *ASTPrinter) VisitNamedType(n *NamedType) {
 	}
 }
 
+func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
+	v.indentor.print("(ArrayType")
+	v.indentor.Push()
+
+	if n.Length != nil {
+		v.indentor.NewLine()
+		n.Length.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	n.ElementType.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitExprStmt(n *ExprStmt) {
 	v.indentor.print("(ExprStmt")
 	v.indentor.Push()
@@ -275,6 +292,70 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 		v.indentor.NewLine()
 		e.Visit(v)
 	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
+	if n.Case.Kind() == TokenCase {
+		v.indentor.print("(SwitchCaseStmt")
+	} else {
+		v.indentor.print("(DefaultCaseStmt")
+	}
+
+	v.indentor.Push()
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	v.indentor.print(n.Colon)
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitSwitchStmt(n *SwitchStmt) {
+	v.indentor.print("(SwitchStmt")
+	v.indentor.Push()
+
+	if n.Init != nil {
+		v.indentor.NewLine()
+		v.indentor.print("(SwitchStmt-Init")
+		v.indentor.Push()
+		v.indentor.NewLine()
+
+		n.Init.Visit(v)
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
+	}
+
+	if n.Tag != nil {
+		v.indentor.NewLine()
+		v.indentor.print("(SwitchStmt-Tag")
+		v.indentor.Push()
+		v.indentor.NewLine()
+
+		n.Tag.Visit(v)
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
+	}
+
+	v.indentor.NewLine()
+	n.Body.Visit(v)
 
 	v.indentor.Pop()
 	v.indentor.NewLine()
