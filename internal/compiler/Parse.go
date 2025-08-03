@@ -647,7 +647,7 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 
 	var init Stmt = nil
 	if p.currentToken().Kind() != TokenLBrace {
-		init = p.parseSimpleStmt()
+		init, _ = p.parseSimpleStmt()
 	}
 
 	var tag Expr = nil
@@ -799,7 +799,7 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 	return
 }
 
-func (p *Parser) parseForStmt() *ForStmt {
+func (p *Parser) parseForStmt() Stmt {
 	forToken := p.eatTokenOrError(TokenFor)
 	if !forToken.valid() {
 		return nil
@@ -819,17 +819,11 @@ func (p *Parser) parseForStmt() *ForStmt {
 	// for range list {}
 	if p.currentToken().Kind() == TokenRange {
 		rangeToken := p.eatToken()
-		rangeExpr := &UnaryExpr{Operator: rangeToken, Base: p.ParseExpr()}
 
-		forRange := ForStmtRange{
-			Init:  &AssignStmt{RHS: []Expr{rangeExpr}},
-			Range: rangeExpr.Operator,
-			Expr:  rangeExpr.Base,
-		}
-
-		return &ForStmt{
+		return &ForRangeStmt{
 			For:   forToken,
-			Range: forRange,
+			Range: rangeToken,
+			Expr:  p.ParseExpr(),
 			Body:  p.parseBlockStmt(),
 		}
 	}
@@ -841,9 +835,9 @@ func (p *Parser) parseForStmt() *ForStmt {
 			// for cond {}
 			if exprStmt, ok := cond.(*ExprStmt); ok {
 				return &ForStmt{
-					For:    forToken,
-					Clause: ForStmtClause{Cond: exprStmt.Expr},
-					Body:   p.parseBlockStmt(),
+					For:  forToken,
+					Cond: exprStmt.Expr,
+					Body: p.parseBlockStmt(),
 				}
 				// for i, [_] := range 10 {}
 			} else if assignStmt, ok := cond.(*AssignStmt); ok && isRange {
@@ -861,15 +855,11 @@ func (p *Parser) parseForStmt() *ForStmt {
 
 				rangeExpr := assignStmt.RHS[0].(*UnaryExpr)
 
-				forRange := ForStmtRange{
+				return &ForRangeStmt{
+					For:   forToken,
 					Init:  assignStmt,
 					Range: rangeExpr.Operator,
 					Expr:  rangeExpr.Base,
-				}
-
-				return &ForStmt{
-					For:   forToken,
-					Range: forRange,
 					Body:  p.parseBlockStmt(),
 				}
 			}
@@ -893,15 +883,11 @@ func (p *Parser) parseForStmt() *ForStmt {
 		post = postStmt
 	}
 
-	forClause := ForStmtClause{
+	return &ForStmt{
+		For:  forToken,
 		Init: init,
 		Cond: cond,
 		Post: post,
-	}
-
-	return &ForStmt{
-		For:    forToken,
-		Clause: forClause,
-		Body:   p.parseBlockStmt(),
+		Body: p.parseBlockStmt(),
 	}
 }

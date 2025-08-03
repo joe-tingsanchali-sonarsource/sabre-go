@@ -361,23 +361,12 @@ func (e *IfStmt) Visit(v NodeVisitor) {
 	v.VisitIfStmt(e)
 }
 
-type ForStmtClause struct {
+type ForStmt struct {
+	For  Token
 	Init Stmt
 	Cond Expr
 	Post Stmt
-}
-
-type ForStmtRange struct {
-	Init  *AssignStmt
-	Range Token
-	Expr  Expr
-}
-
-type ForStmt struct {
-	For    Token
-	Clause ForStmtClause
-	Range  ForStmtRange
-	Body   *BlockStmt
+	Body *BlockStmt
 }
 
 func (e *ForStmt) stmtNode() {}
@@ -386,6 +375,22 @@ func (e *ForStmt) SourceRange() SourceRange {
 }
 func (e *ForStmt) Visit(v NodeVisitor) {
 	v.VisitForStmt(e)
+}
+
+type ForRangeStmt struct {
+	For   Token
+	Init  *AssignStmt
+	Range Token
+	Expr  Expr
+	Body  *BlockStmt
+}
+
+func (e *ForRangeStmt) stmtNode() {}
+func (e *ForRangeStmt) SourceRange() SourceRange {
+	return e.For.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *ForRangeStmt) Visit(v NodeVisitor) {
+	v.VisitForRangeStmt(e)
 }
 
 // Visitor Interface
@@ -415,6 +420,7 @@ type NodeVisitor interface {
 	VisitSwitchStmt(n *SwitchStmt)
 	VisitIfStmt(n *IfStmt)
 	VisitForStmt(n *ForStmt)
+	VisitForRangeStmt(n *ForRangeStmt)
 }
 
 type DefaultVisitor struct{}
@@ -513,20 +519,23 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 }
 
 func (v *DefaultVisitor) VisitForStmt(n *ForStmt) {
-	if n.Range.Init != nil {
-		n.Range.Init.Visit(v)
-		n.Range.Expr.Visit(v)
-	} else {
-		if n.Clause.Init != nil {
-			n.Clause.Init.Visit(v)
-		}
-		if n.Clause.Cond != nil {
-			n.Clause.Cond.Visit(v)
-		}
-		if n.Clause.Post != nil {
-			n.Clause.Post.Visit(v)
-		}
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
+
+	if n.Cond != nil {
+		n.Cond.Visit(v)
+	}
+
+	if n.Post != nil {
+		n.Post.Visit(v)
 	}
 
 	n.Body.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
+	// TODO: Check if init is not nil
+	n.Init.Visit(v)
+	n.Expr.Visit(v)
 }

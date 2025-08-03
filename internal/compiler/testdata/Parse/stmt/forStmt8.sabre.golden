@@ -1,11 +1,11 @@
 (ForStmt
-  (ForStmt-Clause-Cond
+  (ForStmt-Cond
     (BinaryExpr <
       (IdentifierExpr IDENTIFIER(x))
       (LiteralExpr LITERAL_INT(5))
     )
   )
-  (ForStmt-Clause-Post
+  (ForStmt-Post
     (IncDecStmt ++
       (IdentifierExpr IDENTIFIER(x))
     )

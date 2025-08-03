@@ -1,5 +1,5 @@
-(ForStmt
-  (ForStmt-Range-Init
+(ForRangeStmt
+  (ForRangeStmt-Init
     (AssignStmt
       (IdentifierExpr IDENTIFIER(i))
       (IdentifierExpr IDENTIFIER(_))
@@ -9,7 +9,7 @@
       )
     )
   )
-  (ForStmt-Body
+  (ForRangeStmt-Body
     (Block 0)
   )
 )

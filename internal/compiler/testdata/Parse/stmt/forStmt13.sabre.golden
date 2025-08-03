@@ -1,8 +1,8 @@
 (ForStmt
-  (ForStmt-Clause-Cond
+  (ForStmt-Cond
     (IdentifierExpr IDENTIFIER(cond))
   )
-  (ForStmt-Clause-Post
+  (ForStmt-Post
     (IncDecStmt ++
       (IdentifierExpr IDENTIFIER(i))
     )

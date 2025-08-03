@@ -1,12 +1,8 @@
-(ForStmt
-  (ForStmt-Range-Init
-    (AssignStmt
-      (UnaryExpr range
-        (IdentifierExpr IDENTIFIER(list))
-      )
-    )
+(ForRangeStmt
+  (ForRangeStmt-Expr
+    (IdentifierExpr IDENTIFIER(list))
   )
-  (ForStmt-Body
+  (ForRangeStmt-Body
     (Block 0)
   )
 )

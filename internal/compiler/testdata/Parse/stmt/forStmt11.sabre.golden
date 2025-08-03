@@ -1,5 +1,5 @@
 (ForStmt
-  (ForStmt-Clause-Cond
+  (ForStmt-Cond
     (IdentifierExpr IDENTIFIER(cond))
   )
   (ForStmt-Body
