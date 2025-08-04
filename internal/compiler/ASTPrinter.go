@@ -283,10 +283,8 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 		e.Visit(v)
 	}
 
-	if n.Operator.valid() {
-		v.indentor.NewLine()
-		v.indentor.print(n.Operator)
-	}
+	v.indentor.NewLine()
+	v.indentor.print(n.Operator)
 
 	for _, e := range n.RHS {
 		v.indentor.NewLine()

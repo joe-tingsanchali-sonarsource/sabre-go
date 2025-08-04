@@ -535,7 +535,8 @@ func (v *DefaultVisitor) VisitForStmt(n *ForStmt) {
 }
 
 func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
-	// TODO: Check if init is not nil
-	n.Init.Visit(v)
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
 	n.Expr.Visit(v)
 }

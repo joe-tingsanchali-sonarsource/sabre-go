@@ -849,7 +849,7 @@ func (p *Parser) parseForStmt() Stmt {
 				case 2:
 					// nothing to do
 				default:
-					p.file.errorf(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most 2 expressions")
+					p.file.errorf(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most two iteration variables in range for statement")
 					return nil
 				}
 
@@ -869,8 +869,9 @@ func (p *Parser) parseForStmt() Stmt {
 	}
 
 	// for [init]; [cond]; [post] {}
+	p.eatTokenOrError(TokenSemicolon)
+
 	var cond Expr
-	p.eatToken()
 	if p.currentToken().Kind() != TokenSemicolon {
 		cond = p.ParseExpr()
 	}
