@@ -5,4 +5,11 @@
     =
     (LiteralExpr LITERAL_INT(1024))
   )
+  (ConstDeclSpec
+    (IdentifierExpr IDENTIFIER(eof))
+    =
+    (UnaryExpr -
+      (LiteralExpr LITERAL_INT(1))
+    )
+  )
 )
