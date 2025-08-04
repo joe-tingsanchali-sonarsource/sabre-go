@@ -1,0 +1,8 @@
+(ConstDecl
+  (IdentifierExpr IDENTIFIER(u))
+  (IdentifierExpr IDENTIFIER(v))
+  (NamedType IDENTIFIER(float32))
+  =
+  (LiteralExpr LITERAL_INT(0))
+  (LiteralExpr LITERAL_INT(3))
+)

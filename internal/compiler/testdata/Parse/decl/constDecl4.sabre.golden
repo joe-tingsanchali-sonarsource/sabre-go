@@ -1,0 +1,9 @@
+(ConstDecl
+  (IdentifierExpr IDENTIFIER(a))
+  (IdentifierExpr IDENTIFIER(b))
+  (IdentifierExpr IDENTIFIER(c))
+  =
+  (LiteralExpr LITERAL_INT(3))
+  (LiteralExpr LITERAL_INT(4))
+  (LiteralExpr LITERAL_STRING("foo"))
+)
