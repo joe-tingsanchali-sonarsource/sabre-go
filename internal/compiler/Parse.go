@@ -732,7 +732,10 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 
 	lhs := p.parseExprList()
 
-	constType := p.parseType()
+	var constType Type
+	if p.currentToken().Kind() != TokenAssign {
+		constType = p.parseType()
+	}
 
 	assignToken := p.eatTokenIfKind(TokenAssign)
 
