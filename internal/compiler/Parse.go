@@ -732,8 +732,8 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 
 	var specs []ConstDeclSpec
 
-	shouldContinue := true
-	for shouldContinue {
+	keepParsing := true
+	for keepParsing {
 		lhs := p.parseExprList()
 
 		var constType Type
@@ -757,10 +757,7 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 
 		p.eatTokenOrError(TokenSemicolon)
 
-		shouldContinue = lParenToken.valid() && p.currentToken().Kind() != TokenRParen && p.currentToken().valid()
-		if !shouldContinue {
-			break
-		}
+		keepParsing = lParenToken.valid() && p.currentToken().Kind() != TokenRParen && p.currentToken().valid()
 	}
 
 	var rParenToken Token
