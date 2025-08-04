@@ -1,5 +1,7 @@
 (ConstDecl
-  (IdentifierExpr IDENTIFIER(zero))
-  =
-  (LiteralExpr LITERAL_FLOAT(0.0))
+  (ConstDeclSpec
+    (IdentifierExpr IDENTIFIER(zero))
+    =
+    (LiteralExpr LITERAL_FLOAT(0.0))
+  )
 )

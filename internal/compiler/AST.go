@@ -334,13 +334,17 @@ type Decl interface {
 	declNode()
 }
 
-type ConstDecl struct {
-	Const  Token
-	LParen Token
+type ConstDeclSpec struct {
 	LHS    []Expr // TODO: Convert to []*IdentifierExpr later
 	Type   Type
 	Assign Token
 	RHS    []Expr
+}
+
+type ConstDecl struct {
+	Const  Token
+	LParen Token
+	Specs  []ConstDeclSpec
 	RParen Token
 }
 
@@ -349,7 +353,7 @@ func (e *ConstDecl) SourceRange() SourceRange {
 	if e.RParen.valid() {
 		return e.Const.SourceRange().Merge(e.RParen.SourceRange())
 	} else {
-		return e.Const.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+		return e.Const.SourceRange().Merge(e.Specs[0].RHS[len(e.Specs[len(e.Specs)-1].RHS)-1].SourceRange())
 	}
 }
 func (e *ConstDecl) Visit(v NodeVisitor) {
@@ -467,15 +471,17 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 }
 
 func (v *DefaultVisitor) VisitConstDecl(n *ConstDecl) {
-	for _, e := range n.LHS {
-		e.Visit(v)
-	}
+	for _, spec := range n.Specs {
+		for _, e := range spec.LHS {
+			e.Visit(v)
+		}
 
-	if n.Type != nil {
-		n.Type.Visit(v)
-	}
+		if spec.Type != nil {
+			spec.Type.Visit(v)
+		}
 
-	for _, e := range n.RHS {
-		e.Visit(v)
+		for _, e := range spec.RHS {
+			e.Visit(v)
+		}
 	}
 }

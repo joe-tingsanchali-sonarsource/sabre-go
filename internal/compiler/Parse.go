@@ -730,16 +730,38 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 
 	lParenToken := p.eatTokenIfKind(TokenLParen)
 
-	lhs := p.parseExprList()
+	var specs []ConstDeclSpec
 
-	var constType Type
-	if p.currentToken().Kind() != TokenAssign {
-		constType = p.parseType()
+	shouldContinue := true
+	for shouldContinue {
+		lhs := p.parseExprList()
+
+		var constType Type
+		if p.currentToken().Kind() != TokenAssign && p.currentToken().Kind() != TokenSemicolon {
+			constType = p.parseType()
+		}
+
+		assignToken := p.eatTokenIfKind(TokenAssign)
+
+		var rhs []Expr
+		if assignToken.valid() {
+			rhs = p.parseExprList()
+		}
+
+		specs = append(specs, ConstDeclSpec{
+			LHS:    lhs,
+			Type:   constType,
+			Assign: assignToken,
+			RHS:    rhs,
+		})
+
+		p.eatTokenOrError(TokenSemicolon)
+
+		shouldContinue = lParenToken.valid() && p.currentToken().Kind() != TokenRParen && p.currentToken().valid()
+		if !shouldContinue {
+			break
+		}
 	}
-
-	assignToken := p.eatTokenIfKind(TokenAssign)
-
-	rhs := p.parseExprList()
 
 	var rParenToken Token
 	if lParenToken.valid() {
@@ -749,10 +771,7 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 	return &ConstDecl{
 		Const:  constToken,
 		LParen: lParenToken,
-		LHS:    lhs,
-		Type:   constType,
-		Assign: assignToken,
-		RHS:    rhs,
+		Specs:  specs,
 		RParen: rParenToken,
 	}
 }

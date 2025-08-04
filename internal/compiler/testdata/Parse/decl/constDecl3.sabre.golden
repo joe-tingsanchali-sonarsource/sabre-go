@@ -1,6 +1,8 @@
 (ConstDecl
-  (IdentifierExpr IDENTIFIER(size))
-  (NamedType IDENTIFIER(int64))
-  =
-  (LiteralExpr LITERAL_INT(1024))
+  (ConstDeclSpec
+    (IdentifierExpr IDENTIFIER(size))
+    (NamedType IDENTIFIER(int64))
+    =
+    (LiteralExpr LITERAL_INT(1024))
+  )
 )
