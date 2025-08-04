@@ -354,3 +354,30 @@ func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitConstDecl(n *ConstDecl) {
+	v.indentor.print("(ConstDecl")
+	v.indentor.Push()
+
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		v.indentor.NewLine()
+		n.Type.Visit(v)
+	}
+
+	v.indentor.NewLine()
+	v.indentor.print(n.Assign)
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}

@@ -712,3 +712,23 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 
 	return
 }
+
+func (p *Parser) ParseDecl() Decl {
+	switch p.currentToken().Kind() {
+	case TokenConst:
+		return p.parseConstDecl()
+	default:
+		return nil
+	}
+}
+
+func (p *Parser) parseConstDecl() *ConstDecl {
+	constToken := p.eatTokenOrError(TokenConst)
+	if !constToken.valid() {
+		return nil
+	}
+
+	return &ConstDecl{
+		Const: constToken,
+	}
+}

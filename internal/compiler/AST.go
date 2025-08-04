@@ -328,6 +328,34 @@ func (e *IfStmt) Visit(v NodeVisitor) {
 	v.VisitIfStmt(e)
 }
 
+// Decl Nodes
+type Decl interface {
+	Node
+	declNode()
+}
+
+type ConstDecl struct {
+	Const  Token
+	LParen Token
+	LHS    []*IdentifierExpr
+	Type   Type
+	Assign Token
+	RHS    []Expr
+	RParen Token
+}
+
+func (e *ConstDecl) declNode() {}
+func (e *ConstDecl) SourceRange() SourceRange {
+	if e.RParen.valid() {
+		return e.Const.SourceRange().Merge(e.RParen.SourceRange())
+	} else {
+		return e.Const.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+	}
+}
+func (e *ConstDecl) Visit(v NodeVisitor) {
+	v.VisitConstDecl(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -352,6 +380,8 @@ type NodeVisitor interface {
 	VisitBlockStmt(n *BlockStmt)
 	VisitAssignStmt(n *AssignStmt)
 	VisitIfStmt(n *IfStmt)
+
+	VisitConstDecl(n *ConstDecl)
 }
 
 type DefaultVisitor struct{}
@@ -433,5 +463,19 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	n.Body.Visit(v)
 	if n.Else != nil {
 		n.Else.Visit(v)
+	}
+}
+
+func (v *DefaultVisitor) VisitConstDecl(n *ConstDecl) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		n.Type.Visit(v)
+	}
+
+	for _, e := range n.RHS {
+		e.Visit(v)
 	}
 }
