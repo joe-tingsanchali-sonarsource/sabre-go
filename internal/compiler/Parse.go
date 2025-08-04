@@ -741,7 +741,10 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 
 	rhs := p.parseExprList()
 
-	rParenToken := p.eatTokenIfKind(TokenRParen)
+	var rParenToken Token
+	if lParenToken.valid() {
+		rParenToken = p.eatTokenOrError(TokenRParen)
+	}
 
 	return &ConstDecl{
 		Const:  constToken,
