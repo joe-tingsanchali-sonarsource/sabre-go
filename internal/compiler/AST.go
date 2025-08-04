@@ -337,7 +337,7 @@ type Decl interface {
 type ConstDecl struct {
 	Const  Token
 	LParen Token
-	LHS    []*IdentifierExpr
+	LHS    []Expr // TODO: Convert to []*IdentifierExpr later
 	Type   Type
 	Assign Token
 	RHS    []Expr

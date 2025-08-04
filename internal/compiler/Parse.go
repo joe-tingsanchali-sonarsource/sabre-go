@@ -728,7 +728,25 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 		return nil
 	}
 
+	lParenToken := p.eatTokenIfKind(TokenLParen)
+
+	lhs := p.parseExprList()
+
+	constType := p.parseType()
+
+	assignToken := p.eatTokenIfKind(TokenAssign)
+
+	rhs := p.parseExprList()
+
+	rParenToken := p.eatTokenIfKind(TokenRParen)
+
 	return &ConstDecl{
-		Const: constToken,
+		Const:  constToken,
+		LParen: lParenToken,
+		LHS:    lhs,
+		Type:   constType,
+		Assign: assignToken,
+		RHS:    rhs,
+		RParen: rParenToken,
 	}
 }
