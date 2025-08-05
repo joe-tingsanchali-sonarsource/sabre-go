@@ -746,6 +746,9 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 		var rhs []Expr
 		if assignToken.valid() {
 			rhs = p.parseExprList()
+		} else if !lParenToken.valid() {
+			p.file.errorf(p.currentToken().SourceRange(), "missing init expr")
+			return nil
 		}
 
 		specs = append(specs, ConstDeclSpec{

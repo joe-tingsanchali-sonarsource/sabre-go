@@ -1,0 +1,3 @@
+>> 	const Pi float64
+>> 	                ^
+Error[internal/compiler/testdata/Parse/decl/constDecl9.sabre:1:17]: missing init expr
