@@ -1,0 +1,15 @@
+(ForStmt
+  (ForStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(i))
+      +=
+      (LiteralExpr LITERAL_INT(0))
+    )
+  )
+  (ForStmt-Cond
+    (IdentifierExpr IDENTIFIER(cond))
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)

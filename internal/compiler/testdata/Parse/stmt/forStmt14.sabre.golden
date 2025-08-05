@@ -1,0 +1,10 @@
+(ForStmt
+  (ForStmt-Post
+    (IncDecStmt ++
+      (IdentifierExpr IDENTIFIER(i))
+    )
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)

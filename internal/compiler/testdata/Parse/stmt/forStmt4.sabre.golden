@@ -1,0 +1,14 @@
+(ForRangeStmt
+  (ForRangeStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(i))
+      :=
+      (UnaryExpr range
+        (LiteralExpr LITERAL_INT(10))
+      )
+    )
+  )
+  (ForRangeStmt-Body
+    (Block 0)
+  )
+)

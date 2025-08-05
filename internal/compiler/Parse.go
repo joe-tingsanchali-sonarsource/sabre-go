@@ -472,19 +472,20 @@ func (p *Parser) ParseStmt() Stmt {
 		p.eatTokenOrError(TokenSemicolon)
 		return stmt
 	case TokenIf:
-		stmt := p.parseIfStmt()
-		return stmt
+		return p.parseIfStmt()
+	case TokenFor:
+		return p.parseForStmt()
 	default:
-		stmt := p.parseSimpleStmt()
+		stmt, _ := p.parseSimpleStmt()
 		p.eatTokenOrError(TokenSemicolon)
 		return stmt
 	}
 }
 
-func (p *Parser) parseSimpleStmt() Stmt {
+func (p *Parser) parseSimpleStmt() (stmt Stmt, isRange bool) {
 	exprs := p.parseExprList()
 	if len(exprs) == 0 {
-		return nil
+		return nil, false
 	}
 
 	switch p.currentToken().Kind() {
@@ -493,11 +494,21 @@ func (p *Parser) parseSimpleStmt() Stmt {
 		TokenMulAssign, TokenDivAssign, TokenModAssign, TokenAndAssign,
 		TokenOrAssign, TokenXorAssign, TokenShlAssign, TokenShrAssign:
 		operator := p.eatToken()
-		rhs := p.parseExprList()
-		return &AssignStmt{
-			LHS:      exprs,
-			Operator: operator,
-			RHS:      rhs,
+
+		if p.currentToken().Kind() == TokenRange && (operator.Kind() == TokenColonAssign || operator.Kind() == TokenAssign) {
+			rangeToken := p.eatToken()
+			expr := p.ParseExpr()
+			return &AssignStmt{
+				LHS:      exprs,
+				Operator: operator,
+				RHS:      []Expr{&UnaryExpr{Operator: rangeToken, Base: expr}},
+			}, true
+		} else {
+			return &AssignStmt{
+				LHS:      exprs,
+				Operator: operator,
+				RHS:      p.parseExprList(),
+			}, false
 		}
 	}
 
@@ -514,11 +525,11 @@ func (p *Parser) parseSimpleStmt() Stmt {
 		return &IncDecStmt{
 			Expr:     expr,
 			Operator: op,
-		}
+		}, false
 	default:
 		return &ExprStmt{
 			Expr: expr,
-		}
+		}, false
 	}
 }
 
@@ -636,7 +647,7 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 
 	var init Stmt = nil
 	if p.currentToken().Kind() != TokenLBrace {
-		init = p.parseSimpleStmt()
+		init, _ = p.parseSimpleStmt()
 	}
 
 	var tag Expr = nil
@@ -761,14 +772,14 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 
 	// handle direct {
 	if p.currentToken().Kind() != TokenLBrace && p.currentToken().Kind() != TokenSemicolon {
-		init = p.parseSimpleStmt()
+		init, _ = p.parseSimpleStmt()
 	}
 
 	var condStmt Stmt
 	if p.currentToken().Kind() != TokenLBrace {
 		p.eatTokenOrError(TokenSemicolon)
 		if p.currentToken().Kind() != TokenLBrace {
-			condStmt = p.parseSimpleStmt()
+			condStmt, _ = p.parseSimpleStmt()
 		}
 	} else {
 		condStmt = init
@@ -786,4 +797,96 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 	}
 
 	return
+}
+
+func (p *Parser) parseForStmt() Stmt {
+	forToken := p.eatTokenOrError(TokenFor)
+	if !forToken.valid() {
+		return nil
+	}
+
+	exprLevel := p.pushExprLevelAsControlStmt()
+	defer p.popExprLevelFromControlStmt(exprLevel)
+
+	// for {}
+	if p.currentToken().Kind() == TokenLBrace {
+		return &ForStmt{
+			For:  forToken,
+			Body: p.parseBlockStmt(),
+		}
+	}
+
+	// for range list {}
+	if rangeToken := p.eatTokenIfKind(TokenRange); rangeToken.valid() {
+		return &ForRangeStmt{
+			For:   forToken,
+			Range: rangeToken,
+			Expr:  p.ParseExpr(),
+			Body:  p.parseBlockStmt(),
+		}
+	}
+
+	var init Stmt
+	if p.currentToken().Kind() != TokenSemicolon {
+		cond, isRange := p.parseSimpleStmt()
+		if cond != nil {
+			// for cond {}
+			if exprStmt, ok := cond.(*ExprStmt); ok {
+				return &ForStmt{
+					For:  forToken,
+					Cond: exprStmt.Expr,
+					Body: p.parseBlockStmt(),
+				}
+				// for i, [_] := range 10 {}
+			} else if assignStmt, ok := cond.(*AssignStmt); ok && isRange {
+				switch len(assignStmt.LHS) {
+				case 0:
+					// nothing to do
+				case 1:
+					// nothing to do
+				case 2:
+					// nothing to do
+				default:
+					p.file.errorf(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most two iteration variables in range for statement")
+					return nil
+				}
+
+				rangeExpr := assignStmt.RHS[0].(*UnaryExpr)
+
+				return &ForRangeStmt{
+					For:   forToken,
+					Init:  assignStmt,
+					Range: rangeExpr.Operator,
+					Expr:  rangeExpr.Base,
+					Body:  p.parseBlockStmt(),
+				}
+			}
+
+			init = cond
+		}
+	}
+
+	// for [init]; [cond]; [post] {}
+	p.eatTokenOrError(TokenSemicolon)
+
+	var cond Expr
+	if p.currentToken().Kind() != TokenSemicolon {
+		cond = p.ParseExpr()
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	var post Stmt
+	if p.currentToken().Kind() != TokenLBrace {
+		postStmt, _ := p.parseSimpleStmt()
+		post = postStmt
+	}
+
+	return &ForStmt{
+		For:  forToken,
+		Init: init,
+		Cond: cond,
+		Post: post,
+		Body: p.parseBlockStmt(),
+	}
 }
