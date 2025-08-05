@@ -373,8 +373,7 @@ func (p *Parser) parseStructType() *StructType {
 	var fields []StructTypeField
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
-		for p.currentToken().Kind() == TokenComma {
-			p.eatToken()
+		for p.eatTokenIfKind(TokenComma).valid() {
 			names = append(names, p.parseIdentifierExpr())
 		}
 

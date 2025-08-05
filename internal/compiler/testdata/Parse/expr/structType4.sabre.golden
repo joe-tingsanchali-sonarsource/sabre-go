@@ -1,5 +1,7 @@
 (StructType 1
-  (IdentifierExpr IDENTIFIER(x))
+  (StructTypeField
+    (IdentifierExpr IDENTIFIER(x))
     (NamedType IDENTIFIER(int))
     (Tag LITERAL_STRING(`x:"X"`))
+  )
 )

@@ -1,7 +1,9 @@
 (StructType 1
-  (IdentifierExpr IDENTIFIER(List))
+  (StructTypeField
+    (IdentifierExpr IDENTIFIER(List))
     (ArrayType
       (LiteralExpr LITERAL_INT(2))
       (NamedType IDENTIFIER(int))
     )
+  )
 )

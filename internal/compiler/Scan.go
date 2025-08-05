@@ -245,10 +245,6 @@ func (s *Scanner) readRawString() Token {
 		if s.currentChar() == '`' {
 			break
 		}
-		// Handle escape sequences
-		if s.currentChar() == '\\' {
-			s.readChar() // skip escaped character
-		}
 		s.readChar()
 	}
 

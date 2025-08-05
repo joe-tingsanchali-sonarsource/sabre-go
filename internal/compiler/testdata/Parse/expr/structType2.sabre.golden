@@ -1,7 +1,11 @@
 (StructType 2
-  (IdentifierExpr IDENTIFIER(x))
-  (IdentifierExpr IDENTIFIER(y))
+  (StructTypeField
+    (IdentifierExpr IDENTIFIER(x))
+    (IdentifierExpr IDENTIFIER(y))
     (NamedType IDENTIFIER(int))
-  (IdentifierExpr IDENTIFIER(u))
+  )
+  (StructTypeField
+    (IdentifierExpr IDENTIFIER(u))
     (NamedType IDENTIFIER(float32))
+  )
 )
