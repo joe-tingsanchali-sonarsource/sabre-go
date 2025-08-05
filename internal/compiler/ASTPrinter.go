@@ -53,6 +53,19 @@ func NewASTPrinter(out io.Writer) *ASTPrinter {
 	return &ASTPrinter{indentor: NewIndentor(out)}
 }
 
+func (v *ASTPrinter) visitBlockNode(n Node, name string) {
+	v.indentor.NewLine()
+	v.indentor.printf("(%v", name)
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) {
 	v.indentor.printf("(LiteralExpr %v)", n.Token)
 }
@@ -327,29 +340,11 @@ func (v *ASTPrinter) VisitSwitchStmt(n *SwitchStmt) {
 	v.indentor.Push()
 
 	if n.Init != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(SwitchStmt-Init")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Init.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Init, "SwitchStmt-Init")
 	}
 
 	if n.Tag != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(SwitchStmt-Tag")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Tag.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Tag, "SwitchStmt-Tag")
 	}
 
 	v.indentor.NewLine()
@@ -365,53 +360,14 @@ func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
 	v.indentor.Push()
 
 	if n.Init != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(IfStmt-Init")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Init.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Init, "IfStmt-Init")
 	}
 
-	// Condition
-	v.indentor.NewLine()
-	v.indentor.print("(IfStmt-Cond")
-	v.indentor.Push()
-	v.indentor.NewLine()
-
-	n.Cond.Visit(v)
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
-
-	// Body
-	v.indentor.NewLine()
-	v.indentor.print("(IfStmt-Body")
-	v.indentor.Push()
-	v.indentor.NewLine()
-
-	n.Body.Visit(v)
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
+	v.visitBlockNode(n.Cond, "IfStmt-Cond")
+	v.visitBlockNode(n.Body, "IfStmt-Body")
 
 	if n.Else != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(IfStmt-Else")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Else.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Else, "IfStmt-Else")
 	}
 
 	v.indentor.Pop()
@@ -424,55 +380,18 @@ func (v *ASTPrinter) VisitForStmt(n *ForStmt) {
 	v.indentor.Push()
 
 	if n.Init != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(ForStmt-Init")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Init.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Init, "ForStmt-Init")
 	}
 
 	if n.Cond != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(ForStmt-Cond")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Cond.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Cond, "ForStmt-Cond")
 	}
 
 	if n.Post != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(ForStmt-Post")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Post.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Post, "ForStmt-Post")
 	}
 
-	// Body
-	v.indentor.NewLine()
-	v.indentor.print("(ForStmt-Body")
-	v.indentor.Push()
-	v.indentor.NewLine()
-
-	n.Body.Visit(v)
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
+	v.visitBlockNode(n.Body, "ForStmt-Body")
 
 	v.indentor.Pop()
 	v.indentor.NewLine()
@@ -484,40 +403,12 @@ func (v *ASTPrinter) VisitForRangeStmt(n *ForRangeStmt) {
 	v.indentor.Push()
 
 	if n.Init != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(ForRangeStmt-Init")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Init.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Init, "ForRangeStmt-Init")
 	} else {
-		v.indentor.NewLine()
-		v.indentor.print("(ForRangeStmt-Expr")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Expr.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitBlockNode(n.Expr, "ForRangeStmt-Expr")
 	}
 
-	// Body
-	v.indentor.NewLine()
-	v.indentor.print("(ForRangeStmt-Body")
-	v.indentor.Push()
-	v.indentor.NewLine()
-
-	n.Body.Visit(v)
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
+	v.visitBlockNode(n.Body, "ForRangeStmt-Body")
 
 	v.indentor.Pop()
 	v.indentor.NewLine()
