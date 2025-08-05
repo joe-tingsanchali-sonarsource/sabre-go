@@ -817,9 +817,7 @@ func (p *Parser) parseForStmt() Stmt {
 	}
 
 	// for range list {}
-	if p.currentToken().Kind() == TokenRange {
-		rangeToken := p.eatToken()
-
+	if rangeToken := p.eatTokenIfKind(TokenRange); rangeToken.valid() {
 		return &ForRangeStmt{
 			For:   forToken,
 			Range: rangeToken,

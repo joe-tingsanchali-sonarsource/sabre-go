@@ -485,7 +485,6 @@ func (v *ASTPrinter) VisitForRangeStmt(n *ForRangeStmt) {
 
 	if n.Init != nil {
 		v.indentor.NewLine()
-
 		v.indentor.print("(ForRangeStmt-Init")
 		v.indentor.Push()
 		v.indentor.NewLine()
@@ -497,7 +496,6 @@ func (v *ASTPrinter) VisitForRangeStmt(n *ForRangeStmt) {
 		v.indentor.print(")")
 	} else {
 		v.indentor.NewLine()
-
 		v.indentor.print("(ForRangeStmt-Expr")
 		v.indentor.Push()
 		v.indentor.NewLine()
