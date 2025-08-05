@@ -200,12 +200,12 @@ func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
 }
 
 func (v *ASTPrinter) VisitStructType(n *StructType) {
-	v.indentor.printf("(StructType %v", len(n.Fields))
+	v.indentor.printf("(StructType %v", len(n.FieldList.Fields))
 
-	if len(n.Fields) > 0 {
+	if len(n.FieldList.Fields) > 0 {
 		v.indentor.Push()
 
-		for _, f := range n.Fields {
+		for _, f := range n.FieldList.Fields {
 			v.indentor.NewLine()
 			v.indentor.print("(StructTypeField")
 			v.indentor.Push()

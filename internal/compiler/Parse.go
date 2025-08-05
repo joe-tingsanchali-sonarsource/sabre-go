@@ -370,7 +370,7 @@ func (p *Parser) parseStructType() *StructType {
 
 	lBraceToken := p.eatTokenOrError(TokenLBrace)
 
-	var fields []StructTypeField
+	var fields []Field
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
 		for p.eatTokenIfKind(TokenComma).valid() {
@@ -389,16 +389,14 @@ func (p *Parser) parseStructType() *StructType {
 
 		p.eatTokenOrError(TokenSemicolon)
 
-		fields = append(fields, StructTypeField{Names: names, Type: fieldType, Tag: tag})
+		fields = append(fields, Field{Names: names, Type: fieldType, Tag: tag})
 	}
 
 	rBraceToken := p.eatTokenOrError(TokenRBrace)
 
 	return &StructType{
-		Struct: structToken,
-		LBrace: lBraceToken,
-		Fields: fields,
-		RBrace: rBraceToken,
+		Struct:    structToken,
+		FieldList: FieldList{Open: lBraceToken, Fields: fields, Close: rBraceToken},
 	}
 }
 

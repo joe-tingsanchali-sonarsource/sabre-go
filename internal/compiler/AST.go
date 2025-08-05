@@ -177,23 +177,27 @@ func (e *ArrayType) Visit(v NodeVisitor) {
 	v.VisitArrayType(e)
 }
 
-type StructTypeField struct {
+type Field struct {
 	Names []*IdentifierExpr
 	Type  Type
 	Tag   Token
 }
 
+type FieldList struct {
+	Open   Token // { or (
+	Fields []Field
+	Close  Token // } or )
+}
+
 type StructType struct {
-	Struct Token
-	LBrace Token
-	Fields []StructTypeField
-	RBrace Token
+	Struct    Token
+	FieldList FieldList
 }
 
 func (e *StructType) exprNode() {}
 func (e *StructType) typeExpr() {}
 func (e *StructType) SourceRange() SourceRange {
-	return e.Struct.SourceRange().Merge(e.RBrace.SourceRange())
+	return e.Struct.SourceRange().Merge(e.FieldList.Close.SourceRange())
 }
 func (e *StructType) Visit(v NodeVisitor) {
 	v.VisitStructType(e)
@@ -421,7 +425,7 @@ func (v *DefaultVisitor) VisitArrayType(n *ArrayType) {
 	n.ElementType.Visit(v)
 }
 func (v *DefaultVisitor) VisitStructType(n *StructType) {
-	for _, e := range n.Fields {
+	for _, e := range n.FieldList.Fields {
 		for _, name := range e.Names {
 			name.Visit(v)
 		}
