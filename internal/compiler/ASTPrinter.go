@@ -418,3 +418,34 @@ func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitTypeSpec(n *TypeSpec) {
+	v.indentor.print("(TypeSpec")
+	if n.Assign.valid() {
+		v.indentor.print(" alias")
+	}
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Name.Visit(v)
+	v.indentor.NewLine()
+	n.Type.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitGenericDecl(n *GenericDecl) {
+	v.indentor.printf("(GenericDecl %v", n.DeclToken.Value())
+	v.indentor.Push()
+
+	for _, s := range n.Specs {
+		v.indentor.NewLine()
+		s.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}

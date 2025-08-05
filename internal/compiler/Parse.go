@@ -787,3 +787,65 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 
 	return
 }
+
+func (p *Parser) ParseDecl() Decl {
+	switch p.currentToken().Kind() {
+	case TokenType:
+		return p.parseGenericDecl(p.eatToken(), p.parseTypeSpec)
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
+		return nil
+	}
+}
+
+func (p *Parser) parseGenericDecl(token Token, parseFunc func() Spec) *GenericDecl {
+	if lParen := p.eatTokenIfKind(TokenLParen); lParen.valid() {
+		var list []Spec
+		for p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
+			s := parseFunc()
+			if s == nil {
+				return nil
+			}
+			list = append(list, s)
+		}
+		rParen := p.eatTokenOrError(TokenRParen)
+		p.eatTokenOrError(TokenSemicolon)
+		return &GenericDecl{
+			DeclToken: token,
+			LParen:    lParen,
+			Specs:     list,
+			RParen:    rParen,
+		}
+	} else {
+		s := parseFunc()
+		if s == nil {
+			return nil
+		}
+		return &GenericDecl{
+			DeclToken: token,
+			Specs:     []Spec{s},
+		}
+	}
+}
+
+func (p *Parser) parseTypeSpec() Spec {
+	name := p.parseIdentifierExpr()
+	if name == nil {
+		return nil
+	}
+
+	assign := p.eatTokenIfKind(TokenAssign)
+
+	t := p.parseType()
+	if t == nil {
+		return nil
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &TypeSpec{
+		Name:   name,
+		Assign: assign,
+		Type:   t,
+	}
+}

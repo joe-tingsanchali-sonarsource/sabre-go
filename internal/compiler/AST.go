@@ -361,6 +361,53 @@ func (e *IfStmt) Visit(v NodeVisitor) {
 	v.VisitIfStmt(e)
 }
 
+// Specs
+type Spec interface {
+	Node
+	specNode()
+}
+
+type TypeSpec struct {
+	Name   *IdentifierExpr
+	Assign Token // = token or nil
+	Type   Type
+}
+
+func (e *TypeSpec) specNode() {}
+func (e *TypeSpec) SourceRange() SourceRange {
+	return e.Name.SourceRange().Merge(e.Type.SourceRange())
+}
+func (e *TypeSpec) Visit(v NodeVisitor) {
+	v.VisitTypeSpec(e)
+}
+
+// Declarations
+type Decl interface {
+	Node
+	declNode()
+}
+
+type GenericDecl struct {
+	DeclToken Token // import, const, var, type
+	LParen    Token // if any
+	Specs     []Spec
+	RParen    Token // if any
+}
+
+func (e *GenericDecl) declNode() {}
+func (e *GenericDecl) SourceRange() SourceRange {
+	if e.RParen.valid() {
+		return e.DeclToken.SourceRange().Merge(e.RParen.SourceRange())
+	}
+	if len(e.Specs) > 0 {
+		return e.DeclToken.SourceRange().Merge(e.Specs[len(e.Specs)-1].SourceRange())
+	}
+	panic("generic decl is expected to have RParen or at least one Spec")
+}
+func (e *GenericDecl) Visit(v NodeVisitor) {
+	v.VisitGenericDecl(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -387,6 +434,10 @@ type NodeVisitor interface {
 	VisitSwitchCaseStmt(n *SwitchCaseStmt)
 	VisitSwitchStmt(n *SwitchStmt)
 	VisitIfStmt(n *IfStmt)
+
+	VisitTypeSpec(n *TypeSpec)
+
+	VisitGenericDecl(n *GenericDecl)
 }
 
 type DefaultVisitor struct{}
@@ -481,5 +532,16 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	n.Body.Visit(v)
 	if n.Else != nil {
 		n.Else.Visit(v)
+	}
+}
+
+func (v *DefaultVisitor) VisitTypeSpec(n *TypeSpec) {
+	n.Name.Visit(v)
+	n.Type.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {
+	for _, s := range n.Specs {
+		s.Visit(v)
 	}
 }

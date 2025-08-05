@@ -1,0 +1,6 @@
+type (
+	x1 = int
+	x2 int
+	y1 []foo.bar
+	y2 = []foo.bar
+)

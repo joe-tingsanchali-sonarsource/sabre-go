@@ -1,0 +1,8 @@
+(GenericDecl type
+  (TypeSpec alias
+    (IdentifierExpr IDENTIFIER(x))
+    (ArrayType
+      (NamedType IDENTIFIER(foo).IDENTIFIER(bar))
+    )
+  )
+)
