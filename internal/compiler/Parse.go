@@ -550,6 +550,14 @@ func (p *Parser) parseExprList() (list []Expr) {
 	return
 }
 
+func (p *Parser) parseIdentifierExprList() (list []*IdentifierExpr) {
+	list = []*IdentifierExpr{p.parseIdentifierExpr()}
+	for p.eatTokenIfKind(TokenComma).valid() {
+		list = append(list, p.parseIdentifierExpr())
+	}
+	return
+}
+
 func (p *Parser) parseReturnStmt() *ReturnStmt {
 	returnToken := p.eatTokenOrError(TokenReturn)
 	if !returnToken.valid() {
@@ -956,7 +964,7 @@ func (p *Parser) parseTypeSpec() Spec {
 }
 
 func (p *Parser) parseConstSpec() Spec {
-	lhs := p.parseExprList()
+	lhs := p.parseIdentifierExprList()
 
 	var constType Type
 	if p.currentToken().Kind() != TokenAssign && p.currentToken().Kind() != TokenSemicolon {

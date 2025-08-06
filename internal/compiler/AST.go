@@ -414,7 +414,7 @@ func (e *TypeSpec) Visit(v NodeVisitor) {
 }
 
 type ConstSpec struct {
-	LHS    []Expr // TODO: Convert to []*IdentifierExpr later
+	LHS    []*IdentifierExpr
 	Type   Type
 	Assign Token
 	RHS    []Expr
