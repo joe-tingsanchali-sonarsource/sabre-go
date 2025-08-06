@@ -25,6 +25,7 @@ jobs:
           ./sabre test-scan ./internal/compiler/testdata/Scan
           ./sabre test-parse-expr ./internal/compiler/testdata/Parse/expr
           ./sabre test-parse-stmt ./internal/compiler/testdata/Parse/stmt
+          ./sabre test-parse-decl ./internal/compiler/testdata/Parse/decl
           go tool covdata textfmt -i=cov -o sabre-cov.out
 
       - name: SonarQube Scan

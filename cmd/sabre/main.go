@@ -29,6 +29,10 @@ Commands:
                    "sabre parse-stmt <file>"
   test-parse-stmt  tests the statement parsing against golden output
                    "sabre test-parse-stmt <test-data-dir>"
+  parse-decl       parses a declaration
+                   "sabre parse-decl <file>"
+  test-parse-decl  tests the declaration parsing against golden output
+                   "sabre test-parse-decl <test-data-dir>"
 `
 
 func helpString() string {
@@ -193,6 +197,32 @@ func parseStmt(args []string, out io.Writer) error {
 	return nil
 }
 
+func parseDecl(args []string, out io.Writer) error {
+	if len(args) < 1 {
+		return fmt.Errorf("no file provided\n%v", helpString())
+	}
+
+	file := filepath.ToSlash(filepath.Clean(args[0]))
+	unit, err := compiler.UnitFromFile(file)
+	if err != nil {
+		return fmt.Errorf("failed to create unit from file '%s': %v", file, err)
+	}
+
+	if !unit.Scan() {
+		unit.PrintErrors(out)
+		return nil
+	}
+
+	parser := compiler.NewParser(unit.RootFile())
+	decl := parser.ParseDecl()
+	if decl != nil && !unit.HasErrors() {
+		decl.Visit(compiler.NewASTPrinter(out))
+	} else {
+		unit.PrintErrors(out)
+	}
+	return nil
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "Error: no command found\n")
@@ -217,6 +247,10 @@ func main() {
 		err = parseStmt(subArgs, os.Stdout)
 	case "test-parse-stmt":
 		err = testFunc(parseStmt, subArgs, os.Stdout)
+	case "parse-decl":
+		err = parseDecl(subArgs, os.Stdout)
+	case "test-parse-decl":
+		err = testFunc(parseDecl, subArgs, os.Stdout)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command '%s'\n", os.Args[1])
 		help()

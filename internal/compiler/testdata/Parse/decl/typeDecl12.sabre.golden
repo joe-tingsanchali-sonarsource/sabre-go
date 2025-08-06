@@ -1,0 +1,3 @@
+>> 	type x =
+>> 	        ^
+Error[internal/compiler/testdata/Parse/decl/typeDecl12.sabre:1:9]: expected type but found INVALID

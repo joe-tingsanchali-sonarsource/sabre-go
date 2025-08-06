@@ -1,0 +1,6 @@
+(GenericDecl type
+  (TypeSpec
+    (IdentifierExpr IDENTIFIER(x))
+    (NamedType IDENTIFIER(int))
+  )
+)
