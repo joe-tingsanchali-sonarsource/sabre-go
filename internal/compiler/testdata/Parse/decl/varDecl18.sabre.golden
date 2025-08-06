@@ -1,0 +1,18 @@
+(GenericDecl var
+  (VarSpec
+    (IdentifierExpr IDENTIFIER(x))
+    (IdentifierExpr IDENTIFIER(y))
+    (NamedType IDENTIFIER(int))
+  )
+  (VarSpec
+    (IdentifierExpr IDENTIFIER(z))
+    =
+    (LiteralExpr LITERAL_INT(1))
+  )
+  (VarSpec
+    (IdentifierExpr IDENTIFIER(w))
+    (NamedType IDENTIFIER(float))
+    =
+    (LiteralExpr LITERAL_FLOAT(1.5))
+  )
+)
