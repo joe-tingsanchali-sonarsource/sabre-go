@@ -1,0 +1,6 @@
+>> 	type (
+>> 	      ^
+Error[internal/compiler/testdata/Parse/decl/typeDecl8.sabre:1:7]: expected ')' but found 'INVALID'
+>> 	type (
+>> 	      ^
+Error[internal/compiler/testdata/Parse/decl/typeDecl8.sabre:1:7]: expected ';' but found 'INVALID'

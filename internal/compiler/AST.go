@@ -308,6 +308,39 @@ func (e *AssignStmt) Visit(v NodeVisitor) {
 	v.VisitAssignStmt(e)
 }
 
+type SwitchCaseStmt struct {
+	Case  Token
+	LHS   []Expr
+	Colon Token
+	RHS   []Stmt
+}
+
+func (e *SwitchCaseStmt) stmtNode() {}
+func (e *SwitchCaseStmt) SourceRange() SourceRange {
+	if len(e.RHS) == 0 {
+		panic("SwitchCaseStmt RHS shouldn't be empty")
+	}
+	return e.Case.SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+}
+func (e *SwitchCaseStmt) Visit(v NodeVisitor) {
+	v.VisitSwitchCaseStmt(e)
+}
+
+type SwitchStmt struct {
+	Switch Token
+	Init   Stmt
+	Tag    Expr
+	Body   Stmt
+}
+
+func (e *SwitchStmt) stmtNode() {}
+func (e *SwitchStmt) SourceRange() SourceRange {
+	return e.Switch.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *SwitchStmt) Visit(v NodeVisitor) {
+	v.VisitSwitchStmt(e)
+}
+
 type IfStmt struct {
 	If   Token
 	Init Stmt // init statement or nil
@@ -328,36 +361,102 @@ func (e *IfStmt) Visit(v NodeVisitor) {
 	v.VisitIfStmt(e)
 }
 
-// Decl Nodes
-type Decl interface {
-	Node
-	declNode()
+type ForStmt struct {
+	For  Token
+	Init Stmt
+	Cond Expr
+	Post Stmt
+	Body *BlockStmt
 }
 
-type ConstDeclSpec struct {
+func (e *ForStmt) stmtNode() {}
+func (e *ForStmt) SourceRange() SourceRange {
+	return e.For.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *ForStmt) Visit(v NodeVisitor) {
+	v.VisitForStmt(e)
+}
+
+type ForRangeStmt struct {
+	For   Token
+	Init  *AssignStmt
+	Range Token
+	Expr  Expr
+	Body  *BlockStmt
+}
+
+func (e *ForRangeStmt) stmtNode() {}
+func (e *ForRangeStmt) SourceRange() SourceRange {
+	return e.For.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *ForRangeStmt) Visit(v NodeVisitor) {
+	v.VisitForRangeStmt(e)
+}
+
+// Specs
+type Spec interface {
+	Node
+	specNode()
+}
+
+type TypeSpec struct {
+	Name   *IdentifierExpr
+	Assign Token // = token or nil
+	Type   Type
+}
+
+func (e *TypeSpec) specNode() {}
+func (e *TypeSpec) SourceRange() SourceRange {
+	return e.Name.SourceRange().Merge(e.Type.SourceRange())
+}
+func (e *TypeSpec) Visit(v NodeVisitor) {
+	v.VisitTypeSpec(e)
+}
+
+type ConstSpec struct {
 	LHS    []Expr // TODO: Convert to []*IdentifierExpr later
 	Type   Type
 	Assign Token
 	RHS    []Expr
 }
 
-type ConstDecl struct {
-	Const  Token
-	LParen Token
-	Specs  []ConstDeclSpec
-	RParen Token
-}
-
-func (e *ConstDecl) declNode() {}
-func (e *ConstDecl) SourceRange() SourceRange {
-	if e.RParen.valid() {
-		return e.Const.SourceRange().Merge(e.RParen.SourceRange())
+func (e *ConstSpec) specNode() {}
+func (e *ConstSpec) SourceRange() SourceRange {
+	if len(e.RHS) > 0 {
+		return e.LHS[0].SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
 	} else {
-		return e.Const.SourceRange().Merge(e.Specs[0].RHS[len(e.Specs[len(e.Specs)-1].RHS)-1].SourceRange())
+		return e.LHS[0].SourceRange()
 	}
 }
-func (e *ConstDecl) Visit(v NodeVisitor) {
-	v.VisitConstDecl(e)
+func (e *ConstSpec) Visit(v NodeVisitor) {
+	v.VisitConstSpec(e)
+}
+
+// Declarations
+type Decl interface {
+	Node
+	declNode()
+}
+
+type GenericDecl struct {
+	DeclToken Token // import, const, var, type
+	LParen    Token // if any
+	Specs     []Spec
+	RParen    Token // if any
+}
+
+func (e *GenericDecl) declNode() {}
+func (e *GenericDecl) SourceRange() SourceRange {
+	if e.RParen.valid() {
+		return e.DeclToken.SourceRange().Merge(e.RParen.SourceRange())
+	}
+	if len(e.Specs) > 0 {
+		return e.DeclToken.SourceRange().Merge(e.Specs[len(e.Specs)-1].SourceRange())
+	}
+	panic("generic decl is expected to have RParen or at least one Spec")
+}
+func (e *GenericDecl) Visit(v NodeVisitor) {
+	v.VisitGenericDecl(e)
 }
 
 // Visitor Interface
@@ -383,9 +482,16 @@ type NodeVisitor interface {
 	VisitIncDecStmt(n *IncDecStmt)
 	VisitBlockStmt(n *BlockStmt)
 	VisitAssignStmt(n *AssignStmt)
+	VisitSwitchCaseStmt(n *SwitchCaseStmt)
+	VisitSwitchStmt(n *SwitchStmt)
 	VisitIfStmt(n *IfStmt)
+	VisitForStmt(n *ForStmt)
+	VisitForRangeStmt(n *ForRangeStmt)
 
-	VisitConstDecl(n *ConstDecl)
+	VisitTypeSpec(n *TypeSpec)
+	VisitConstSpec(n *ConstSpec)
+
+	VisitGenericDecl(n *GenericDecl)
 }
 
 type DefaultVisitor struct{}
@@ -459,6 +565,19 @@ func (v *DefaultVisitor) VisitAssignStmt(n *AssignStmt) {
 		e.Visit(v)
 	}
 }
+func (v *DefaultVisitor) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
+}
+func (v *DefaultVisitor) VisitSwitchStmt(n *SwitchStmt) {
+	n.Init.Visit(v)
+	n.Tag.Visit(v)
+	n.Body.Visit(v)
+}
 func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	if n.Init != nil {
 		n.Init.Visit(v)
@@ -470,18 +589,50 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	}
 }
 
-func (v *DefaultVisitor) VisitConstDecl(n *ConstDecl) {
-	for _, spec := range n.Specs {
-		for _, e := range spec.LHS {
-			e.Visit(v)
-		}
+func (v *DefaultVisitor) VisitForStmt(n *ForStmt) {
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
 
-		if spec.Type != nil {
-			spec.Type.Visit(v)
-		}
+	if n.Cond != nil {
+		n.Cond.Visit(v)
+	}
 
-		for _, e := range spec.RHS {
-			e.Visit(v)
-		}
+	if n.Post != nil {
+		n.Post.Visit(v)
+	}
+
+	n.Body.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
+	n.Expr.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitTypeSpec(n *TypeSpec) {
+	n.Name.Visit(v)
+	n.Type.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitConstSpec(n *ConstSpec) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		n.Type.Visit(v)
+	}
+
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
+}
+
+func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {
+	for _, s := range n.Specs {
+		s.Visit(v)
 	}
 }

@@ -1,11 +1,11 @@
-(ConstDecl
-  (ConstDeclSpec
+(GenericDecl const
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(size))
     (NamedType IDENTIFIER(int64))
     =
     (LiteralExpr LITERAL_INT(1024))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(eof))
     =
     (UnaryExpr -

@@ -53,6 +53,18 @@ func NewASTPrinter(out io.Writer) *ASTPrinter {
 	return &ASTPrinter{indentor: NewIndentor(out)}
 }
 
+func (v *ASTPrinter) visitPhonyNode(n Node, name string) {
+	v.indentor.printf("(%v", name)
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) {
 	v.indentor.printf("(LiteralExpr %v)", n.Token)
 }
@@ -296,58 +308,25 @@ func (v *ASTPrinter) VisitAssignStmt(n *AssignStmt) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
-	v.indentor.print("(IfStmt")
-	v.indentor.Push()
-
-	if n.Init != nil {
-		v.indentor.NewLine()
-		v.indentor.print("(IfStmt-Init")
-		v.indentor.Push()
-		v.indentor.NewLine()
-
-		n.Init.Visit(v)
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
-		v.indentor.print(")")
+func (v *ASTPrinter) VisitSwitchCaseStmt(n *SwitchCaseStmt) {
+	if n.Case.Kind() == TokenCase {
+		v.indentor.print("(SwitchCaseStmt")
+	} else {
+		v.indentor.print("(DefaultCaseStmt")
 	}
 
-	// Condition
-	v.indentor.NewLine()
-	v.indentor.print("(IfStmt-Cond")
 	v.indentor.Push()
-	v.indentor.NewLine()
-
-	n.Cond.Visit(v)
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
-
-	// Body
-	v.indentor.NewLine()
-	v.indentor.print("(IfStmt-Body")
-	v.indentor.Push()
-	v.indentor.NewLine()
-
-	n.Body.Visit(v)
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
-
-	if n.Else != nil {
+	for _, e := range n.LHS {
 		v.indentor.NewLine()
-		v.indentor.print("(IfStmt-Else")
-		v.indentor.Push()
-		v.indentor.NewLine()
+		e.Visit(v)
+	}
 
-		n.Else.Visit(v)
+	v.indentor.NewLine()
+	v.indentor.print(n.Colon)
 
-		v.indentor.Pop()
+	for _, e := range n.RHS {
 		v.indentor.NewLine()
-		v.indentor.print(")")
+		e.Visit(v)
 	}
 
 	v.indentor.Pop()
@@ -355,38 +334,152 @@ func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitConstDecl(n *ConstDecl) {
-	v.indentor.print("(ConstDecl")
+func (v *ASTPrinter) VisitSwitchStmt(n *SwitchStmt) {
+	v.indentor.print("(SwitchStmt")
 	v.indentor.Push()
 
-	for _, spec := range n.Specs {
+	if n.Init != nil {
 		v.indentor.NewLine()
-		v.indentor.print("(ConstDeclSpec")
-		v.indentor.Push()
+		v.visitPhonyNode(n.Init, "SwitchStmt-Init")
+	}
 
-		for _, e := range spec.LHS {
-			v.indentor.NewLine()
-			e.Visit(v)
-		}
-
-		if spec.Type != nil {
-			v.indentor.NewLine()
-			spec.Type.Visit(v)
-		}
-
-		if spec.Assign.valid() {
-			v.indentor.NewLine()
-			v.indentor.print(spec.Assign)
-		}
-
-		for _, e := range spec.RHS {
-			v.indentor.NewLine()
-			e.Visit(v)
-		}
-
-		v.indentor.Pop()
+	if n.Tag != nil {
 		v.indentor.NewLine()
-		v.indentor.print(")")
+		v.visitPhonyNode(n.Tag, "SwitchStmt-Tag")
+	}
+
+	v.indentor.NewLine()
+	n.Body.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitIfStmt(n *IfStmt) {
+	v.indentor.print("(IfStmt")
+	v.indentor.Push()
+
+	if n.Init != nil {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Init, "IfStmt-Init")
+	}
+
+	v.indentor.NewLine()
+	v.visitPhonyNode(n.Cond, "IfStmt-Cond")
+	v.indentor.NewLine()
+	v.visitPhonyNode(n.Body, "IfStmt-Body")
+
+	if n.Else != nil {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Else, "IfStmt-Else")
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitForStmt(n *ForStmt) {
+	v.indentor.print("(ForStmt")
+	v.indentor.Push()
+
+	if n.Init != nil {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Init, "ForStmt-Init")
+	}
+
+	if n.Cond != nil {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Cond, "ForStmt-Cond")
+	}
+
+	if n.Post != nil {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Post, "ForStmt-Post")
+	}
+
+	v.indentor.NewLine()
+	v.visitPhonyNode(n.Body, "ForStmt-Body")
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitForRangeStmt(n *ForRangeStmt) {
+	v.indentor.print("(ForRangeStmt")
+	v.indentor.Push()
+
+	if n.Init != nil {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Init, "ForRangeStmt-Init")
+	} else {
+		v.indentor.NewLine()
+		v.visitPhonyNode(n.Expr, "ForRangeStmt-Expr")
+	}
+
+	v.indentor.NewLine()
+	v.visitPhonyNode(n.Body, "ForRangeStmt-Body")
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitTypeSpec(n *TypeSpec) {
+	v.indentor.print("(TypeSpec")
+	if n.Assign.valid() {
+		v.indentor.print(" alias")
+	}
+	v.indentor.Push()
+	v.indentor.NewLine()
+
+	n.Name.Visit(v)
+	v.indentor.NewLine()
+	n.Type.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitConstSpec(n *ConstSpec) {
+	v.indentor.print("(ConstSpec")
+	v.indentor.Push()
+
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		v.indentor.NewLine()
+		n.Type.Visit(v)
+	}
+
+	if n.Assign.valid() {
+		v.indentor.NewLine()
+		v.indentor.print(n.Assign)
+	}
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitGenericDecl(n *GenericDecl) {
+	v.indentor.printf("(GenericDecl %v", n.DeclToken.Value())
+	v.indentor.Push()
+
+	for _, s := range n.Specs {
+		v.indentor.NewLine()
+		s.Visit(v)
 	}
 
 	v.indentor.Pop()

@@ -1,0 +1,22 @@
+(GenericDecl type
+  (TypeSpec alias
+    (IdentifierExpr IDENTIFIER(x1))
+    (NamedType IDENTIFIER(int))
+  )
+  (TypeSpec
+    (IdentifierExpr IDENTIFIER(x2))
+    (NamedType IDENTIFIER(int))
+  )
+  (TypeSpec
+    (IdentifierExpr IDENTIFIER(y1))
+    (ArrayType
+      (NamedType IDENTIFIER(foo).IDENTIFIER(bar))
+    )
+  )
+  (TypeSpec alias
+    (IdentifierExpr IDENTIFIER(y2))
+    (ArrayType
+      (NamedType IDENTIFIER(foo).IDENTIFIER(bar))
+    )
+  )
+)

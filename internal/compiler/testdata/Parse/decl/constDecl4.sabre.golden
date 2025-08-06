@@ -1,5 +1,5 @@
-(ConstDecl
-  (ConstDeclSpec
+(GenericDecl const
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(a))
     (IdentifierExpr IDENTIFIER(b))
     (IdentifierExpr IDENTIFIER(c))

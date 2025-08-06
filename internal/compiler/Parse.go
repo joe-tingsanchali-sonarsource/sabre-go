@@ -184,6 +184,7 @@ func (p *Parser) parseBaseExpr() Expr {
 					expr = complit
 				}
 			}
+			return expr
 		default:
 			return expr
 		}
@@ -462,6 +463,8 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseBreakStmt()
 	case TokenFallthrough:
 		return p.parseFallthroughStmt()
+	case TokenSwitch:
+		return p.parseSwitchStmt()
 	case TokenContinue:
 		return p.parseContinueStmt()
 	case TokenLBrace:
@@ -469,19 +472,20 @@ func (p *Parser) ParseStmt() Stmt {
 		p.eatTokenOrError(TokenSemicolon)
 		return stmt
 	case TokenIf:
-		stmt := p.parseIfStmt()
-		return stmt
+		return p.parseIfStmt()
+	case TokenFor:
+		return p.parseForStmt()
 	default:
-		stmt := p.parseSimpleStmt()
+		stmt, _ := p.parseSimpleStmt()
 		p.eatTokenOrError(TokenSemicolon)
 		return stmt
 	}
 }
 
-func (p *Parser) parseSimpleStmt() Stmt {
+func (p *Parser) parseSimpleStmt() (stmt Stmt, isRange bool) {
 	exprs := p.parseExprList()
 	if len(exprs) == 0 {
-		return nil
+		return nil, false
 	}
 
 	switch p.currentToken().Kind() {
@@ -490,11 +494,21 @@ func (p *Parser) parseSimpleStmt() Stmt {
 		TokenMulAssign, TokenDivAssign, TokenModAssign, TokenAndAssign,
 		TokenOrAssign, TokenXorAssign, TokenShlAssign, TokenShrAssign:
 		operator := p.eatToken()
-		rhs := p.parseExprList()
-		return &AssignStmt{
-			LHS:      exprs,
-			Operator: operator,
-			RHS:      rhs,
+
+		if p.currentToken().Kind() == TokenRange && (operator.Kind() == TokenColonAssign || operator.Kind() == TokenAssign) {
+			rangeToken := p.eatToken()
+			expr := p.ParseExpr()
+			return &AssignStmt{
+				LHS:      exprs,
+				Operator: operator,
+				RHS:      []Expr{&UnaryExpr{Operator: rangeToken, Base: expr}},
+			}, true
+		} else {
+			return &AssignStmt{
+				LHS:      exprs,
+				Operator: operator,
+				RHS:      p.parseExprList(),
+			}, false
 		}
 	}
 
@@ -511,11 +525,11 @@ func (p *Parser) parseSimpleStmt() Stmt {
 		return &IncDecStmt{
 			Expr:     expr,
 			Operator: op,
-		}
+		}, false
 	default:
 		return &ExprStmt{
 			Expr: expr,
-		}
+		}, false
 	}
 }
 
@@ -594,6 +608,79 @@ func (p *Parser) parseFallthroughStmt() *FallthroughStmt {
 	}
 }
 
+func (p *Parser) parseSwitchCaseStmt() *SwitchCaseStmt {
+	caseToken := p.eatTokenIfKind(TokenCase)
+
+	var lhs []Expr
+	if caseToken.valid() {
+		lhs = p.parseExprList()
+	} else {
+		caseToken = p.eatTokenOrError(TokenDefault)
+		if !caseToken.valid() {
+			return nil
+		}
+	}
+
+	colonToken := p.eatTokenOrError(TokenColon)
+	if !colonToken.valid() {
+		return nil
+	}
+
+	rhs := p.parseStmtList()
+
+	return &SwitchCaseStmt{
+		Case:  caseToken,
+		LHS:   lhs,
+		Colon: colonToken,
+		RHS:   rhs,
+	}
+}
+
+func (p *Parser) parseSwitchStmt() *SwitchStmt {
+	switchToken := p.eatTokenOrError(TokenSwitch)
+	if !switchToken.valid() {
+		return nil
+	}
+
+	exprLevel := p.pushExprLevelAsControlStmt()
+	defer p.popExprLevelFromControlStmt(exprLevel)
+
+	var init Stmt = nil
+	if p.currentToken().Kind() != TokenLBrace {
+		init, _ = p.parseSimpleStmt()
+	}
+
+	var tag Expr = nil
+	if exprStmt, ok := init.(*ExprStmt); ok {
+		tag = exprStmt.Expr
+		init = nil
+	} else {
+		if init != nil {
+			p.eatTokenOrError(TokenSemicolon)
+		}
+
+		if p.currentToken().Kind() != TokenLBrace {
+			tag = p.ParseExpr()
+			p.eatTokenIfKind(TokenSemicolon)
+		}
+	}
+
+	lBraceToken := p.eatTokenOrError(TokenLBrace)
+	var list []Stmt
+	for p.currentToken().Kind() == TokenCase || p.currentToken().Kind() == TokenDefault {
+		list = append(list, p.parseSwitchCaseStmt())
+	}
+	rBraceToken := p.eatTokenOrError(TokenRBrace)
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &SwitchStmt{
+		Switch: switchToken,
+		Init:   init,
+		Tag:    tag,
+		Body:   &BlockStmt{LBrace: lBraceToken, Stmts: list, RBrace: rBraceToken},
+	}
+}
+
 func (p *Parser) parseContinueStmt() *ContinueStmt {
 	continueToken := p.eatTokenOrError(TokenContinue)
 	if !continueToken.valid() {
@@ -632,8 +719,7 @@ func (p *Parser) parseBlockStmt() *BlockStmt {
 
 func (p *Parser) parseStmtList() []Stmt {
 	var list []Stmt
-	// TODO: Add != case and != default to this list when you work on switch
-	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
+	for p.currentToken().Kind() != TokenRBrace && p.currentToken().Kind() != TokenCase && p.currentToken().Kind() != TokenDefault && p.currentToken().valid() {
 		list = append(list, p.ParseStmt())
 	}
 	return list
@@ -686,14 +772,14 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 
 	// handle direct {
 	if p.currentToken().Kind() != TokenLBrace && p.currentToken().Kind() != TokenSemicolon {
-		init = p.parseSimpleStmt()
+		init, _ = p.parseSimpleStmt()
 	}
 
 	var condStmt Stmt
 	if p.currentToken().Kind() != TokenLBrace {
 		p.eatTokenOrError(TokenSemicolon)
 		if p.currentToken().Kind() != TokenLBrace {
-			condStmt = p.parseSimpleStmt()
+			condStmt, _ = p.parseSimpleStmt()
 		}
 	} else {
 		condStmt = init
@@ -713,65 +799,188 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 	return
 }
 
+func (p *Parser) parseForStmt() Stmt {
+	forToken := p.eatTokenOrError(TokenFor)
+	if !forToken.valid() {
+		return nil
+	}
+
+	exprLevel := p.pushExprLevelAsControlStmt()
+	defer p.popExprLevelFromControlStmt(exprLevel)
+
+	// for {}
+	if p.currentToken().Kind() == TokenLBrace {
+		return &ForStmt{
+			For:  forToken,
+			Body: p.parseBlockStmt(),
+		}
+	}
+
+	// for range list {}
+	if rangeToken := p.eatTokenIfKind(TokenRange); rangeToken.valid() {
+		return &ForRangeStmt{
+			For:   forToken,
+			Range: rangeToken,
+			Expr:  p.ParseExpr(),
+			Body:  p.parseBlockStmt(),
+		}
+	}
+
+	var init Stmt
+	if p.currentToken().Kind() != TokenSemicolon {
+		cond, isRange := p.parseSimpleStmt()
+		if cond != nil {
+			// for cond {}
+			if exprStmt, ok := cond.(*ExprStmt); ok {
+				return &ForStmt{
+					For:  forToken,
+					Cond: exprStmt.Expr,
+					Body: p.parseBlockStmt(),
+				}
+				// for i, [_] := range 10 {}
+			} else if assignStmt, ok := cond.(*AssignStmt); ok && isRange {
+				switch len(assignStmt.LHS) {
+				case 0:
+					// nothing to do
+				case 1:
+					// nothing to do
+				case 2:
+					// nothing to do
+				default:
+					p.file.errorf(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most two iteration variables in range for statement")
+					return nil
+				}
+
+				rangeExpr := assignStmt.RHS[0].(*UnaryExpr)
+
+				return &ForRangeStmt{
+					For:   forToken,
+					Init:  assignStmt,
+					Range: rangeExpr.Operator,
+					Expr:  rangeExpr.Base,
+					Body:  p.parseBlockStmt(),
+				}
+			}
+
+			init = cond
+		}
+	}
+
+	// for [init]; [cond]; [post] {}
+	p.eatTokenOrError(TokenSemicolon)
+
+	var cond Expr
+	if p.currentToken().Kind() != TokenSemicolon {
+		cond = p.ParseExpr()
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	var post Stmt
+	if p.currentToken().Kind() != TokenLBrace {
+		postStmt, _ := p.parseSimpleStmt()
+		post = postStmt
+	}
+
+	return &ForStmt{
+		For:  forToken,
+		Init: init,
+		Cond: cond,
+		Post: post,
+		Body: p.parseBlockStmt(),
+	}
+}
+
 func (p *Parser) ParseDecl() Decl {
 	switch p.currentToken().Kind() {
+	case TokenType:
+		return p.parseGenericDecl(p.eatToken(), p.parseTypeSpec)
 	case TokenConst:
-		return p.parseConstDecl()
+		return p.parseGenericDecl(p.eatToken(), p.parseConstSpec)
 	default:
+		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
 		return nil
 	}
 }
 
-func (p *Parser) parseConstDecl() *ConstDecl {
-	constToken := p.eatTokenOrError(TokenConst)
-	if !constToken.valid() {
+func (p *Parser) parseGenericDecl(token Token, parseFunc func() Spec) *GenericDecl {
+	if lParen := p.eatTokenIfKind(TokenLParen); lParen.valid() {
+		var list []Spec
+		for p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
+			s := parseFunc()
+			if s == nil {
+				return nil
+			}
+			list = append(list, s)
+		}
+		rParen := p.eatTokenOrError(TokenRParen)
+		p.eatTokenOrError(TokenSemicolon)
+		return &GenericDecl{
+			DeclToken: token,
+			LParen:    lParen,
+			Specs:     list,
+			RParen:    rParen,
+		}
+	} else {
+		s := parseFunc()
+		if s == nil {
+			return nil
+		}
+		return &GenericDecl{
+			DeclToken: token,
+			Specs:     []Spec{s},
+		}
+	}
+}
+
+func (p *Parser) parseTypeSpec() Spec {
+	name := p.parseIdentifierExpr()
+	if name == nil {
 		return nil
 	}
 
-	lParenToken := p.eatTokenIfKind(TokenLParen)
+	assign := p.eatTokenIfKind(TokenAssign)
 
-	var specs []ConstDeclSpec
-
-	keepParsing := true
-	for keepParsing {
-		lhs := p.parseExprList()
-
-		var constType Type
-		if p.currentToken().Kind() != TokenAssign && p.currentToken().Kind() != TokenSemicolon {
-			constType = p.parseType()
-		}
-
-		assignToken := p.eatTokenIfKind(TokenAssign)
-
-		var rhs []Expr
-		if assignToken.valid() {
-			rhs = p.parseExprList()
-		} else if !lParenToken.valid() {
-			p.file.errorf(p.currentToken().SourceRange(), "missing init expr")
-			return nil
-		}
-
-		specs = append(specs, ConstDeclSpec{
-			LHS:    lhs,
-			Type:   constType,
-			Assign: assignToken,
-			RHS:    rhs,
-		})
-
-		p.eatTokenOrError(TokenSemicolon)
-
-		keepParsing = lParenToken.valid() && p.currentToken().Kind() != TokenRParen && p.currentToken().valid()
+	t := p.parseType()
+	if t == nil {
+		return nil
 	}
 
-	var rParenToken Token
-	if lParenToken.valid() {
-		rParenToken = p.eatTokenOrError(TokenRParen)
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &TypeSpec{
+		Name:   name,
+		Assign: assign,
+		Type:   t,
+	}
+}
+
+func (p *Parser) parseConstSpec() Spec {
+	lhs := p.parseExprList()
+
+	var constType Type
+	if p.currentToken().Kind() != TokenAssign && p.currentToken().Kind() != TokenSemicolon {
+		constType = p.parseType()
 	}
 
-	return &ConstDecl{
-		Const:  constToken,
-		LParen: lParenToken,
-		Specs:  specs,
-		RParen: rParenToken,
+	assignToken := p.eatTokenIfKind(TokenAssign)
+
+	if constType != nil && !assignToken.valid() {
+		p.file.errorf(p.currentToken().SourceRange(), "missing init expr")
+		return nil
+	}
+
+	var rhs []Expr
+	if assignToken.valid() {
+		rhs = p.parseExprList()
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &ConstSpec{
+		LHS:    lhs,
+		Type:   constType,
+		Assign: assignToken,
+		RHS:    rhs,
 	}
 }

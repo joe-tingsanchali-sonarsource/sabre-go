@@ -1,25 +1,25 @@
-(ConstDecl
-  (ConstDeclSpec
+(GenericDecl const
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Sunday))
     =
     (IdentifierExpr IDENTIFIER(iota))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Monday))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Tuesday))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Wednesday))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Thursday))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Friday))
   )
-  (ConstDeclSpec
+  (ConstSpec
     (IdentifierExpr IDENTIFIER(Partyday))
   )
 )

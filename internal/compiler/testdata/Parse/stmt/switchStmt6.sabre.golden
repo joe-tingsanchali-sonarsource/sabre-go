@@ -1,0 +1,12 @@
+(SwitchStmt
+  (Block 1
+    (DefaultCaseStmt
+      :
+      (ExprStmt
+        (CallExpr
+          (IdentifierExpr IDENTIFIER(f0))
+        )
+      )
+    )
+  )
+)
