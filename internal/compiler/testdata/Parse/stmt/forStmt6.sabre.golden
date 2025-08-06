@@ -1,0 +1,8 @@
+(ForRangeStmt
+  (ForRangeStmt-Expr
+    (IdentifierExpr IDENTIFIER(list))
+  )
+  (ForRangeStmt-Body
+    (Block 0)
+  )
+)

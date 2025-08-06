@@ -1,0 +1,23 @@
+(ForStmt
+  (ForStmt-Init
+    (AssignStmt
+      (IdentifierExpr IDENTIFIER(i))
+      :=
+      (LiteralExpr LITERAL_INT(0))
+    )
+  )
+  (ForStmt-Cond
+    (BinaryExpr <
+      (IdentifierExpr IDENTIFIER(i))
+      (LiteralExpr LITERAL_INT(10))
+    )
+  )
+  (ForStmt-Post
+    (IncDecStmt ++
+      (IdentifierExpr IDENTIFIER(i))
+    )
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)

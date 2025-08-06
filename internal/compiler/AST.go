@@ -361,6 +361,38 @@ func (e *IfStmt) Visit(v NodeVisitor) {
 	v.VisitIfStmt(e)
 }
 
+type ForStmt struct {
+	For  Token
+	Init Stmt
+	Cond Expr
+	Post Stmt
+	Body *BlockStmt
+}
+
+func (e *ForStmt) stmtNode() {}
+func (e *ForStmt) SourceRange() SourceRange {
+	return e.For.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *ForStmt) Visit(v NodeVisitor) {
+	v.VisitForStmt(e)
+}
+
+type ForRangeStmt struct {
+	For   Token
+	Init  *AssignStmt
+	Range Token
+	Expr  Expr
+	Body  *BlockStmt
+}
+
+func (e *ForRangeStmt) stmtNode() {}
+func (e *ForRangeStmt) SourceRange() SourceRange {
+	return e.For.SourceRange().Merge(e.Body.SourceRange())
+}
+func (e *ForRangeStmt) Visit(v NodeVisitor) {
+	v.VisitForRangeStmt(e)
+}
+
 // Specs
 type Spec interface {
 	Node
@@ -434,6 +466,8 @@ type NodeVisitor interface {
 	VisitSwitchCaseStmt(n *SwitchCaseStmt)
 	VisitSwitchStmt(n *SwitchStmt)
 	VisitIfStmt(n *IfStmt)
+	VisitForStmt(n *ForStmt)
+	VisitForRangeStmt(n *ForRangeStmt)
 
 	VisitTypeSpec(n *TypeSpec)
 
@@ -533,6 +567,29 @@ func (v *DefaultVisitor) VisitIfStmt(n *IfStmt) {
 	if n.Else != nil {
 		n.Else.Visit(v)
 	}
+}
+
+func (v *DefaultVisitor) VisitForStmt(n *ForStmt) {
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
+
+	if n.Cond != nil {
+		n.Cond.Visit(v)
+	}
+
+	if n.Post != nil {
+		n.Post.Visit(v)
+	}
+
+	n.Body.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
+	if n.Init != nil {
+		n.Init.Visit(v)
+	}
+	n.Expr.Visit(v)
 }
 
 func (v *DefaultVisitor) VisitTypeSpec(n *TypeSpec) {

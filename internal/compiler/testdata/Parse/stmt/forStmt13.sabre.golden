@@ -1,0 +1,13 @@
+(ForStmt
+  (ForStmt-Cond
+    (IdentifierExpr IDENTIFIER(cond))
+  )
+  (ForStmt-Post
+    (IncDecStmt ++
+      (IdentifierExpr IDENTIFIER(i))
+    )
+  )
+  (ForStmt-Body
+    (Block 0)
+  )
+)
