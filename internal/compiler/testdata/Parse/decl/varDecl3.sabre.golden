@@ -1,0 +1,8 @@
+(GenericDecl var
+  (VarSpec
+    (IdentifierExpr IDENTIFIER(x))
+    (ArrayType
+      (NamedType IDENTIFIER(foo).IDENTIFIER(bar))
+    )
+  )
+)

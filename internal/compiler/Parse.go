@@ -550,6 +550,14 @@ func (p *Parser) parseExprList() (list []Expr) {
 	return
 }
 
+func (p *Parser) parseIdentifierExprList() (list []*IdentifierExpr) {
+	list = []*IdentifierExpr{p.parseIdentifierExpr()}
+	for p.eatTokenIfKind(TokenComma).valid() {
+		list = append(list, p.parseIdentifierExpr())
+	}
+	return
+}
+
 func (p *Parser) parseReturnStmt() *ReturnStmt {
 	returnToken := p.eatTokenOrError(TokenReturn)
 	if !returnToken.valid() {
@@ -895,6 +903,8 @@ func (p *Parser) ParseDecl() Decl {
 	switch p.currentToken().Kind() {
 	case TokenType:
 		return p.parseGenericDecl(p.eatToken(), p.parseTypeSpec)
+	case TokenVar:
+		return p.parseGenericDecl(p.eatToken(), p.parseVarSpec)
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
 		return nil
@@ -950,5 +960,33 @@ func (p *Parser) parseTypeSpec() Spec {
 		Name:   name,
 		Assign: assign,
 		Type:   t,
+	}
+}
+
+func (p *Parser) parseVarSpec() Spec {
+	lhs := p.parseIdentifierExprList()
+
+	var varType Type
+	if p.currentToken().Kind() != TokenAssign {
+		varType = p.parseType()
+	}
+
+	assignToken := p.eatTokenIfKind(TokenAssign)
+
+	var rhs []Expr
+	if assignToken.valid() {
+		rhs = p.parseExprList()
+		if len(rhs) == 0 {
+			return nil
+		}
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &VarSpec{
+		LHS:    lhs,
+		Type:   varType,
+		Assign: assignToken,
+		RHS:    rhs,
 	}
 }

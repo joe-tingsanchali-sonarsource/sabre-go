@@ -1,0 +1,6 @@
+(GenericDecl var
+  (VarSpec
+    (IdentifierExpr IDENTIFIER(x))
+    (NamedType IDENTIFIER(int))
+  )
+)

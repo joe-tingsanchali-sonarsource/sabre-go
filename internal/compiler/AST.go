@@ -413,6 +413,27 @@ func (e *TypeSpec) Visit(v NodeVisitor) {
 	v.VisitTypeSpec(e)
 }
 
+type VarSpec struct {
+	LHS    []*IdentifierExpr
+	Type   Type
+	Assign Token
+	RHS    []Expr
+}
+
+func (e *VarSpec) specNode() {}
+func (e *VarSpec) SourceRange() SourceRange {
+	if len(e.RHS) > 0 {
+		return e.LHS[0].SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+	}
+	if e.Type != nil {
+		return e.LHS[0].SourceRange().Merge(e.Type.SourceRange())
+	}
+	panic("var decl is expected to have a type or init expr")
+}
+func (e *VarSpec) Visit(v NodeVisitor) {
+	v.VisitVarSpec(e)
+}
+
 // Declarations
 type Decl interface {
 	Node
@@ -470,6 +491,7 @@ type NodeVisitor interface {
 	VisitForRangeStmt(n *ForRangeStmt)
 
 	VisitTypeSpec(n *TypeSpec)
+	VisitVarSpec(n *VarSpec)
 
 	VisitGenericDecl(n *GenericDecl)
 }
@@ -595,6 +617,20 @@ func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
 func (v *DefaultVisitor) VisitTypeSpec(n *TypeSpec) {
 	n.Name.Visit(v)
 	n.Type.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitVarSpec(n *VarSpec) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		n.Type.Visit(v)
+	}
+
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
 }
 
 func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {

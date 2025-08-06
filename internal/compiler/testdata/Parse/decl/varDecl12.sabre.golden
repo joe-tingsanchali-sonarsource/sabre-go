@@ -1,0 +1,5 @@
+>> 		x
+>> 		 ^
+>> 	)
+>> 	  
+Error[internal/compiler/testdata/Parse/decl/varDecl12.sabre:2:3]: expected type but found ;(\n)
