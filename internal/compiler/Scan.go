@@ -233,6 +233,29 @@ func (s *Scanner) readString() Token {
 	return token
 }
 
+func (s *Scanner) readRawString() Token {
+	start := s.currentLocation
+	if s.currentChar() != '`' {
+		panic("raw strings should start with `")
+	}
+
+	s.readChar()
+
+	for !s.isEOF() {
+		if s.currentChar() == '`' {
+			break
+		}
+		s.readChar()
+	}
+
+	if s.currentChar() == '`' {
+		s.readChar() // consume closing quote
+	}
+	token := s.createTokenFromLocationPoint(TokenLiteralString, start)
+
+	return token
+}
+
 func (s *Scanner) readComment(start LocationPoint) Token {
 	for s.currentChar() != '\n' {
 		if s.currentChar() == '\r' && s.peekChar(2) == '\n' {
@@ -465,6 +488,10 @@ func (s *Scanner) Scan() Token {
 			return s.createTokenFromLocationPoint(TokenXorAssign, start)
 		}
 		return s.createTokenFromLocationPoint(TokenXor, start)
+
+	case '`':
+		insertSemi = true
+		return s.readRawString()
 
 	case '"':
 		insertSemi = true

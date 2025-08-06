@@ -1,0 +1,5 @@
+>> 	    x, int
+>> 	          ^
+>> 	}
+>> 	  
+Error[internal/compiler/testdata/Parse/expr/structType8.sabre:2:11]: expected type but found ;(\n)

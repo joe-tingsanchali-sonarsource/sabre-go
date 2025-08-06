@@ -1,0 +1,3 @@
+>> 	    u float32
+>> 	             ^
+Error[internal/compiler/testdata/Parse/expr/structType5.sabre:3:14]: expected '}' but found 'INVALID'
