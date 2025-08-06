@@ -973,6 +973,9 @@ func (p *Parser) parseConstSpec() Spec {
 	var rhs []Expr
 	if assignToken.valid() {
 		rhs = p.parseExprList()
+		if len(rhs) == 0 {
+			return nil
+		}
 	}
 
 	p.eatTokenOrError(TokenSemicolon)
