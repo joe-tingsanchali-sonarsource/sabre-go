@@ -974,7 +974,7 @@ func (p *Parser) parseConstSpec() Spec {
 	assignToken := p.eatTokenIfKind(TokenAssign)
 
 	if constType != nil && !assignToken.valid() {
-		p.file.errorf(p.currentToken().SourceRange(), "missing init expr")
+		p.file.errorf(p.currentToken().SourceRange(), "constant declaration must have an init value")
 		return nil
 	}
 
