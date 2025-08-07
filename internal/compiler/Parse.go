@@ -289,6 +289,8 @@ func (p *Parser) parseAtom() Expr {
 		return p.parseArrayType()
 	case TokenStruct:
 		return p.parseStructType()
+	case TokenFunc:
+		return p.parseFuncType()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
 	}
@@ -363,16 +365,12 @@ func (p *Parser) parseArrayType() *ArrayType {
 	}
 }
 
-func (p *Parser) parseStructType() *StructType {
-	structToken := p.eatTokenOrError(TokenStruct)
-	if !structToken.valid() {
-		return nil
-	}
-
-	lBraceToken := p.eatTokenOrError(TokenLBrace)
+func (p *Parser) parseFieldList(open, close TokenKind, expectSemicolon bool) FieldList {
+	openToken := p.eatTokenOrError(open)
 
 	var fields []Field
-	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
+	for p.currentToken().Kind() != close && p.currentToken().valid() {
+		// TODO: Use p.parseIdentifierExprList() once merged.
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
 		for p.eatTokenIfKind(TokenComma).valid() {
 			names = append(names, p.parseIdentifierExpr())
@@ -380,7 +378,7 @@ func (p *Parser) parseStructType() *StructType {
 
 		fieldType := p.parseType()
 		if fieldType == nil {
-			return nil
+			return FieldList{}
 		}
 
 		var tag Token
@@ -388,16 +386,70 @@ func (p *Parser) parseStructType() *StructType {
 			tag = p.eatToken()
 		}
 
-		p.eatTokenOrError(TokenSemicolon)
+		if expectSemicolon {
+			p.eatTokenOrError(TokenSemicolon)
+		}
 
 		fields = append(fields, Field{Names: names, Type: fieldType, Tag: tag})
 	}
 
-	rBraceToken := p.eatTokenOrError(TokenRBrace)
+	closeToken := p.eatTokenOrError(close)
+
+	return FieldList{
+		Open:   openToken,
+		Fields: fields,
+		Close:  closeToken,
+	}
+}
+
+func (p *Parser) parseStructType() *StructType {
+	structToken := p.eatTokenOrError(TokenStruct)
+	if !structToken.valid() {
+		return nil
+	}
 
 	return &StructType{
 		Struct:    structToken,
-		FieldList: FieldList{Open: lBraceToken, Fields: fields, Close: rBraceToken},
+		FieldList: p.parseFieldList(TokenLBrace, TokenRBrace, true),
+	}
+}
+
+func (p *Parser) parseFuncType() *FuncType {
+	funcToken := p.eatTokenOrError(TokenFunc)
+	if !funcToken.valid() {
+		return nil
+	}
+
+	// TODO: Type parameters
+	parameters := p.parseFieldList(TokenLParen, TokenRParen, false)
+
+	lParenToken := p.eatTokenIfKind(TokenLParen)
+
+	name := p.parseType()
+
+	var t Type
+	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
+		t = p.parseType()
+	}
+
+	var field Field
+	if t != nil {
+		field = Field{Names: []*IdentifierExpr{name.(*NamedType).Identifier}, Type: t}
+	} else {
+		field = Field{Type: name}
+	}
+
+	var rParenToken Token
+	if lParenToken.valid() {
+		rParenToken = p.eatTokenOrError(TokenRParen)
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &FuncType{
+		Func:       funcToken,
+		Parameters: parameters,
+		Results:    FieldList{Open: lParenToken, Fields: []Field{field}, Close: rParenToken},
 	}
 }
 
@@ -414,18 +466,22 @@ func (p *Parser) parseType() Type {
 				return nil
 			}
 			return &NamedType{
-				Package:  identifier.Token,
-				TypeName: selector.Token,
+				Package:    identifier.Token,
+				TypeName:   selector.Token,
+				Identifier: identifier,
 			}
 		} else {
 			return &NamedType{
-				TypeName: identifier.Token,
+				TypeName:   identifier.Token,
+				Identifier: identifier,
 			}
 		}
 	case TokenLBracket:
 		return p.parseArrayType()
 	case TokenStruct:
 		return p.parseStructType()
+	case TokenFunc:
+		return p.parseFuncType()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
 		return nil
@@ -450,6 +506,8 @@ func (p *Parser) convertParsedExprToType(e Expr) Type {
 	case *ArrayType:
 		return n
 	case *StructType:
+		return n
+	case *FuncType:
 		return n
 	}
 	return nil
