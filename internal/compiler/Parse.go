@@ -423,25 +423,26 @@ func (p *Parser) parseFuncType() *FuncType {
 	// TODO: Type parameters
 	parameters := p.parseFieldList(TokenLParen, TokenRParen, false)
 
-	lParenToken := p.eatTokenIfKind(TokenLParen)
+	var results FieldList
+	if p.currentToken().Kind() != TokenSemicolon {
+		results.Open = p.eatTokenIfKind(TokenLParen)
 
-	name := p.parseType()
+		name := p.parseType()
 
-	var t Type
-	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-		t = p.parseType()
-	}
+		var field Field
 
-	var field Field
-	if t != nil {
-		field = Field{Names: []*IdentifierExpr{name.(*NamedType).Identifier}, Type: t}
-	} else {
-		field = Field{Type: name}
-	}
+		if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
+			field.Names = []*IdentifierExpr{name.(*NamedType).Identifier}
+			field.Type = p.parseType()
+		} else {
+			field.Type = name
+		}
 
-	var rParenToken Token
-	if lParenToken.valid() {
-		rParenToken = p.eatTokenOrError(TokenRParen)
+		results.Fields = []Field{field}
+
+		if results.Open.valid() {
+			results.Close = p.eatTokenOrError(TokenRParen)
+		}
 	}
 
 	p.eatTokenOrError(TokenSemicolon)
@@ -449,7 +450,7 @@ func (p *Parser) parseFuncType() *FuncType {
 	return &FuncType{
 		Func:       funcToken,
 		Parameters: parameters,
-		Results:    FieldList{Open: lParenToken, Fields: []Field{field}, Close: rParenToken},
+		Results:    results,
 	}
 }
 

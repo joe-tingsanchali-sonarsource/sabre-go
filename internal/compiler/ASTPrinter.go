@@ -251,10 +251,9 @@ func (v *ASTPrinter) VisitStructType(n *StructType) {
 
 func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 	v.indentor.print("(FuncType")
+	v.indentor.Push()
 
 	if len(n.TypeParameters.Fields) > 0 {
-		v.indentor.Push()
-
 		for _, f := range n.TypeParameters.Fields {
 			v.indentor.NewLine()
 			v.indentor.print("(FuncType-TypeParameters")
@@ -280,13 +279,9 @@ func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 			v.indentor.NewLine()
 			v.indentor.print(")")
 		}
-
-		v.indentor.Pop()
 	}
 
 	if len(n.Parameters.Fields) > 0 {
-		v.indentor.Push()
-
 		for _, f := range n.Parameters.Fields {
 			v.indentor.NewLine()
 			v.indentor.print("(FuncType-Parameters")
@@ -312,13 +307,9 @@ func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 			v.indentor.NewLine()
 			v.indentor.print(")")
 		}
-
-		v.indentor.Pop()
 	}
 
 	if len(n.Results.Fields) > 0 {
-		v.indentor.Push()
-
 		for _, f := range n.Results.Fields {
 			v.indentor.NewLine()
 			v.indentor.print("(FuncType-Results")
@@ -344,11 +335,12 @@ func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 			v.indentor.NewLine()
 			v.indentor.print(")")
 		}
-
-		v.indentor.Pop()
-		v.indentor.NewLine()
 	}
 
+	v.indentor.Pop()
+	if len(n.Parameters.Fields) > 0 {
+		v.indentor.NewLine()
+	}
 	v.indentor.print(")")
 }
 
