@@ -1,0 +1,14 @@
+(FuncType
+  (FuncType-Parameters
+    (IdentifierExpr IDENTIFIER(n))
+    (NamedType IDENTIFIER(int))
+  )
+  (FuncType-Results
+    (FuncType
+      (FuncType-Parameters
+        (IdentifierExpr IDENTIFIER(x))
+        (NamedType IDENTIFIER(int))
+      )
+    )
+  )
+)

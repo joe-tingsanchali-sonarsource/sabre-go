@@ -424,6 +424,8 @@ func (p *Parser) parseFuncType() *FuncType {
 	}
 
 	// Parameters
+	// TODO: Handle un-named parameters
+	// TODO: Handle Ellipsis parameters
 	parameters := p.parseFieldList(TokenLParen, TokenRParen, false)
 
 	// One result or non
@@ -437,19 +439,21 @@ func (p *Parser) parseFuncType() *FuncType {
 		}
 	}
 
+	// TODO: Cleanup
+	// More than one result, named or un-named
 	var results FieldList
-
 	var name0 *IdentifierExpr
 	var typ0 Type
-
-	// Results
-	// TODO: Cleanup
-	if p.currentToken().Kind() != TokenSemicolon {
+	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
 		results.Open = p.eatTokenIfKind(TokenLParen)
 
+		var names []*IdentifierExpr
 		for name0 != nil || p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
 			if typ0 == nil && name0 == nil {
-				name0 = p.parseIdentifierExpr()
+				names = p.parseIdentifierExprList()
+				if len(names) > 0 {
+					name0 = names[0]
+				}
 				if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenComma {
 					typ0 = p.parseType()
 				}
@@ -459,8 +463,7 @@ func (p *Parser) parseFuncType() *FuncType {
 				if typ0 == nil {
 					results.Fields = append(results.Fields, Field{Type: p.convertParsedExprToType(name0)})
 				} else {
-
-					results.Fields = append(results.Fields, Field{Names: []*IdentifierExpr{name0}, Type: typ0})
+					results.Fields = append(results.Fields, Field{Names: names, Type: typ0})
 				}
 			}
 
@@ -472,35 +475,14 @@ func (p *Parser) parseFuncType() *FuncType {
 			}
 		}
 
-		// names := p.parseIdentifierExprList()
-
-		// var fields []Field
-		// var field Field
-		// field.Type = p.parseType()
-		// if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-		// 	field.Names = []*IdentifierExpr{field.Type.(*NamedType).Expr}
-		// 	field.Type = p.parseType()
-		// }
-		// fields = append(fields, field)
-
-		// for p.eatTokenIfKind(TokenComma).valid() {
-		// 	var f Field
-		// 	f.Type = p.parseType()
-		// 	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-		// 		f.Names = []*IdentifierExpr{f.Type.(*NamedType).Expr}
-		// 		f.Type = p.parseType()
-		// 	}
-		// 	fields = append(fields, f)
-		// }
-
-		// results.Fields = fields
-
 		if results.Open.valid() {
 			results.Close = p.eatTokenOrError(TokenRParen)
 		}
 	}
 
-	p.eatTokenOrError(TokenSemicolon)
+	if len(results.Fields) > 0 {
+		p.eatTokenOrError(TokenSemicolon)
+	}
 
 	return &FuncType{
 		Func:       funcToken,
