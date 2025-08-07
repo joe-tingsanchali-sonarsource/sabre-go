@@ -145,7 +145,7 @@ type Type interface {
 type NamedType struct {
 	Package  Token
 	TypeName Token
-	Expr     *IdentifierExpr
+	Expr     *IdentifierExpr // TODO: Remove it if not needed.
 }
 
 func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
