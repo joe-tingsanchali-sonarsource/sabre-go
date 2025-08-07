@@ -1,0 +1,4 @@
+const (
+    size int64 = 1024
+    eof        = -1
+)

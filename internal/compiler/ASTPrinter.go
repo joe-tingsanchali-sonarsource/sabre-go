@@ -547,6 +547,35 @@ func (v *ASTPrinter) VisitTypeSpec(n *TypeSpec) {
 	v.indentor.print(")")
 }
 
+func (v *ASTPrinter) VisitConstSpec(n *ConstSpec) {
+	v.indentor.print("(ConstSpec")
+	v.indentor.Push()
+
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		v.indentor.NewLine()
+		n.Type.Visit(v)
+	}
+
+	if n.Assign.valid() {
+		v.indentor.NewLine()
+		v.indentor.print(n.Assign)
+	}
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitGenericDecl(n *GenericDecl) {
 	v.indentor.printf("(GenericDecl %v", n.DeclToken.Value())
 	v.indentor.Push()
