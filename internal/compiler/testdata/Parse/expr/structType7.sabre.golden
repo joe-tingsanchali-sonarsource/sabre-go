@@ -1,0 +1,3 @@
+>> 	    [2]int
+>> 	    ^      
+Error[internal/compiler/testdata/Parse/expr/structType7.sabre:2:5]: expected an identifier but found '['

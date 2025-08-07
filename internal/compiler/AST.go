@@ -177,6 +177,32 @@ func (e *ArrayType) Visit(v NodeVisitor) {
 	v.VisitArrayType(e)
 }
 
+type Field struct {
+	Names []*IdentifierExpr
+	Type  Type
+	Tag   Token
+}
+
+type FieldList struct {
+	Open   Token // { or (
+	Fields []Field
+	Close  Token // } or )
+}
+
+type StructType struct {
+	Struct    Token
+	FieldList FieldList
+}
+
+func (e *StructType) exprNode() {}
+func (e *StructType) typeExpr() {}
+func (e *StructType) SourceRange() SourceRange {
+	return e.Struct.SourceRange().Merge(e.FieldList.Close.SourceRange())
+}
+func (e *StructType) Visit(v NodeVisitor) {
+	v.VisitStructType(e)
+}
+
 // Stmt Nodes
 type Stmt interface {
 	Node
@@ -413,6 +439,25 @@ func (e *TypeSpec) Visit(v NodeVisitor) {
 	v.VisitTypeSpec(e)
 }
 
+type ConstSpec struct {
+	LHS    []*IdentifierExpr
+	Type   Type
+	Assign Token
+	RHS    []Expr
+}
+
+func (e *ConstSpec) specNode() {}
+func (e *ConstSpec) SourceRange() SourceRange {
+	if len(e.RHS) > 0 {
+		return e.LHS[0].SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+	} else {
+		return e.LHS[0].SourceRange()
+	}
+}
+func (e *ConstSpec) Visit(v NodeVisitor) {
+	v.VisitConstSpec(e)
+}
+
 type VarSpec struct {
 	LHS    []*IdentifierExpr
 	Type   Type
@@ -475,6 +520,7 @@ type NodeVisitor interface {
 
 	VisitNamedType(n *NamedType)
 	VisitArrayType(n *ArrayType)
+	VisitStructType(n *StructType)
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
@@ -491,6 +537,7 @@ type NodeVisitor interface {
 	VisitForRangeStmt(n *ForRangeStmt)
 
 	VisitTypeSpec(n *TypeSpec)
+	VisitConstSpec(n *ConstSpec)
 	VisitVarSpec(n *VarSpec)
 
 	VisitGenericDecl(n *GenericDecl)
@@ -538,6 +585,14 @@ func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
 func (v *DefaultVisitor) VisitArrayType(n *ArrayType) {
 	n.Length.Visit(v)
 	n.ElementType.Visit(v)
+}
+func (v *DefaultVisitor) VisitStructType(n *StructType) {
+	for _, e := range n.FieldList.Fields {
+		for _, name := range e.Names {
+			name.Visit(v)
+		}
+		e.Type.Visit(v)
+	}
 }
 
 func (v *DefaultVisitor) VisitExprStmt(n *ExprStmt) {
@@ -617,6 +672,20 @@ func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
 func (v *DefaultVisitor) VisitTypeSpec(n *TypeSpec) {
 	n.Name.Visit(v)
 	n.Type.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitConstSpec(n *ConstSpec) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		n.Type.Visit(v)
+	}
+
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
 }
 
 func (v *DefaultVisitor) VisitVarSpec(n *VarSpec) {

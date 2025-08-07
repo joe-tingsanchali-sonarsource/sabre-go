@@ -1,0 +1,30 @@
+(GenericDecl const
+  (ConstSpec
+    (IdentifierExpr IDENTIFIER(bit0))
+    (IdentifierExpr IDENTIFIER(mask0))
+    =
+    (BinaryExpr <<
+      (LiteralExpr LITERAL_INT(1))
+      (IdentifierExpr IDENTIFIER(iota))
+    )
+    (BinaryExpr -
+      (BinaryExpr <<
+        (LiteralExpr LITERAL_INT(1))
+        (IdentifierExpr IDENTIFIER(iota))
+      )
+      (LiteralExpr LITERAL_INT(1))
+    )
+  )
+  (ConstSpec
+    (IdentifierExpr IDENTIFIER(bit1))
+    (IdentifierExpr IDENTIFIER(mask1))
+  )
+  (ConstSpec
+    (IdentifierExpr IDENTIFIER(_))
+    (IdentifierExpr IDENTIFIER(_))
+  )
+  (ConstSpec
+    (IdentifierExpr IDENTIFIER(bit3))
+    (IdentifierExpr IDENTIFIER(mask3))
+  )
+)

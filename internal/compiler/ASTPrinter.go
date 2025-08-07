@@ -211,6 +211,44 @@ func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
 	v.indentor.print(")")
 }
 
+func (v *ASTPrinter) VisitStructType(n *StructType) {
+	v.indentor.printf("(StructType %v", len(n.FieldList.Fields))
+
+	if len(n.FieldList.Fields) > 0 {
+		v.indentor.Push()
+
+		for _, f := range n.FieldList.Fields {
+			v.indentor.NewLine()
+			v.indentor.print("(StructTypeField")
+			v.indentor.Push()
+
+			// Identifiers
+			for _, name := range f.Names {
+				v.indentor.NewLine()
+				name.Visit(v)
+			}
+
+			// Type
+			v.indentor.NewLine()
+			f.Type.Visit(v)
+
+			// Tag
+			if f.Tag.valid() {
+				v.indentor.NewLine()
+				v.indentor.printf("(Tag %v)", f.Tag)
+			}
+
+			v.indentor.Pop()
+			v.indentor.NewLine()
+			v.indentor.print(")")
+		}
+
+		v.indentor.Pop()
+		v.indentor.NewLine()
+	}
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitExprStmt(n *ExprStmt) {
 	v.indentor.print("(ExprStmt")
 	v.indentor.Push()
@@ -438,6 +476,35 @@ func (v *ASTPrinter) VisitTypeSpec(n *TypeSpec) {
 	n.Name.Visit(v)
 	v.indentor.NewLine()
 	n.Type.Visit(v)
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitConstSpec(n *ConstSpec) {
+	v.indentor.print("(ConstSpec")
+	v.indentor.Push()
+
+	for _, e := range n.LHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		v.indentor.NewLine()
+		n.Type.Visit(v)
+	}
+
+	if n.Assign.valid() {
+		v.indentor.NewLine()
+		v.indentor.print(n.Assign)
+	}
+
+	for _, e := range n.RHS {
+		v.indentor.NewLine()
+		e.Visit(v)
+	}
 
 	v.indentor.Pop()
 	v.indentor.NewLine()

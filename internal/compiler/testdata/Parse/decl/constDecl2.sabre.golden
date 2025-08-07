@@ -1,0 +1,7 @@
+(GenericDecl const
+  (ConstSpec
+    (IdentifierExpr IDENTIFIER(zero))
+    =
+    (LiteralExpr LITERAL_FLOAT(0.0))
+  )
+)

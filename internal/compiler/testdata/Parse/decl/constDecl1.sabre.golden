@@ -1,0 +1,8 @@
+(GenericDecl const
+  (ConstSpec
+    (IdentifierExpr IDENTIFIER(Pi))
+    (NamedType IDENTIFIER(float64))
+    =
+    (LiteralExpr LITERAL_FLOAT(3.14159265358979323846))
+  )
+)
