@@ -1,0 +1,11 @@
+(FuncType
+  (FuncType-Parameters
+    (NamedType IDENTIFIER(int))
+    (NamedType IDENTIFIER(int))
+    (NamedType IDENTIFIER(float64))
+  )
+  (FuncType-Results
+    (NamedType IDENTIFIER(float64))
+    (NamedType IDENTIFIER(int))
+  )
+)

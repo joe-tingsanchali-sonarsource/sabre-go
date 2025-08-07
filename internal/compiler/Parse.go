@@ -372,9 +372,9 @@ func (p *Parser) parseFieldList(open, close TokenKind, expectSemicolon bool) Fie
 	for p.currentToken().Kind() != close && p.currentToken().valid() {
 		names := p.parseIdentifierExprList()
 
-		fieldType := p.parseType()
-		if fieldType == nil {
-			return FieldList{}
+		var fieldType Type
+		if p.currentToken().Kind() != close {
+			fieldType = p.parseType()
 		}
 
 		var tag Token
@@ -424,14 +424,27 @@ func (p *Parser) parseFuncType() *FuncType {
 	}
 
 	// Parameters
-	// TODO: Handle un-named parameters
 	// TODO: Handle Ellipsis parameters
+	var fields []Field
 	parameters := p.parseFieldList(TokenLParen, TokenRParen, false)
+	for _, f := range parameters.Fields {
+		if f.Type == nil {
+			for _, n := range f.Names {
+				fields = append(fields, Field{Type: p.convertParsedExprToType(n)})
+			}
+		} else {
+			fields = append(fields, f)
+		}
+	}
+	parameters.Fields = fields
 
 	// One result or non
 	if p.currentToken().Kind() != TokenLParen && p.currentToken().Kind() != TokenSemicolon {
 		fields := []Field{Field{Type: p.parseType()}}
-		p.eatTokenOrError(TokenSemicolon)
+		// Will get eaten by the outer func type parsing
+		if _, ok := fields[0].Type.(*FuncType); !ok {
+			p.eatTokenOrError(TokenSemicolon)
+		}
 		return &FuncType{
 			Func:       funcToken,
 			Parameters: parameters,
@@ -461,7 +474,9 @@ func (p *Parser) parseFuncType() *FuncType {
 
 			if name0 != nil || typ0 != nil {
 				if typ0 == nil {
-					results.Fields = append(results.Fields, Field{Type: p.convertParsedExprToType(name0)})
+					for _, n := range names {
+						results.Fields = append(results.Fields, Field{Type: p.convertParsedExprToType(n)})
+					}
 				} else {
 					results.Fields = append(results.Fields, Field{Names: names, Type: typ0})
 				}
@@ -480,9 +495,7 @@ func (p *Parser) parseFuncType() *FuncType {
 		}
 	}
 
-	if len(results.Fields) > 0 {
-		p.eatTokenOrError(TokenSemicolon)
-	}
+	p.eatTokenOrError(TokenSemicolon)
 
 	return &FuncType{
 		Func:       funcToken,

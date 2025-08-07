@@ -4,3 +4,9 @@ Error[internal/compiler/testdata/Parse/expr/structType9.sabre:2:7]: expected an 
 >> 	    x,
 >> 	      ^
 Error[internal/compiler/testdata/Parse/expr/structType9.sabre:2:7]: expected type but found INVALID
+>> 	    x,
+>> 	      ^
+Error[internal/compiler/testdata/Parse/expr/structType9.sabre:2:7]: expected ';' but found 'INVALID'
+>> 	    x,
+>> 	      ^
+Error[internal/compiler/testdata/Parse/expr/structType9.sabre:2:7]: expected '}' but found 'INVALID'
