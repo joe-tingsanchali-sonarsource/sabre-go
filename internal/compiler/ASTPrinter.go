@@ -254,87 +254,57 @@ func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 	v.indentor.Push()
 
 	if len(n.TypeParameters.Fields) > 0 {
+		v.indentor.NewLine()
+		v.indentor.print("(FuncType-TypeParameters")
+		v.indentor.Push()
 		for _, f := range n.TypeParameters.Fields {
-			v.indentor.NewLine()
-			v.indentor.print("(FuncType-TypeParameters")
-			v.indentor.Push()
-
-			// Identifiers
 			for _, name := range f.Names {
 				v.indentor.NewLine()
 				name.Visit(v)
 			}
 
-			// Type
 			v.indentor.NewLine()
 			f.Type.Visit(v)
-
-			// Tag
-			if f.Tag.valid() {
-				v.indentor.NewLine()
-				v.indentor.printf("(Tag %v)", f.Tag)
-			}
-
-			v.indentor.Pop()
-			v.indentor.NewLine()
-			v.indentor.print(")")
 		}
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
 	}
 
 	if len(n.Parameters.Fields) > 0 {
+		v.indentor.NewLine()
+		v.indentor.print("(FuncType-Parameters")
+		v.indentor.Push()
 		for _, f := range n.Parameters.Fields {
-			v.indentor.NewLine()
-			v.indentor.print("(FuncType-Parameters")
-			v.indentor.Push()
-
-			// Identifiers
 			for _, name := range f.Names {
 				v.indentor.NewLine()
 				name.Visit(v)
 			}
 
-			// Type
 			v.indentor.NewLine()
 			f.Type.Visit(v)
-
-			// Tag
-			if f.Tag.valid() {
-				v.indentor.NewLine()
-				v.indentor.printf("(Tag %v)", f.Tag)
-			}
-
-			v.indentor.Pop()
-			v.indentor.NewLine()
-			v.indentor.print(")")
 		}
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
 	}
 
 	if len(n.Results.Fields) > 0 {
+		v.indentor.NewLine()
+		v.indentor.print("(FuncType-Results")
+		v.indentor.Push()
 		for _, f := range n.Results.Fields {
-			v.indentor.NewLine()
-			v.indentor.print("(FuncType-Results")
-			v.indentor.Push()
-
-			// Identifiers
 			for _, name := range f.Names {
 				v.indentor.NewLine()
 				name.Visit(v)
 			}
 
-			// Type
 			v.indentor.NewLine()
 			f.Type.Visit(v)
-
-			// Tag
-			if f.Tag.valid() {
-				v.indentor.NewLine()
-				v.indentor.printf("(Tag %v)", f.Tag)
-			}
-
-			v.indentor.Pop()
-			v.indentor.NewLine()
-			v.indentor.print(")")
 		}
+		v.indentor.Pop()
+		v.indentor.NewLine()
+		v.indentor.print(")")
 	}
 
 	v.indentor.Pop()

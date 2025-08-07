@@ -143,9 +143,9 @@ type Type interface {
 }
 
 type NamedType struct {
-	Package    Token
-	TypeName   Token
-	Identifier *IdentifierExpr
+	Package  Token
+	TypeName Token
+	Expr     *IdentifierExpr
 }
 
 func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }

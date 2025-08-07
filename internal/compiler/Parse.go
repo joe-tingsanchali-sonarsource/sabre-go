@@ -420,25 +420,39 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	// TODO: Type parameters
+	if lBracketToken := p.eatTokenIfKind(TokenLBracket); lBracketToken.valid() {
+		p.file.errorf(lBracketToken.SourceRange(), "function type must not have type parameters")
+		return nil
+	}
+
+	// Parameters
 	parameters := p.parseFieldList(TokenLParen, TokenRParen, false)
 
+	// Results
 	var results FieldList
 	if p.currentToken().Kind() != TokenSemicolon {
 		results.Open = p.eatTokenIfKind(TokenLParen)
 
-		name := p.parseType()
-
+		var fields []Field
 		var field Field
-
+		field.Type = p.parseType()
 		if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-			field.Names = []*IdentifierExpr{name.(*NamedType).Identifier}
+			field.Names = []*IdentifierExpr{field.Type.(*NamedType).Expr}
 			field.Type = p.parseType()
-		} else {
-			field.Type = name
+		}
+		fields = append(fields, field)
+
+		for p.eatTokenIfKind(TokenComma).valid() {
+			var f Field
+			f.Type = p.parseType()
+			if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
+				f.Names = []*IdentifierExpr{f.Type.(*NamedType).Expr}
+				f.Type = p.parseType()
+			}
+			fields = append(fields, f)
 		}
 
-		results.Fields = []Field{field}
+		results.Fields = fields
 
 		if results.Open.valid() {
 			results.Close = p.eatTokenOrError(TokenRParen)
@@ -467,14 +481,14 @@ func (p *Parser) parseType() Type {
 				return nil
 			}
 			return &NamedType{
-				Package:    identifier.Token,
-				TypeName:   selector.Token,
-				Identifier: identifier,
+				Package:  identifier.Token,
+				TypeName: selector.Token,
+				Expr:     identifier,
 			}
 		} else {
 			return &NamedType{
-				TypeName:   identifier.Token,
-				Identifier: identifier,
+				TypeName: identifier.Token,
+				Expr:     identifier,
 			}
 		}
 	case TokenLBracket:
