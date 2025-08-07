@@ -439,6 +439,25 @@ func (e *TypeSpec) Visit(v NodeVisitor) {
 	v.VisitTypeSpec(e)
 }
 
+type ConstSpec struct {
+	LHS    []*IdentifierExpr
+	Type   Type
+	Assign Token
+	RHS    []Expr
+}
+
+func (e *ConstSpec) specNode() {}
+func (e *ConstSpec) SourceRange() SourceRange {
+	if len(e.RHS) > 0 {
+		return e.LHS[0].SourceRange().Merge(e.RHS[len(e.RHS)-1].SourceRange())
+	} else {
+		return e.LHS[0].SourceRange()
+	}
+}
+func (e *ConstSpec) Visit(v NodeVisitor) {
+	v.VisitConstSpec(e)
+}
+
 // Declarations
 type Decl interface {
 	Node
@@ -497,6 +516,7 @@ type NodeVisitor interface {
 	VisitForRangeStmt(n *ForRangeStmt)
 
 	VisitTypeSpec(n *TypeSpec)
+	VisitConstSpec(n *ConstSpec)
 
 	VisitGenericDecl(n *GenericDecl)
 }
@@ -630,6 +650,20 @@ func (v *DefaultVisitor) VisitForRangeStmt(n *ForRangeStmt) {
 func (v *DefaultVisitor) VisitTypeSpec(n *TypeSpec) {
 	n.Name.Visit(v)
 	n.Type.Visit(v)
+}
+
+func (v *DefaultVisitor) VisitConstSpec(n *ConstSpec) {
+	for _, e := range n.LHS {
+		e.Visit(v)
+	}
+
+	if n.Type != nil {
+		n.Type.Visit(v)
+	}
+
+	for _, e := range n.RHS {
+		e.Visit(v)
+	}
 }
 
 func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {
