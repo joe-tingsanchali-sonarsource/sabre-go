@@ -1,9 +1,9 @@
 (GenericDecl var
-  (VarSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(x))
     (NamedType IDENTIFIER(int))
   )
-  (VarSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(y))
     (NamedType IDENTIFIER(int))
   )

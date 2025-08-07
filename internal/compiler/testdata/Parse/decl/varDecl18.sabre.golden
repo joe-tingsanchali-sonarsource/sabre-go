@@ -1,15 +1,15 @@
 (GenericDecl var
-  (VarSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(x))
     (IdentifierExpr IDENTIFIER(y))
     (NamedType IDENTIFIER(int))
   )
-  (VarSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(z))
     =
     (LiteralExpr LITERAL_INT(1))
   )
-  (VarSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(w))
     (NamedType IDENTIFIER(float))
     =

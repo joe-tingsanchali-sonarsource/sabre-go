@@ -1,5 +1,5 @@
 (GenericDecl const
-  (ConstSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(u))
     (IdentifierExpr IDENTIFIER(v))
     (NamedType IDENTIFIER(float32))

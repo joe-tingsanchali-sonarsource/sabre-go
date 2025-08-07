@@ -482,37 +482,8 @@ func (v *ASTPrinter) VisitTypeSpec(n *TypeSpec) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitConstSpec(n *ConstSpec) {
-	v.indentor.print("(ConstSpec")
-	v.indentor.Push()
-
-	for _, e := range n.LHS {
-		v.indentor.NewLine()
-		e.Visit(v)
-	}
-
-	if n.Type != nil {
-		v.indentor.NewLine()
-		n.Type.Visit(v)
-	}
-
-	if n.Assign.valid() {
-		v.indentor.NewLine()
-		v.indentor.print(n.Assign)
-	}
-
-	for _, e := range n.RHS {
-		v.indentor.NewLine()
-		e.Visit(v)
-	}
-
-	v.indentor.Pop()
-	v.indentor.NewLine()
-	v.indentor.print(")")
-}
-
-func (v *ASTPrinter) VisitVarSpec(n *VarSpec) {
-	v.indentor.print("(VarSpec")
+func (v *ASTPrinter) VisitValueSpec(n *ValueSpec) {
+	v.indentor.print("(ValueSpec")
 	v.indentor.Push()
 
 	for _, e := range n.LHS {

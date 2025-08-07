@@ -1034,7 +1034,7 @@ func (p *Parser) parseConstSpec() Spec {
 
 	p.eatTokenOrError(TokenSemicolon)
 
-	return &ConstSpec{
+	return &ValueSpec{
 		LHS:    lhs,
 		Type:   constType,
 		Assign: assignToken,
@@ -1062,7 +1062,7 @@ func (p *Parser) parseVarSpec() Spec {
 
 	p.eatTokenOrError(TokenSemicolon)
 
-	return &VarSpec{
+	return &ValueSpec{
 		LHS:    lhs,
 		Type:   varType,
 		Assign: assignToken,
