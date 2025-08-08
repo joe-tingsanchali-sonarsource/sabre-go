@@ -414,7 +414,16 @@ func (p *Parser) parseStructType() *StructType {
 
 func (p *Parser) parseFuncFieldList() (fields []Field) {
 	for p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
-		exprs := p.parseExprList()
+		var exprs []Expr
+		if e := p.parseAtom(); e != nil {
+			exprs = append(exprs, e)
+		}
+
+		for p.eatTokenIfKind(TokenComma).valid() {
+			if e := p.parseAtom(); e != nil {
+				exprs = append(exprs, e)
+			}
+		}
 
 		var fieldType Type
 		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenComma {
