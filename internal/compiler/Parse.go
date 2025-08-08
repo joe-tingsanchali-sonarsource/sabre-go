@@ -448,19 +448,6 @@ func (p *Parser) parseFuncFieldList() (fields []Field) {
 	return
 }
 
-// TODO: (type1, type2, name3 type3)
-func (p *Parser) parseFuncTypeParameters() (parameters FieldList) {
-	// TODO: Handle Ellipsis parameters
-
-	parameters = FieldList{
-		Open:   p.eatTokenOrError(TokenLParen),
-		Fields: p.parseFuncFieldList(),
-		Close:  p.eatTokenOrError(TokenRParen),
-	}
-
-	return
-}
-
 func (p *Parser) parseFuncTypeResults() (results FieldList) {
 	// One result or non
 	if p.currentToken().Kind() != TokenLParen && p.currentToken().Kind() != TokenSemicolon {
@@ -510,9 +497,16 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
+	// TODO: Handle Ellipsis parameters
+	parameters := FieldList{
+		Open:   p.eatTokenOrError(TokenLParen),
+		Fields: p.parseFuncFieldList(),
+		Close:  p.eatTokenOrError(TokenRParen),
+	}
+
 	return &FuncType{
 		Func:       funcToken,
-		Parameters: p.parseFuncTypeParameters(),
+		Parameters: parameters,
 		Results:    p.parseFuncTypeResults(),
 	}
 }
