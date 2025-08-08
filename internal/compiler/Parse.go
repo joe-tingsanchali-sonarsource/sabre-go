@@ -412,6 +412,84 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
+func (p *Parser) parseFuncFieldList() (fields []Field) {
+	for p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
+		exprs := p.parseExprList()
+
+		var fieldType Type
+		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenComma {
+			fieldType = p.parseType()
+		}
+
+		if fieldType == nil {
+			for _, e := range exprs {
+				fields = append(fields, Field{Type: p.convertParsedExprToType(e)})
+			}
+		} else {
+			var names []*IdentifierExpr
+			for _, e := range exprs {
+				names = append(names, e.(*IdentifierExpr))
+			}
+			fields = append(fields, Field{Names: names, Type: fieldType})
+		}
+
+		p.eatTokenIfKind(TokenComma)
+	}
+
+	return
+}
+
+// TODO: (type1, type2, name3 type3)
+func (p *Parser) parseFuncTypeParameters() (parameters FieldList) {
+	// TODO: Handle Ellipsis parameters
+
+	parameters = FieldList{
+		Open:   p.eatTokenOrError(TokenLParen),
+		Fields: p.parseFuncFieldList(),
+		Close:  p.eatTokenOrError(TokenRParen),
+	}
+
+	return
+}
+
+func (p *Parser) parseFuncTypeResults() (results FieldList) {
+	// One result or non
+	if p.currentToken().Kind() != TokenLParen && p.currentToken().Kind() != TokenSemicolon {
+		fields := []Field{{Type: p.parseType()}}
+		// Will get eaten by the outer func type parsing
+		if _, ok := fields[0].Type.(*FuncType); !ok {
+			p.eatTokenOrError(TokenSemicolon)
+		}
+
+		results = FieldList{Fields: fields}
+		return
+	}
+
+	// More than one result, named or un-named
+	var open Token
+	var close Token
+	var fields []Field
+	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
+		open = p.eatTokenIfKind(TokenLParen)
+
+		fields = p.parseFuncFieldList()
+
+		if open.valid() {
+			close = p.eatTokenOrError(TokenRParen)
+		}
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	results = FieldList{
+		Open:   open,
+		Fields: fields,
+		Close:  close,
+	}
+
+	return
+}
+
 func (p *Parser) parseFuncType() *FuncType {
 	funcToken := p.eatTokenOrError(TokenFunc)
 	if !funcToken.valid() {
@@ -423,84 +501,10 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	// Parameters
-	// TODO: Handle Ellipsis parameters
-	var fields []Field
-	parameters := p.parseFieldList(TokenLParen, TokenRParen, false)
-	for _, f := range parameters.Fields {
-		if f.Type == nil {
-			for _, n := range f.Names {
-				fields = append(fields, Field{Type: p.convertParsedExprToType(n)})
-			}
-		} else {
-			fields = append(fields, f)
-		}
-	}
-	parameters.Fields = fields
-
-	// One result or non
-	if p.currentToken().Kind() != TokenLParen && p.currentToken().Kind() != TokenSemicolon {
-		fields := []Field{Field{Type: p.parseType()}}
-		// Will get eaten by the outer func type parsing
-		if _, ok := fields[0].Type.(*FuncType); !ok {
-			p.eatTokenOrError(TokenSemicolon)
-		}
-		return &FuncType{
-			Func:       funcToken,
-			Parameters: parameters,
-			Results:    FieldList{Fields: fields},
-		}
-	}
-
-	// TODO: Cleanup
-	// More than one result, named or un-named
-	var results FieldList
-	var name0 *IdentifierExpr
-	var typ0 Type
-	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-		results.Open = p.eatTokenIfKind(TokenLParen)
-
-		var names []*IdentifierExpr
-		for name0 != nil || p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
-			if typ0 == nil && name0 == nil {
-				names = p.parseIdentifierExprList()
-				if len(names) > 0 {
-					name0 = names[0]
-				}
-				if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenComma {
-					typ0 = p.parseType()
-				}
-			}
-
-			if name0 != nil || typ0 != nil {
-				if typ0 == nil {
-					for _, n := range names {
-						results.Fields = append(results.Fields, Field{Type: p.convertParsedExprToType(n)})
-					}
-				} else {
-					results.Fields = append(results.Fields, Field{Names: names, Type: typ0})
-				}
-			}
-
-			name0 = nil
-			typ0 = nil
-
-			if !p.eatTokenIfKind(TokenComma).valid() {
-				break
-			}
-		}
-
-		if results.Open.valid() {
-			results.Close = p.eatTokenOrError(TokenRParen)
-		}
-	}
-
-	p.eatTokenOrError(TokenSemicolon)
-
 	return &FuncType{
 		Func:       funcToken,
-		Parameters: parameters,
-		Results:    results,
+		Parameters: p.parseFuncTypeParameters(),
+		Results:    p.parseFuncTypeResults(),
 	}
 }
 

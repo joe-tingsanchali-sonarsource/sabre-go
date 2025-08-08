@@ -206,7 +206,7 @@ func (e *StructType) Visit(v NodeVisitor) {
 
 type FuncType struct {
 	Func           Token
-	TypeParameters FieldList
+	TypeParameters FieldList // TODO: Remove if not used
 	Parameters     FieldList
 	Results        FieldList
 }
