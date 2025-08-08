@@ -270,11 +270,6 @@ func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 	v.indentor.print("(FuncType")
 	v.indentor.Push()
 
-	if len(n.TypeParameters.Fields) > 0 {
-		v.indentor.NewLine()
-		v.visitPhonyFieldListNode(n.TypeParameters, "FuncType-TypeParameters")
-	}
-
 	if len(n.Parameters.Fields) > 0 {
 		v.indentor.NewLine()
 		v.visitPhonyFieldListNode(n.Parameters, "FuncType-Parameters")

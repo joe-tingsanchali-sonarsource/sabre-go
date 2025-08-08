@@ -204,10 +204,9 @@ func (e *StructType) Visit(v NodeVisitor) {
 }
 
 type FuncType struct {
-	Func           Token
-	TypeParameters FieldList
-	Parameters     FieldList
-	Results        FieldList
+	Func       Token
+	Parameters FieldList
+	Results    FieldList
 }
 
 func (e *FuncType) exprNode() {}
@@ -505,26 +504,6 @@ func (e *GenericDecl) Visit(v NodeVisitor) {
 	v.VisitGenericDecl(e)
 }
 
-// type FuncDecl struct {
-// 	Name *IdentifierExpr
-// 	// Type *FuncType
-// 	Body *BlockStmt
-// }
-
-// func (e *FuncDecl) declNode() {}
-// func (e *FuncDecl) SourceRange() SourceRange {
-// 	if e.RParen.valid() {
-// 		return e.DeclToken.SourceRange().Merge(e.RParen.SourceRange())
-// 	}
-// 	if len(e.Specs) > 0 {
-// 		return e.DeclToken.SourceRange().Merge(e.Specs[len(e.Specs)-1].SourceRange())
-// 	}
-// 	panic("generic decl is expected to have RParen or at least one Spec")
-// }
-// func (e *FuncDecl) Visit(v NodeVisitor) {
-// 	v.VisitFuncDecl(e)
-// }
-
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -615,13 +594,6 @@ func (v *DefaultVisitor) VisitStructType(n *StructType) {
 }
 
 func (v *DefaultVisitor) VisitFuncType(n *FuncType) {
-	for _, e := range n.TypeParameters.Fields {
-		for _, name := range e.Names {
-			name.Visit(v)
-		}
-		e.Type.Visit(v)
-	}
-
 	for _, e := range n.Parameters.Fields {
 		for _, name := range e.Names {
 			name.Visit(v)
