@@ -1,0 +1,5 @@
+(FuncType
+  (FuncType-Results
+    (NamedType IDENTIFIER(int))
+  )
+)

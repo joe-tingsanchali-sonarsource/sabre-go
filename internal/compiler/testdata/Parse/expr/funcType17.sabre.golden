@@ -1,0 +1,7 @@
+(FuncType
+  (FuncType-Results
+    (ArrayType
+      (NamedType IDENTIFIER(float64))
+    )
+  )
+)
