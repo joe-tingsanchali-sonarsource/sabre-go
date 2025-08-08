@@ -1,5 +1,5 @@
 (GenericDecl const
-  (ConstSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(Pi))
     (NamedType IDENTIFIER(float64))
     =

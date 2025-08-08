@@ -1,5 +1,5 @@
 (GenericDecl const
-  (ConstSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(bit0))
     (IdentifierExpr IDENTIFIER(mask0))
     =
@@ -15,15 +15,15 @@
       (LiteralExpr LITERAL_INT(1))
     )
   )
-  (ConstSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(bit1))
     (IdentifierExpr IDENTIFIER(mask1))
   )
-  (ConstSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(_))
     (IdentifierExpr IDENTIFIER(_))
   )
-  (ConstSpec
+  (ValueSpec
     (IdentifierExpr IDENTIFIER(bit3))
     (IdentifierExpr IDENTIFIER(mask3))
   )

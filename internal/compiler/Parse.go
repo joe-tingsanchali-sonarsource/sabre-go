@@ -949,6 +949,8 @@ func (p *Parser) ParseDecl() Decl {
 		return p.parseGenericDecl(p.eatToken(), p.parseTypeSpec)
 	case TokenConst:
 		return p.parseGenericDecl(p.eatToken(), p.parseConstSpec)
+	case TokenVar:
+		return p.parseGenericDecl(p.eatToken(), p.parseVarSpec)
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
 		return nil
@@ -1032,9 +1034,37 @@ func (p *Parser) parseConstSpec() Spec {
 
 	p.eatTokenOrError(TokenSemicolon)
 
-	return &ConstSpec{
+	return &ValueSpec{
 		LHS:    lhs,
 		Type:   constType,
+		Assign: assignToken,
+		RHS:    rhs,
+	}
+}
+
+func (p *Parser) parseVarSpec() Spec {
+	lhs := p.parseIdentifierExprList()
+
+	var varType Type
+	if p.currentToken().Kind() != TokenAssign {
+		varType = p.parseType()
+	}
+
+	assignToken := p.eatTokenIfKind(TokenAssign)
+
+	var rhs []Expr
+	if assignToken.valid() {
+		rhs = p.parseExprList()
+		if len(rhs) == 0 {
+			return nil
+		}
+	}
+
+	p.eatTokenOrError(TokenSemicolon)
+
+	return &ValueSpec{
+		LHS:    lhs,
+		Type:   varType,
 		Assign: assignToken,
 		RHS:    rhs,
 	}

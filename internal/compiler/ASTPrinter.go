@@ -482,8 +482,8 @@ func (v *ASTPrinter) VisitTypeSpec(n *TypeSpec) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitConstSpec(n *ConstSpec) {
-	v.indentor.print("(ConstSpec")
+func (v *ASTPrinter) VisitValueSpec(n *ValueSpec) {
+	v.indentor.print("(ValueSpec")
 	v.indentor.Push()
 
 	for _, e := range n.LHS {

@@ -1,0 +1,5 @@
+var (
+    x, y int
+    z = 1
+    w float = 1.5
+)
