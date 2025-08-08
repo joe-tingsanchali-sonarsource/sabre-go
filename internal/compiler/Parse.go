@@ -412,99 +412,78 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseFuncTypeFieldExprList() (list []Expr) {
-	if e := p.parseAtom(); e != nil {
-		list = append(list, e)
+func (p *Parser) parseFuncFields(close TokenKind) (fields []Field) {
+	if p.currentToken().Kind() == close || p.currentToken().Kind() == TokenSemicolon || !p.currentToken().valid() || p.currentToken().Kind() == TokenComma {
+		return nil
 	}
 
-	for p.eatTokenIfKind(TokenComma).valid() {
-		if e := p.parseAtom(); e != nil {
-			list = append(list, e)
-		}
+	exprs := p.parseAtomExprList()
+
+	var fieldType Type
+	if p.currentToken().Kind() != close && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
+		fieldType = p.parseType()
 	}
 
-	return
-}
-
-func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
-	for p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-		exprs := p.parseFuncTypeFieldExprList()
-
-		var fieldType Type
-		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-			fieldType = p.parseType()
-		}
-
-		if fieldType == nil {
-			for _, e := range exprs {
-				fields = append(fields, Field{Type: p.convertParsedExprToType(e)})
-			}
-		} else {
-			var names []*IdentifierExpr
-			for _, e := range exprs {
-				names = append(names, e.(*IdentifierExpr))
-			}
-			fields = append(fields, Field{Names: names, Type: fieldType})
-		}
-
-		p.eatTokenIfKind(TokenComma)
-	}
-
-	return
-}
-
-func (p *Parser) parseFuncTypeResults() (results FieldList, expectSemicolon bool) {
-	if p.currentToken().Kind() == TokenComma || p.currentToken().Kind() == TokenRParen {
-		return
-	}
-
-	if p.currentToken().Kind() != TokenLParen {
-		// One result or non
-		if p.currentToken().Kind() != TokenSemicolon {
-			results.Fields = []Field{{Type: p.parseType()}}
-			if _, ok := results.Fields[0].Type.(*FuncType); ok {
-				expectSemicolon = false
-			} else {
-				expectSemicolon = true
+	if fieldType != nil {
+		field := Field{Type: fieldType}
+		for _, e := range exprs {
+			if n, ok := e.(*IdentifierExpr); ok {
+				field.Names = append(field.Names, n)
 			}
 		}
+		fields = append(fields, field)
 	} else {
-		// More than one result, named or un-named
-		results = FieldList{
-			Open:   p.eatTokenOrError(TokenLParen),
-			Fields: p.parseFuncTypeFieldList(),
-			Close:  p.eatTokenOrError(TokenRParen),
+		for _, e := range exprs {
+			if t := p.convertParsedExprToType(e); t != nil {
+				fields = append(fields, Field{Type: t})
+			}
 		}
-
-		expectSemicolon = true
 	}
 
 	return
+}
+
+func (p *Parser) parseFuncFieldList(open, close TokenKind, isResults bool) FieldList {
+	var openToken Token
+	if isResults {
+		openToken = p.eatTokenIfKind(open)
+	} else {
+		openToken = p.eatTokenOrError(open)
+	}
+
+	var fields []Field
+	if p.currentToken().Kind() != TokenComma {
+		fields = p.parseFuncFields(close)
+		for p.eatTokenIfKind(TokenComma).valid() {
+			fields = append(fields, p.parseFuncFields(close)...)
+		}
+	}
+
+	var closeToken Token
+	if !isResults || openToken.valid() {
+		closeToken = p.eatTokenOrError(close)
+	}
+
+	return FieldList{
+		Open:   openToken,
+		Fields: fields,
+		Close:  closeToken,
+	}
 }
 
 func (p *Parser) parseFuncType() *FuncType {
+	p.pushExprLevel()
+	defer p.popExprLevel()
+
 	funcToken := p.eatTokenOrError(TokenFunc)
 	if !funcToken.valid() {
 		return nil
 	}
 
-	// Type parameters
-	if lBracketToken := p.eatTokenIfKind(TokenLBracket); lBracketToken.valid() {
-		p.file.errorf(lBracketToken.SourceRange(), "function type must not have type parameters")
-		return nil
-	}
+	parameters := p.parseFuncFieldList(TokenLParen, TokenRParen, false)
+	results := p.parseFuncFieldList(TokenLParen, TokenRParen, true)
 
-	// Parameters
-	parameters := FieldList{
-		Open:   p.eatTokenOrError(TokenLParen),
-		Fields: p.parseFuncTypeFieldList(),
-		Close:  p.eatTokenOrError(TokenRParen),
-	}
-
-	// Results
-	results, expectSemicolon := p.parseFuncTypeResults()
-
-	if expectSemicolon {
+	if p.exprLevel == 1 {
 		p.eatTokenOrError(TokenSemicolon)
 	}
 
@@ -704,6 +683,23 @@ func (p *Parser) parseExprList() (list []Expr) {
 	list = append(list, e)
 	for p.eatTokenIfKind(TokenComma).valid() {
 		e = p.ParseExpr()
+		if e == nil {
+			return nil
+		}
+		list = append(list, e)
+	}
+	return
+}
+
+func (p *Parser) parseAtomExprList() (list []Expr) {
+	e := p.parseAtom()
+	if e == nil {
+		return nil
+	}
+
+	list = append(list, e)
+	for p.eatTokenIfKind(TokenComma).valid() {
+		e = p.parseAtom()
 		if e == nil {
 			return nil
 		}
