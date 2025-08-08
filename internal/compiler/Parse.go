@@ -490,7 +490,6 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	// TODO: Handle Ellipsis(...) parameters
 	// Parameters
 	parameters := FieldList{
 		Open:   p.eatTokenOrError(TokenLParen),
