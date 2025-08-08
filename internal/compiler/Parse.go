@@ -427,11 +427,11 @@ func (p *Parser) parseFuncTypeFieldExprList() (list []Expr) {
 }
 
 func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
-	for p.currentToken().Kind() != TokenRParen {
+	for p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
 		exprs := p.parseFuncTypeFieldExprList()
 
 		var fieldType Type
-		if p.currentToken().Kind() != TokenRParen {
+		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
 			fieldType = p.parseType()
 		}
 
