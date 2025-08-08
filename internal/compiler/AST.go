@@ -145,7 +145,6 @@ type Type interface {
 type NamedType struct {
 	Package  Token
 	TypeName Token
-	Expr     *IdentifierExpr // TODO: Remove it if not needed.
 }
 
 func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
@@ -206,7 +205,7 @@ func (e *StructType) Visit(v NodeVisitor) {
 
 type FuncType struct {
 	Func           Token
-	TypeParameters FieldList // TODO: Remove if not used
+	TypeParameters FieldList
 	Parameters     FieldList
 	Results        FieldList
 }

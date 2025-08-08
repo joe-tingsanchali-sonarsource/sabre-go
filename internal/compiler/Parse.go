@@ -412,21 +412,26 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseFuncFieldList() (fields []Field) {
-	for p.currentToken().Kind() != TokenRParen && p.currentToken().valid() {
-		var exprs []Expr
-		if e := p.parseAtom(); e != nil {
-			exprs = append(exprs, e)
-		}
+func (p *Parser) parseFuncTypeFieldExprList() (list []Expr) {
+	if e := p.parseAtom(); e != nil {
+		list = append(list, e)
+	}
 
-		for p.eatTokenIfKind(TokenComma).valid() {
-			if e := p.parseAtom(); e != nil {
-				exprs = append(exprs, e)
-			}
+	for p.eatTokenIfKind(TokenComma).valid() {
+		if e := p.parseAtom(); e != nil {
+			list = append(list, e)
 		}
+	}
+
+	return
+}
+
+func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
+	for p.currentToken().Kind() != TokenRParen {
+		exprs := p.parseFuncTypeFieldExprList()
 
 		var fieldType Type
-		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenComma {
+		if p.currentToken().Kind() != TokenRParen {
 			fieldType = p.parseType()
 		}
 
@@ -449,38 +454,18 @@ func (p *Parser) parseFuncFieldList() (fields []Field) {
 }
 
 func (p *Parser) parseFuncTypeResults() (results FieldList) {
-	// One result or non
-	if p.currentToken().Kind() != TokenLParen && p.currentToken().Kind() != TokenSemicolon {
-		fields := []Field{{Type: p.parseType()}}
-		// Will get eaten by the outer func type parsing
-		if _, ok := fields[0].Type.(*FuncType); !ok {
-			p.eatTokenOrError(TokenSemicolon)
+	if p.currentToken().Kind() != TokenLParen {
+		// One result or non
+		if p.currentToken().Kind() != TokenSemicolon {
+			results.Fields = []Field{{Type: p.parseType()}}
 		}
-
-		results = FieldList{Fields: fields}
-		return
-	}
-
-	// More than one result, named or un-named
-	var open Token
-	var close Token
-	var fields []Field
-	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-		open = p.eatTokenIfKind(TokenLParen)
-
-		fields = p.parseFuncFieldList()
-
-		if open.valid() {
-			close = p.eatTokenOrError(TokenRParen)
+	} else {
+		// More than one result, named or un-named
+		results = FieldList{
+			Open:   p.eatTokenOrError(TokenLParen),
+			Fields: p.parseFuncTypeFieldList(),
+			Close:  p.eatTokenOrError(TokenRParen),
 		}
-	}
-
-	p.eatTokenOrError(TokenSemicolon)
-
-	results = FieldList{
-		Open:   open,
-		Fields: fields,
-		Close:  close,
 	}
 
 	return
@@ -492,22 +477,29 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
+	// Type parameters
 	if lBracketToken := p.eatTokenIfKind(TokenLBracket); lBracketToken.valid() {
 		p.file.errorf(lBracketToken.SourceRange(), "function type must not have type parameters")
 		return nil
 	}
 
-	// TODO: Handle Ellipsis parameters
+	// TODO: Handle Ellipsis(...) parameters
+	// Parameters
 	parameters := FieldList{
 		Open:   p.eatTokenOrError(TokenLParen),
-		Fields: p.parseFuncFieldList(),
+		Fields: p.parseFuncTypeFieldList(),
 		Close:  p.eatTokenOrError(TokenRParen),
 	}
+
+	// Results
+	results := p.parseFuncTypeResults()
+
+	p.eatTokenIfKind(TokenSemicolon)
 
 	return &FuncType{
 		Func:       funcToken,
 		Parameters: parameters,
-		Results:    p.parseFuncTypeResults(),
+		Results:    results,
 	}
 }
 
@@ -526,12 +518,10 @@ func (p *Parser) parseType() Type {
 			return &NamedType{
 				Package:  identifier.Token,
 				TypeName: selector.Token,
-				Expr:     identifier,
 			}
 		} else {
 			return &NamedType{
 				TypeName: identifier.Token,
-				Expr:     identifier,
 			}
 		}
 	case TokenLBracket:
