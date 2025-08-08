@@ -453,11 +453,16 @@ func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
 	return
 }
 
-func (p *Parser) parseFuncTypeResults() (results FieldList) {
+func (p *Parser) parseFuncTypeResults() (results FieldList, expectSemicolon bool) {
 	if p.currentToken().Kind() != TokenLParen {
 		// One result or non
 		if p.currentToken().Kind() != TokenSemicolon {
 			results.Fields = []Field{{Type: p.parseType()}}
+			if _, ok := results.Fields[0].Type.(*FuncType); ok {
+				expectSemicolon = false
+			} else {
+				expectSemicolon = true
+			}
 		}
 	} else {
 		// More than one result, named or un-named
@@ -466,6 +471,8 @@ func (p *Parser) parseFuncTypeResults() (results FieldList) {
 			Fields: p.parseFuncTypeFieldList(),
 			Close:  p.eatTokenOrError(TokenRParen),
 		}
+
+		expectSemicolon = true
 	}
 
 	return
@@ -492,9 +499,11 @@ func (p *Parser) parseFuncType() *FuncType {
 	}
 
 	// Results
-	results := p.parseFuncTypeResults()
+	results, expectSemicolon := p.parseFuncTypeResults()
 
-	p.eatTokenIfKind(TokenSemicolon)
+	if expectSemicolon {
+		p.eatTokenOrError(TokenSemicolon)
+	}
 
 	return &FuncType{
 		Func:       funcToken,

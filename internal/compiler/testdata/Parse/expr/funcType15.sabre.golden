@@ -1,5 +1,3 @@
-(FuncType
-  (FuncType-Results
-    (NamedType IDENTIFIER(int))
-  )
-)
+>> 	func() int)
+>> 	          ^ 
+Error[internal/compiler/testdata/Parse/expr/funcType15.sabre:1:11]: expected ';' but found ')'
