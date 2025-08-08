@@ -454,6 +454,10 @@ func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
 }
 
 func (p *Parser) parseFuncTypeResults() (results FieldList, expectSemicolon bool) {
+	if p.currentToken().Kind() == TokenComma || p.currentToken().Kind() == TokenRParen {
+		return
+	}
+
 	if p.currentToken().Kind() != TokenLParen {
 		// One result or non
 		if p.currentToken().Kind() != TokenSemicolon {

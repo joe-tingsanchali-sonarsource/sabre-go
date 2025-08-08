@@ -1,0 +1,11 @@
+(FuncType
+  (FuncType-Results
+    (FuncType)
+    (FuncType
+      (FuncType-Parameters
+        (NamedType IDENTIFIER(x))
+        (NamedType IDENTIFIER(y))
+      )
+    )
+  )
+)
