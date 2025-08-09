@@ -412,11 +412,11 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseFuncTypeFieldList(close TokenKind) (fields []Field) {
+func (p *Parser) parseFuncTypeFields() (fields []Field) {
 	exprs := p.parseAtomExprList()
 
 	// (x int) or (x, y int) ..etc
-	if p.currentToken().Kind() != close && p.currentToken().Kind() != TokenSemicolon {
+	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
 		field := Field{Type: p.parseType()}
 		for _, e := range exprs {
 			if n, ok := e.(*IdentifierExpr); ok {
@@ -444,32 +444,14 @@ func (p *Parser) parseFuncTypeFieldList(close TokenKind) (fields []Field) {
 	return
 }
 
-func (p *Parser) parseFuncTypeParameters(open, close TokenKind, isResults bool) FieldList {
-	var openToken Token
-	if isResults {
-		openToken = p.eatTokenIfKind(open)
-	} else {
-		openToken = p.eatTokenOrError(open)
-	}
-
-	var fields []Field
-	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != close {
-		fields = p.parseFuncTypeFieldList(close)
+func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
+	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen {
+		fields = p.parseFuncTypeFields()
 		for p.eatTokenIfKind(TokenComma).valid() {
-			fields = append(fields, p.parseFuncTypeFieldList(close)...)
+			fields = append(fields, p.parseFuncTypeFields()...)
 		}
 	}
-
-	var closeToken Token
-	if !isResults || openToken.valid() {
-		closeToken = p.eatTokenOrError(close)
-	}
-
-	return FieldList{
-		Open:   openToken,
-		Fields: fields,
-		Close:  closeToken,
-	}
+	return
 }
 
 func (p *Parser) parseFuncType() *FuncType {
@@ -481,11 +463,19 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	parameters := p.parseFuncTypeParameters(TokenLParen, TokenRParen, false)
+	parameters := FieldList{
+		Open:   p.eatTokenOrError(TokenLParen),
+		Fields: p.parseFuncTypeFieldList(),
+		Close:  p.eatTokenOrError(TokenRParen),
+	}
 
 	var results FieldList
 	if p.currentToken().Kind() != TokenSemicolon {
-		results = p.parseFuncTypeParameters(TokenLParen, TokenRParen, true)
+		results.Open = p.eatTokenIfKind(TokenLParen)
+		results.Fields = p.parseFuncTypeFieldList()
+		if results.Open.valid() {
+			results.Close = p.eatTokenOrError(TokenRParen)
+		}
 	}
 
 	if p.exprLevel == 1 {
