@@ -422,29 +422,23 @@ func (p *Parser) parseParameterDecl() (list []Field) {
 			}
 		}
 
-		var t Type
 		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-			t = p.parseType()
-			return []Field{{Names: names, Type: t}}
+			return []Field{{Names: names, Type: p.parseType()}}
 		}
 
 		for _, n := range names {
-			if t := p.convertParsedExprToType(n); t != nil {
-				list = append(list, Field{Type: t})
-			} else {
-				p.file.errorf(n.SourceRange(), "expected type")
-			}
+			list = append(list, Field{Type: p.convertParsedExprToType(n)})
 		}
 
 		return
 	case TokenLBracket:
-		fallthrough
+		return []Field{{Type: p.parseArrayType()}}
 	case TokenStruct:
-		fallthrough
+		return []Field{{Type: p.parseStructType()}}
 	case TokenFunc:
-		return []Field{{Type: p.parseType()}}
+		return []Field{{Type: p.parseFuncType()}}
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier or type")
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
 		return nil
 	}
 }
