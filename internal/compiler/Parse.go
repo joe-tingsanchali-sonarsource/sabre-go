@@ -412,7 +412,7 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseParameterDecl() (list []Field) {
+func (p *Parser) parseParameterDecl() Field {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
@@ -423,30 +423,39 @@ func (p *Parser) parseParameterDecl() (list []Field) {
 		}
 
 		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-			return []Field{{Names: names, Type: p.parseType()}}
+			return Field{Names: names, Type: p.parseType()}
 		}
 
-		for _, n := range names {
-			list = append(list, Field{Type: p.convertParsedExprToType(n)})
-		}
-
-		return
+		return Field{Names: names}
 	case TokenLBracket:
-		return []Field{{Type: p.parseArrayType()}}
+		return Field{Type: p.parseArrayType()}
 	case TokenStruct:
-		return []Field{{Type: p.parseStructType()}}
+		return Field{Type: p.parseStructType()}
 	case TokenFunc:
-		return []Field{{Type: p.parseFuncType()}}
+		return Field{Type: p.parseFuncType()}
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
-		return nil
+		return Field{}
 	}
 }
 
 func (p *Parser) parseParameterList() (list []Field) {
-	list = p.parseParameterDecl()
+	if field := p.parseParameterDecl(); field.Type == nil {
+		for _, n := range field.Names {
+			list = append(list, Field{Type: p.convertParsedExprToType(n)})
+		}
+	} else {
+		list = append(list, field)
+	}
+
 	for p.eatTokenIfKind(TokenComma).valid() {
-		list = append(list, p.parseParameterDecl()...)
+		if field := p.parseParameterDecl(); field.Type == nil {
+			for _, n := range field.Names {
+				list = append(list, Field{Type: p.convertParsedExprToType(n)})
+			}
+		} else {
+			list = append(list, field)
+		}
 	}
 	return
 }
