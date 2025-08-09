@@ -705,6 +705,17 @@ func (p *Parser) parseAtomExprList() (list []Expr) {
 		}
 		list = append(list, e)
 	}
+
+	for _, e := range list {
+		switch e.(type) {
+		case *IdentifierExpr:
+		case Type:
+		default:
+			p.file.errorf(e.SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+			return nil
+		}
+	}
+
 	return
 }
 
