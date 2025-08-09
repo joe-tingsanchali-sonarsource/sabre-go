@@ -416,6 +416,9 @@ func (p *Parser) parseParameterDecl() Field {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
+
+		prevTokenIndex := p.currentTokenIndex
+
 		for p.eatTokenIfKind(TokenComma).valid() {
 			if p.currentToken().Kind() == TokenIdentifier {
 				names = append(names, p.parseIdentifierExpr())
@@ -426,7 +429,8 @@ func (p *Parser) parseParameterDecl() Field {
 			return Field{Names: names, Type: p.parseType()}
 		}
 
-		return Field{Names: names}
+		p.currentTokenIndex = prevTokenIndex
+		return Field{Type: p.convertParsedExprToType(names[0])}
 	case TokenLBracket:
 		return Field{Type: p.parseArrayType()}
 	case TokenStruct:
@@ -440,52 +444,43 @@ func (p *Parser) parseParameterDecl() Field {
 }
 
 func (p *Parser) parseParameterList() (list []Field) {
-	if field := p.parseParameterDecl(); field.Type == nil {
-		for _, n := range field.Names {
-			list = append(list, Field{Type: p.convertParsedExprToType(n)})
-		}
-	} else {
-		list = append(list, field)
-	}
-
+	list = []Field{p.parseParameterDecl()}
 	for p.eatTokenIfKind(TokenComma).valid() {
-		if field := p.parseParameterDecl(); field.Type == nil {
-			for _, n := range field.Names {
-				list = append(list, Field{Type: p.convertParsedExprToType(n)})
-			}
-		} else {
-			list = append(list, field)
-		}
+		list = append(list, p.parseParameterDecl())
 	}
 	return
 }
 
-func (p *Parser) parseParameters(isParenOptional bool) FieldList {
-	var openToken Token
-	if isParenOptional {
-		openToken = p.eatTokenIfKind(TokenLParen)
-	} else {
-		openToken = p.eatTokenOrError(TokenLParen)
-	}
+func (p *Parser) parseParameters() FieldList {
+	openToken := p.eatTokenOrError(TokenLParen)
 
 	var fields []Field
-	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+	if p.currentToken().Kind() != TokenRParen {
 		fields = p.parseParameterList()
 		for p.eatTokenIfKind(TokenComma).valid() {
 			fields = append(fields, p.parseParameterList()...)
 		}
 	}
 
-	var closeToken Token
-	if openToken.valid() {
-		closeToken = p.eatTokenOrError(TokenRParen)
-	}
+	closeToken := p.eatTokenOrError(TokenRParen)
 
 	return FieldList{
 		Open:   openToken,
 		Fields: fields,
 		Close:  closeToken,
 	}
+}
+
+func (p *Parser) parseResult() FieldList {
+	if p.currentToken().Kind() == TokenLParen {
+		return p.parseParameters()
+	}
+
+	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+		return FieldList{Fields: []Field{{Type: p.parseType()}}}
+	}
+
+	return FieldList{}
 }
 
 func (p *Parser) parseFuncType() *FuncType {
@@ -497,8 +492,8 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	parameters := p.parseParameters(false)
-	results := p.parseParameters(true)
+	parameters := p.parseParameters()
+	result := p.parseResult()
 
 	if p.exprLevel == 1 {
 		p.eatTokenOrError(TokenSemicolon)
@@ -507,7 +502,7 @@ func (p *Parser) parseFuncType() *FuncType {
 	return &FuncType{
 		Func:       funcToken,
 		Parameters: parameters,
-		Results:    results,
+		Result:     result,
 	}
 }
 

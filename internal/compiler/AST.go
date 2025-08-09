@@ -206,14 +206,14 @@ func (e *StructType) Visit(v NodeVisitor) {
 type FuncType struct {
 	Func       Token
 	Parameters FieldList
-	Results    FieldList
+	Result     FieldList
 }
 
 func (e *FuncType) exprNode() {}
 func (e *FuncType) typeExpr() {}
 func (e *FuncType) SourceRange() SourceRange {
-	if len(e.Results.Fields) > 0 {
-		return e.Func.SourceRange().Merge(e.Results.Fields[len(e.Results.Fields)-1].Type.SourceRange())
+	if len(e.Result.Fields) > 0 {
+		return e.Func.SourceRange().Merge(e.Result.Fields[len(e.Result.Fields)-1].Type.SourceRange())
 	} else {
 		return e.Func.SourceRange().Merge(e.Parameters.Close.SourceRange())
 	}
@@ -601,7 +601,7 @@ func (v *DefaultVisitor) VisitFuncType(n *FuncType) {
 		e.Type.Visit(v)
 	}
 
-	for _, e := range n.Results.Fields {
+	for _, e := range n.Result.Fields {
 		for _, name := range e.Names {
 			name.Visit(v)
 		}
