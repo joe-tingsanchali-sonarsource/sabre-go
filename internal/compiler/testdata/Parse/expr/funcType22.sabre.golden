@@ -16,7 +16,7 @@
         (NamedType IDENTIFIER(float32))
       )
       (FuncType-Results
-        (NamedType IDENTIFIER(int))
+        (IdentifierExpr IDENTIFIER(int))
         (ArrayType
           (NamedType IDENTIFIER(int))
         )

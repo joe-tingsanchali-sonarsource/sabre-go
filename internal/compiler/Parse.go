@@ -412,46 +412,77 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseFuncTypeFields() (fields []Field) {
-	exprs := p.parseAtomExprList()
-
-	// (x int) or (x, y int) ..etc
-	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-		field := Field{Type: p.parseType()}
-		for _, e := range exprs {
-			if n, ok := e.(*IdentifierExpr); ok {
-				field.Names = append(field.Names, n)
-			} else {
-				p.file.errorf(e.SourceRange(), "expected an identifier")
-				return nil
+func (p *Parser) parseParameterDecl() (list []Field) {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		names := []*IdentifierExpr{p.parseIdentifierExpr()}
+		for p.eatTokenIfKind(TokenComma).valid() {
+			if p.currentToken().Kind() == TokenIdentifier {
+				names = append(names, p.parseIdentifierExpr())
 			}
 		}
-		fields = append(fields, field)
+
+		var t Type
+		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+			t = p.parseType()
+			return []Field{{Names: names, Type: t}}
+		}
+
+		for _, n := range names {
+			if t := p.convertParsedExprToType(n); t != nil {
+				list = append(list, Field{Type: t})
+			} else {
+				p.file.errorf(n.SourceRange(), "expected type")
+			}
+		}
 
 		return
+	case TokenLBracket:
+		fallthrough
+	case TokenStruct:
+		fallthrough
+	case TokenFunc:
+		return []Field{{Type: p.parseType()}}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier or type")
+		return nil
 	}
+}
 
-	// (int, float32) ..etc
-	for _, e := range exprs {
-		if t := p.convertParsedExprToType(e); t != nil {
-			fields = append(fields, Field{Type: t})
-		} else {
-			p.file.errorf(e.SourceRange(), "expected type")
-			return nil
-		}
+func (p *Parser) parseParameterList() (list []Field) {
+	list = p.parseParameterDecl()
+	for p.eatTokenIfKind(TokenComma).valid() {
+		list = append(list, p.parseParameterDecl()...)
 	}
-
 	return
 }
 
-func (p *Parser) parseFuncTypeFieldList() (fields []Field) {
-	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen {
-		fields = p.parseFuncTypeFields()
+func (p *Parser) parseParameters(isParenOptional bool) FieldList {
+	var openToken Token
+	if isParenOptional {
+		openToken = p.eatTokenIfKind(TokenLParen)
+	} else {
+		openToken = p.eatTokenOrError(TokenLParen)
+	}
+
+	var fields []Field
+	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+		fields = p.parseParameterList()
 		for p.eatTokenIfKind(TokenComma).valid() {
-			fields = append(fields, p.parseFuncTypeFields()...)
+			fields = append(fields, p.parseParameterList()...)
 		}
 	}
-	return
+
+	var closeToken Token
+	if openToken.valid() {
+		closeToken = p.eatTokenOrError(TokenRParen)
+	}
+
+	return FieldList{
+		Open:   openToken,
+		Fields: fields,
+		Close:  closeToken,
+	}
 }
 
 func (p *Parser) parseFuncType() *FuncType {
@@ -463,20 +494,8 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	parameters := FieldList{
-		Open:   p.eatTokenOrError(TokenLParen),
-		Fields: p.parseFuncTypeFieldList(),
-		Close:  p.eatTokenOrError(TokenRParen),
-	}
-
-	var results FieldList
-	if p.currentToken().Kind() != TokenSemicolon {
-		results.Open = p.eatTokenIfKind(TokenLParen)
-		results.Fields = p.parseFuncTypeFieldList()
-		if results.Open.valid() {
-			results.Close = p.eatTokenOrError(TokenRParen)
-		}
-	}
+	parameters := p.parseParameters(false)
+	results := p.parseParameters(true)
 
 	if p.exprLevel == 1 {
 		p.eatTokenOrError(TokenSemicolon)
@@ -678,23 +697,6 @@ func (p *Parser) parseExprList() (list []Expr) {
 	list = append(list, e)
 	for p.eatTokenIfKind(TokenComma).valid() {
 		e = p.ParseExpr()
-		if e == nil {
-			return nil
-		}
-		list = append(list, e)
-	}
-	return
-}
-
-func (p *Parser) parseAtomExprList() (list []Expr) {
-	e := p.parseAtom()
-	if e == nil {
-		return nil
-	}
-
-	list = append(list, e)
-	for p.eatTokenIfKind(TokenComma).valid() {
-		e = p.parseAtom()
 		if e == nil {
 			return nil
 		}
