@@ -415,13 +415,9 @@ func (p *Parser) parseStructType() *StructType {
 func (p *Parser) parseFuncTypeFieldList(close TokenKind) (fields []Field) {
 	exprs := p.parseAtomExprList()
 
-	var fieldType Type
-	if p.currentToken().Kind() != close && p.currentToken().Kind() != TokenSemicolon && p.currentToken().valid() {
-		fieldType = p.parseType()
-	}
-
-	if fieldType != nil {
-		field := Field{Type: fieldType}
+	// (x int) or (x, y int) ..etc
+	if p.currentToken().Kind() != close && p.currentToken().Kind() != TokenSemicolon {
+		field := Field{Type: p.parseType()}
 		for _, e := range exprs {
 			if n, ok := e.(*IdentifierExpr); ok {
 				field.Names = append(field.Names, n)
@@ -431,14 +427,17 @@ func (p *Parser) parseFuncTypeFieldList(close TokenKind) (fields []Field) {
 			}
 		}
 		fields = append(fields, field)
-	} else {
-		for _, e := range exprs {
-			if t := p.convertParsedExprToType(e); t != nil {
-				fields = append(fields, Field{Type: t})
-			} else {
-				p.file.errorf(e.SourceRange(), "expected type")
-				return nil
-			}
+
+		return
+	}
+
+	// (int, float32) ..etc
+	for _, e := range exprs {
+		if t := p.convertParsedExprToType(e); t != nil {
+			fields = append(fields, Field{Type: t})
+		} else {
+			p.file.errorf(e.SourceRange(), "expected type")
+			return nil
 		}
 	}
 
