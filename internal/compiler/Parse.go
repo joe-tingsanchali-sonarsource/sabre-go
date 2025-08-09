@@ -412,11 +412,7 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseFuncFields(close TokenKind) (fields []Field) {
-	if p.currentToken().Kind() == close || p.currentToken().Kind() == TokenSemicolon || !p.currentToken().valid() || p.currentToken().Kind() == TokenComma {
-		return nil
-	}
-
+func (p *Parser) parseFuncTypeFieldList(close TokenKind) (fields []Field) {
 	exprs := p.parseAtomExprList()
 
 	var fieldType Type
@@ -449,7 +445,7 @@ func (p *Parser) parseFuncFields(close TokenKind) (fields []Field) {
 	return
 }
 
-func (p *Parser) parseFuncFieldList(open, close TokenKind, isResults bool) FieldList {
+func (p *Parser) parseFuncTypeParameters(open, close TokenKind, isResults bool) FieldList {
 	var openToken Token
 	if isResults {
 		openToken = p.eatTokenIfKind(open)
@@ -458,10 +454,10 @@ func (p *Parser) parseFuncFieldList(open, close TokenKind, isResults bool) Field
 	}
 
 	var fields []Field
-	if p.currentToken().Kind() != TokenComma {
-		fields = p.parseFuncFields(close)
+	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != close {
+		fields = p.parseFuncTypeFieldList(close)
 		for p.eatTokenIfKind(TokenComma).valid() {
-			fields = append(fields, p.parseFuncFields(close)...)
+			fields = append(fields, p.parseFuncTypeFieldList(close)...)
 		}
 	}
 
@@ -486,8 +482,12 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	parameters := p.parseFuncFieldList(TokenLParen, TokenRParen, false)
-	results := p.parseFuncFieldList(TokenLParen, TokenRParen, true)
+	parameters := p.parseFuncTypeParameters(TokenLParen, TokenRParen, false)
+
+	var results FieldList
+	if p.currentToken().Kind() != TokenSemicolon {
+		results = p.parseFuncTypeParameters(TokenLParen, TokenRParen, true)
+	}
 
 	if p.exprLevel == 1 {
 		p.eatTokenOrError(TokenSemicolon)
