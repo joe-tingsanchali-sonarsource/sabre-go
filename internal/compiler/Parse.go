@@ -429,6 +429,9 @@ func (p *Parser) parseFuncFields(close TokenKind) (fields []Field) {
 		for _, e := range exprs {
 			if n, ok := e.(*IdentifierExpr); ok {
 				field.Names = append(field.Names, n)
+			} else {
+				p.file.errorf(e.SourceRange(), "expected an identifier")
+				return nil
 			}
 		}
 		fields = append(fields, field)
@@ -436,6 +439,9 @@ func (p *Parser) parseFuncFields(close TokenKind) (fields []Field) {
 		for _, e := range exprs {
 			if t := p.convertParsedExprToType(e); t != nil {
 				fields = append(fields, Field{Type: t})
+			} else {
+				p.file.errorf(e.SourceRange(), "expected type")
+				return nil
 			}
 		}
 	}
@@ -705,17 +711,6 @@ func (p *Parser) parseAtomExprList() (list []Expr) {
 		}
 		list = append(list, e)
 	}
-
-	for _, e := range list {
-		switch e.(type) {
-		case *IdentifierExpr:
-		case Type:
-		default:
-			p.file.errorf(e.SourceRange(), "expected an identifier but found '%v'", p.currentToken())
-			return nil
-		}
-	}
-
 	return
 }
 
