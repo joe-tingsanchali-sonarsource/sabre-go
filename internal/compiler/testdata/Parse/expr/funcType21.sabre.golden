@@ -1,0 +1,3 @@
+>> 	func(5)
+>> 	     ^  
+Error[internal/compiler/testdata/Parse/expr/funcType21.sabre:1:6]: expected type
