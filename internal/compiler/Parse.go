@@ -390,100 +390,6 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
-func (p *Parser) parseParameterDecl() Field {
-	switch p.currentToken().Kind() {
-	case TokenIdentifier:
-		names := []*IdentifierExpr{p.parseIdentifierExpr()}
-		prevTokenIndex := p.currentTokenIndex
-
-		for p.eatTokenIfKind(TokenComma).valid() {
-			if p.currentToken().Kind() == TokenIdentifier {
-				names = append(names, p.parseIdentifierExpr())
-			} else {
-				p.currentTokenIndex = prevTokenIndex
-				return Field{Type: p.convertParsedExprToType(names[0])}
-			}
-		}
-
-		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-			return Field{Names: names, Type: p.parseType()}
-		}
-
-		p.currentTokenIndex = prevTokenIndex
-		return Field{Type: p.convertParsedExprToType(names[0])}
-	case TokenLBracket:
-		return Field{Type: p.parseArrayType()}
-	case TokenStruct:
-		return Field{Type: p.parseStructType()}
-	case TokenFunc:
-		return Field{Type: p.parseFuncType()}
-	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
-		return Field{}
-	}
-}
-
-func (p *Parser) parseParameterList() (list []Field) {
-	list = []Field{p.parseParameterDecl()}
-	for p.eatTokenIfKind(TokenComma).valid() {
-		list = append(list, p.parseParameterDecl())
-	}
-	return
-}
-
-func (p *Parser) parseParameters() FieldList {
-	openToken := p.eatTokenOrError(TokenLParen)
-
-	var fields []Field
-	if p.currentToken().Kind() != TokenRParen {
-		fields = p.parseParameterList()
-		for p.eatTokenIfKind(TokenComma).valid() {
-			fields = append(fields, p.parseParameterList()...)
-		}
-	}
-
-	closeToken := p.eatTokenOrError(TokenRParen)
-
-	return FieldList{
-		Open:   openToken,
-		Fields: fields,
-		Close:  closeToken,
-	}
-}
-
-func (p *Parser) parseResult() FieldList {
-	if p.currentToken().Kind() == TokenLParen {
-		return p.parseParameters()
-	}
-
-	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-		return FieldList{Fields: []Field{{Type: p.parseType()}}}
-	}
-
-	return FieldList{}
-}
-
-func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
-	parameters = p.parseParameters()
-	result = p.parseResult()
-	return
-}
-
-func (p *Parser) parseFuncType() *FuncType {
-	funcToken := p.eatTokenOrError(TokenFunc)
-	if !funcToken.valid() {
-		return nil
-	}
-
-	parameters, result := p.parseSignature()
-
-	return &FuncType{
-		Func:       funcToken,
-		Parameters: parameters,
-		Result:     result,
-	}
-}
-
 // FieldDecl = (IdentifierList Type | EmbeddedField) [ Tag ] ";"
 func (p *Parser) parseFieldDecl() *Field {
 	// Implements: FieldDecl = (IdentifierList Type | EmbeddedField) [ Tag ] ';'
@@ -523,6 +429,100 @@ func (p *Parser) parseFieldDecl() *Field {
 // EmbeddedField = TypeName ; (subset without pointer / type args).
 func (p *Parser) parseEmbeddedField(first *IdentifierExpr) Type {
 	return p.parseTypeNameWithFirstId(first)
+}
+
+func (p *Parser) parseFuncType() *FuncType {
+	funcToken := p.eatTokenOrError(TokenFunc)
+	if !funcToken.valid() {
+		return nil
+	}
+
+	parameters, result := p.parseSignature()
+
+	return &FuncType{
+		Func:       funcToken,
+		Parameters: parameters,
+		Result:     result,
+	}
+}
+
+func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
+	parameters = p.parseParameters()
+	result = p.parseResult()
+	return
+}
+
+func (p *Parser) parseParameters() FieldList {
+	openToken := p.eatTokenOrError(TokenLParen)
+
+	var fields []Field
+	if p.currentToken().Kind() != TokenRParen {
+		fields = p.parseParameterList()
+		for p.eatTokenIfKind(TokenComma).valid() {
+			fields = append(fields, p.parseParameterList()...)
+		}
+	}
+
+	closeToken := p.eatTokenOrError(TokenRParen)
+
+	return FieldList{
+		Open:   openToken,
+		Fields: fields,
+		Close:  closeToken,
+	}
+}
+
+func (p *Parser) parseParameterList() (list []Field) {
+	list = []Field{p.parseParameterDecl()}
+	for p.eatTokenIfKind(TokenComma).valid() {
+		list = append(list, p.parseParameterDecl())
+	}
+	return
+}
+
+func (p *Parser) parseParameterDecl() Field {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		names := []*IdentifierExpr{p.parseIdentifierExpr()}
+		prevTokenIndex := p.currentTokenIndex
+
+		for p.eatTokenIfKind(TokenComma).valid() {
+			if p.currentToken().Kind() == TokenIdentifier {
+				names = append(names, p.parseIdentifierExpr())
+			} else {
+				p.currentTokenIndex = prevTokenIndex
+				return Field{Type: p.convertParsedExprToType(names[0])}
+			}
+		}
+
+		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+			return Field{Names: names, Type: p.parseType()}
+		}
+
+		p.currentTokenIndex = prevTokenIndex
+		return Field{Type: p.convertParsedExprToType(names[0])}
+	case TokenLBracket:
+		return Field{Type: p.parseArrayType()}
+	case TokenStruct:
+		return Field{Type: p.parseStructType()}
+	case TokenFunc:
+		return Field{Type: p.parseFuncType()}
+	default:
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		return Field{}
+	}
+}
+
+func (p *Parser) parseResult() FieldList {
+	if p.currentToken().Kind() == TokenLParen {
+		return p.parseParameters()
+	}
+
+	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+		return FieldList{Fields: []Field{{Type: p.parseType()}}}
+	}
+
+	return FieldList{}
 }
 
 func (p *Parser) parseType() Type {
