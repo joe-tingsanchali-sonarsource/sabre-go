@@ -488,28 +488,34 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 		return nil
 	}
 
-	var types []Type
-	types = append(types, p.convertParsedExprToType(expr))
+	exprs := []Expr{expr}
 	for p.eatTokenIfKind(TokenComma).valid() {
-		types = append(types, p.convertParsedExprToType(p.tryParseIdentOrTypeExpr()))
+		if e := p.tryParseIdentOrTypeExpr(); e != nil {
+			exprs = append(exprs, e)
+		} else {
+			p.file.errorf(p.currentToken().SourceRange(), "expected an identifier or type but found '%v'", p.currentToken())
+			return nil
+		}
 	}
 
 	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-		var names []*IdentifierExpr
-		for _, t := range types {
-			if named, ok := t.(*NamedType); ok {
-				names = append(names, named.TypeName)
-			}
+		t := p.parseType()
+		if t == nil {
+			return nil
 		}
 
-		list = []Field{{Names: names, Type: p.parseType()}}
+		var names []*IdentifierExpr
+		for _, e := range exprs {
+			names = append(names, e.(*IdentifierExpr))
+		}
+
+		list = []Field{{Names: names, Type: t}}
 		return
 	}
 
-	for _, t := range types {
-		list = append(list, Field{Type: t})
+	for _, e := range exprs {
+		list = append(list, Field{Type: p.convertParsedExprToType(e)})
 	}
-
 	return
 }
 
