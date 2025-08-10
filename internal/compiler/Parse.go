@@ -473,21 +473,23 @@ func (p *Parser) parseParameters() FieldList {
 }
 
 func (p *Parser) parseParameterList() (list []Field) {
-	list = []Field{p.parseParameterDecl()}
+	expr := p.tryParseIdentOrTypeExpr()
+	if expr == nil {
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		return nil
+	}
+
+	list = p.parseParameterListWithFirstExpr(expr)
 	for p.eatTokenIfKind(TokenComma).valid() {
-		list = append(list, p.parseParameterDecl())
+		list = append(list, p.parseParameterListWithFirstExpr(p.tryParseIdentOrTypeExpr())...)
 	}
 	return
 }
 
-func (p *Parser) parseParameterDecl() Field {
-	expr := p.tryParseIdentOrTypeExpr()
+func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 	if expr == nil {
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
-		return Field{}
+		return nil
 	}
-
-	prevTokenIndex := p.currentTokenIndex
 
 	var types []Type
 	types = append(types, p.convertParsedExprToType(expr))
@@ -502,11 +504,16 @@ func (p *Parser) parseParameterDecl() Field {
 				names = append(names, named.TypeName)
 			}
 		}
-		return Field{Names: names, Type: p.parseType()}
+
+		list = []Field{{Names: names, Type: p.parseType()}}
+		return
 	}
 
-	p.currentTokenIndex = prevTokenIndex
-	return Field{Type: types[0]}
+	for _, t := range types {
+		list = append(list, Field{Type: t})
+	}
+
+	return
 }
 
 func (p *Parser) parseResult() FieldList {
