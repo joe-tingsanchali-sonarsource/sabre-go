@@ -481,8 +481,8 @@ func (p *Parser) parseParameterList() (list []Field) {
 }
 
 func (p *Parser) parseParameterDecl() Field {
-	t := p.tryParseType()
-	if t == nil {
+	expr := p.tryParseIdentOrTypeExpr()
+	if expr == nil {
 		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
 		return Field{}
 	}
@@ -490,9 +490,9 @@ func (p *Parser) parseParameterDecl() Field {
 	prevTokenIndex := p.currentTokenIndex
 
 	var types []Type
-	types = append(types, t)
+	types = append(types, p.convertParsedExprToType(expr))
 	for p.eatTokenIfKind(TokenComma).valid() {
-		types = append(types, p.tryParseType())
+		types = append(types, p.convertParsedExprToType(p.tryParseIdentOrTypeExpr()))
 	}
 
 	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
@@ -514,17 +514,21 @@ func (p *Parser) parseResult() FieldList {
 		return p.parseParameters()
 	}
 
-	if t := p.tryParseType(); t != nil {
+	if t := p.convertParsedExprToType(p.tryParseIdentOrTypeExpr()); t != nil {
 		return FieldList{Fields: []Field{{Type: t}}}
 	}
 
 	return FieldList{}
 }
 
-func (p *Parser) tryParseType() Type {
+func (p *Parser) tryParseIdentOrTypeExpr() Expr {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
-		return p.parseTypeName()
+		expr := p.parseIdentifierExpr()
+		if p.currentToken().Kind() == TokenDot {
+			return p.parseSelectorExpr(expr)
+		}
+		return expr
 	case TokenLBracket:
 		return p.parseArrayType()
 	case TokenStruct:
@@ -537,11 +541,11 @@ func (p *Parser) tryParseType() Type {
 }
 
 func (p *Parser) parseType() Type {
-	t := p.tryParseType()
-	if t == nil {
+	expr := p.tryParseIdentOrTypeExpr()
+	if expr == nil {
 		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
 	}
-	return t
+	return p.convertParsedExprToType(expr)
 }
 
 // TypeName = identifier | identifier '.' identifier
