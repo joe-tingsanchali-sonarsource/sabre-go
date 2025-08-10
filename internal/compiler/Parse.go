@@ -480,9 +480,6 @@ func (p *Parser) parseParameterList() (list []Field) {
 	}
 
 	list = p.parseParameterListWithFirstExpr(expr)
-	for p.eatTokenIfKind(TokenComma).valid() {
-		list = append(list, p.parseParameterListWithFirstExpr(p.tryParseIdentOrTypeExpr())...)
-	}
 	return
 }
 
