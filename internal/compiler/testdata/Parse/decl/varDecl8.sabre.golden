@@ -1,0 +1,6 @@
+>> 	var (
+>> 	     ^
+Error[internal/compiler/testdata/Parse/decl/varDecl8.sabre:1:6]: expected ')' but found 'INVALID'
+>> 	var (
+>> 	     ^
+Error[internal/compiler/testdata/Parse/decl/varDecl8.sabre:1:6]: expected ';' but found 'INVALID'

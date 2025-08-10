@@ -1,0 +1,3 @@
+>> 	)
+>> 	^ 
+Error[internal/compiler/testdata/Parse/decl/varDecl11.sabre:3:1]: expected an expression but found ')'

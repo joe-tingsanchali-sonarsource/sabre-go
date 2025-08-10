@@ -1,0 +1,7 @@
+(GenericDecl var
+  (ValueSpec
+    (IdentifierExpr IDENTIFIER(x))
+    =
+    (LiteralExpr LITERAL_INT(1))
+  )
+)
