@@ -204,10 +204,10 @@ func (v *ASTPrinter) VisitComplitExpr(n *ComplitExpr) {
 }
 
 func (v *ASTPrinter) VisitNamedType(n *NamedType) {
-	if n.Package != nil {
-		v.indentor.printf("(NamedType %v.%v)", n.Package.Token, n.TypeName.Token)
+	if n.Package.valid() {
+		v.indentor.printf("(NamedType %v.%v)", n.Package, n.TypeName)
 	} else {
-		v.indentor.printf("(NamedType %v)", n.TypeName.Token)
+		v.indentor.printf("(NamedType %v)", n.TypeName)
 	}
 }
 

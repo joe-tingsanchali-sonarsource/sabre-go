@@ -573,23 +573,23 @@ func (p *Parser) parseTypeNameWithFirstId(firstId *IdentifierExpr) *NamedType {
 		if selector == nil {
 			return nil
 		}
-		return &NamedType{Package: firstId, TypeName: selector}
+		return &NamedType{Package: firstId.Token, TypeName: selector.Token}
 	}
 
-	return &NamedType{TypeName: firstId}
+	return &NamedType{TypeName: firstId.Token}
 }
 
 func (p *Parser) convertParsedExprToType(e Expr) Type {
 	switch n := e.(type) {
 	case *IdentifierExpr:
 		return &NamedType{
-			TypeName: e.(*IdentifierExpr),
+			TypeName: n.Token,
 		}
 	case *SelectorExpr:
 		if base, ok := n.Base.(*IdentifierExpr); ok {
 			return &NamedType{
-				Package:  base,
-				TypeName: n.Selector,
+				Package:  base.Token,
+				TypeName: n.Selector.Token,
 			}
 		}
 	case *NamedType:
