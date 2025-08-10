@@ -1,0 +1,4 @@
+struct {
+    P.T4
+    x, y int
+}

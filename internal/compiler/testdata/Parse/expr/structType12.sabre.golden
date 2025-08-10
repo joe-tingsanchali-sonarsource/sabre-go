@@ -1,0 +1,10 @@
+(StructType 2
+  (StructTypeField
+    (NamedType IDENTIFIER(P).IDENTIFIER(T4))
+  )
+  (StructTypeField
+    (IdentifierExpr IDENTIFIER(x))
+    (IdentifierExpr IDENTIFIER(y))
+    (NamedType IDENTIFIER(int))
+  )
+)
