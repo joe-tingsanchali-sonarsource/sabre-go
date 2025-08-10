@@ -4,6 +4,3 @@ Error[internal/compiler/testdata/Parse/expr/funcType20.sabre:1:6]: expected an i
 >> 	func(5 int)
 >> 	     ^      
 Error[internal/compiler/testdata/Parse/expr/funcType20.sabre:1:6]: expected ')' but found 'LITERAL_INT'
->> 	func(5 int)
->> 	          ^ 
-Error[internal/compiler/testdata/Parse/expr/funcType20.sabre:1:11]: expected ';' but found ')'

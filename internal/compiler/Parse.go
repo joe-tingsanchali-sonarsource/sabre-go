@@ -375,6 +375,9 @@ func (p *Parser) parseFieldList(open, close TokenKind, expectSemicolon bool) Fie
 		var fieldType Type
 		if p.currentToken().Kind() != close {
 			fieldType = p.parseType()
+			if fieldType == nil {
+				return FieldList{}
+			}
 		}
 
 		var tag Token
@@ -489,19 +492,12 @@ func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
 }
 
 func (p *Parser) parseFuncType() *FuncType {
-	p.pushExprLevel()
-	defer p.popExprLevel()
-
 	funcToken := p.eatTokenOrError(TokenFunc)
 	if !funcToken.valid() {
 		return nil
 	}
 
 	parameters, result := p.parseSignature()
-
-	if p.exprLevel == 1 {
-		p.eatTokenOrError(TokenSemicolon)
-	}
 
 	return &FuncType{
 		Func:       funcToken,

@@ -212,8 +212,10 @@ type FuncType struct {
 func (e *FuncType) exprNode() {}
 func (e *FuncType) typeExpr() {}
 func (e *FuncType) SourceRange() SourceRange {
-	if len(e.Result.Fields) > 0 {
-		return e.Func.SourceRange().Merge(e.Result.Fields[len(e.Result.Fields)-1].Type.SourceRange())
+	if e.Result.Close.valid() {
+		return e.Func.SourceRange().Merge(e.Result.Close.SourceRange())
+	} else if len(e.Result.Fields) > 0 {
+		return e.Func.SourceRange().Merge(e.Result.Fields[0].Type.SourceRange())
 	} else {
 		return e.Func.SourceRange().Merge(e.Parameters.Close.SourceRange())
 	}
@@ -592,7 +594,6 @@ func (v *DefaultVisitor) VisitStructType(n *StructType) {
 		e.Type.Visit(v)
 	}
 }
-
 func (v *DefaultVisitor) VisitFuncType(n *FuncType) {
 	for _, e := range n.Parameters.Fields {
 		for _, name := range e.Names {

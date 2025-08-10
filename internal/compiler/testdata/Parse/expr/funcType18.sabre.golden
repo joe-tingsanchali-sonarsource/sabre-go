@@ -1,6 +1,3 @@
 >> 	func() ([]float64
 >> 	                 ^
 Error[internal/compiler/testdata/Parse/expr/funcType18.sabre:1:18]: expected ')' but found ';'
->> 	func() ([]float64
->> 	                 ^
-Error[internal/compiler/testdata/Parse/expr/funcType18.sabre:1:18]: expected ';' but found 'INVALID'
