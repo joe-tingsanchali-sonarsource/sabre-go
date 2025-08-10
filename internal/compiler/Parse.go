@@ -514,8 +514,8 @@ func (p *Parser) parseResult() FieldList {
 		return p.parseParameters()
 	}
 
-	if p.currentToken().Kind() != TokenComma && p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-		return FieldList{Fields: []Field{{Type: p.parseType()}}}
+	if t := p.tryParseType(); t != nil {
+		return FieldList{Fields: []Field{{Type: t}}}
 	}
 
 	return FieldList{}
