@@ -416,7 +416,6 @@ func (p *Parser) parseParameterDecl() Field {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
 		names := []*IdentifierExpr{p.parseIdentifierExpr()}
-
 		prevTokenIndex := p.currentTokenIndex
 
 		for p.eatTokenIfKind(TokenComma).valid() {
@@ -483,6 +482,12 @@ func (p *Parser) parseResult() FieldList {
 	return FieldList{}
 }
 
+func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
+	parameters = p.parseParameters()
+	result = p.parseResult()
+	return
+}
+
 func (p *Parser) parseFuncType() *FuncType {
 	p.pushExprLevel()
 	defer p.popExprLevel()
@@ -492,8 +497,7 @@ func (p *Parser) parseFuncType() *FuncType {
 		return nil
 	}
 
-	parameters := p.parseParameters()
-	result := p.parseResult()
+	parameters, result := p.parseSignature()
 
 	if p.exprLevel == 1 {
 		p.eatTokenOrError(TokenSemicolon)
