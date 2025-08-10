@@ -373,24 +373,11 @@ func (p *Parser) parseStructType() *StructType {
 
 	var fields []Field
 	for p.currentToken().Kind() != TokenRBrace && p.currentToken().valid() {
-		names := []*IdentifierExpr{p.parseIdentifierExpr()}
-		for p.eatTokenIfKind(TokenComma).valid() {
-			names = append(names, p.parseIdentifierExpr())
-		}
-
-		fieldType := p.parseType()
-		if fieldType == nil {
+		if f := p.parseFieldDecl(); f != nil {
+			fields = append(fields, *f)
+		} else {
 			return nil
 		}
-
-		var tag Token
-		if p.currentToken().Kind() == TokenLiteralString {
-			tag = p.eatToken()
-		}
-
-		p.eatTokenOrError(TokenSemicolon)
-
-		fields = append(fields, Field{Names: names, Type: fieldType, Tag: tag})
 	}
 
 	rBraceToken := p.eatTokenOrError(TokenRBrace)
@@ -401,27 +388,51 @@ func (p *Parser) parseStructType() *StructType {
 	}
 }
 
+// FieldDecl = (IdentifierList Type | EmbeddedField) [ Tag ] ";"
+func (p *Parser) parseFieldDecl() *Field {
+	// Implements: FieldDecl = (IdentifierList Type | EmbeddedField) [ Tag ] ';'
+	// Start by parsing the first identifier (common prefix for both alternatives)
+	firstIdent := p.parseIdentifierExpr()
+	if firstIdent == nil {
+		return nil
+	}
+
+	// Unified embedded field detection (qualified or unqualified).
+	// If after first identifier we immediately see '.', ';', string tag, or '}', treat it as EmbeddedField.
+	// '.' case will be consumed inside parseEmbeddedField.
+	switch p.currentToken().Kind() {
+	case TokenDot, TokenSemicolon, TokenLiteralString, TokenRBrace:
+		embeddedType := p.parseEmbeddedField(firstIdent)
+		if embeddedType == nil {
+			return nil
+		}
+		tag := p.eatTokenIfKind(TokenLiteralString)
+		p.eatTokenOrError(TokenSemicolon)
+		return &Field{Type: embeddedType, Tag: tag}
+	}
+
+	// IdentifierList Type path
+	names := p.parseIdentifierExprListWithFirstId(firstIdent)
+
+	fieldType := p.parseType()
+	if fieldType == nil {
+		return nil
+	}
+
+	tag := p.eatTokenIfKind(TokenLiteralString)
+	p.eatTokenOrError(TokenSemicolon)
+	return &Field{Names: names, Type: fieldType, Tag: tag}
+}
+
+// EmbeddedField = TypeName ; (subset without pointer / type args).
+func (p *Parser) parseEmbeddedField(first *IdentifierExpr) Type {
+	return p.parseTypeNameWithFirstId(first)
+}
+
 func (p *Parser) parseType() Type {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
-		identifier := p.parseIdentifierExpr()
-		if identifier == nil {
-			return nil
-		}
-		if p.eatTokenIfKind(TokenDot).valid() {
-			selector := p.parseIdentifierExpr()
-			if selector == nil {
-				return nil
-			}
-			return &NamedType{
-				Package:  identifier.Token,
-				TypeName: selector.Token,
-			}
-		} else {
-			return &NamedType{
-				TypeName: identifier.Token,
-			}
-		}
+		return p.parseTypeName()
 	case TokenLBracket:
 		return p.parseArrayType()
 	case TokenStruct:
@@ -430,6 +441,27 @@ func (p *Parser) parseType() Type {
 		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
 		return nil
 	}
+}
+
+// TypeName = identifier | identifier '.' identifier
+func (p *Parser) parseTypeName() *NamedType {
+	return p.parseTypeNameWithFirstId(p.parseIdentifierExpr())
+}
+
+func (p *Parser) parseTypeNameWithFirstId(firstId *IdentifierExpr) *NamedType {
+	if firstId == nil {
+		return nil
+	}
+
+	if p.eatTokenIfKind(TokenDot).valid() {
+		selector := p.parseIdentifierExpr()
+		if selector == nil {
+			return nil
+		}
+		return &NamedType{Package: firstId.Token, TypeName: selector.Token}
+	}
+
+	return &NamedType{TypeName: firstId.Token}
 }
 
 func (p *Parser) convertParsedExprToType(e Expr) Type {
@@ -594,10 +626,29 @@ func (p *Parser) parseExprList() (list []Expr) {
 	return
 }
 
-func (p *Parser) parseIdentifierExprList() (list []*IdentifierExpr) {
-	list = []*IdentifierExpr{p.parseIdentifierExpr()}
+func (p *Parser) parseIdentifierExprList() []*IdentifierExpr {
+	firstId := p.parseIdentifierExpr()
+	if firstId == nil {
+		return nil
+	}
+	return p.parseIdentifierExprListWithFirstId(firstId)
+}
+
+func (p *Parser) parseIdentifierExprListWithFirstId(firstIdentifier *IdentifierExpr) (list []*IdentifierExpr) {
+	if firstIdentifier == nil {
+		firstIdentifier = p.parseIdentifierExpr()
+	}
+
+	if firstIdentifier == nil {
+		return nil
+	}
+	list = append(list, firstIdentifier)
 	for p.eatTokenIfKind(TokenComma).valid() {
-		list = append(list, p.parseIdentifierExpr())
+		id := p.parseIdentifierExpr()
+		if id == nil {
+			return nil
+		}
+		list = append(list, id)
 	}
 	return
 }

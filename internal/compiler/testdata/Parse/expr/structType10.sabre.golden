@@ -1,0 +1,5 @@
+(StructType 1
+  (StructTypeField
+    (NamedType IDENTIFIER(EmbeddedType))
+  )
+)
