@@ -627,7 +627,11 @@ func (p *Parser) parseExprList() (list []Expr) {
 }
 
 func (p *Parser) parseIdentifierExprList() []*IdentifierExpr {
-	return p.parseIdentifierExprListWithFirstId(p.parseIdentifierExpr())
+	firstId := p.parseIdentifierExpr()
+	if firstId == nil {
+		return nil
+	}
+	return p.parseIdentifierExprListWithFirstId(firstId)
 }
 
 func (p *Parser) parseIdentifierExprListWithFirstId(firstIdentifier *IdentifierExpr) (list []*IdentifierExpr) {
