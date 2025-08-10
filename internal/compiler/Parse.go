@@ -424,6 +424,9 @@ func (p *Parser) parseParameterDecl() Field {
 		for p.eatTokenIfKind(TokenComma).valid() {
 			if p.currentToken().Kind() == TokenIdentifier {
 				names = append(names, p.parseIdentifierExpr())
+			} else {
+				p.currentTokenIndex = prevTokenIndex
+				return Field{Type: p.convertParsedExprToType(names[0])}
 			}
 		}
 

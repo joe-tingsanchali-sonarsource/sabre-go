@@ -1,13 +1,13 @@
 (FuncType
   (FuncType-Parameters
-    (IdentifierExpr IDENTIFIER(int))
-    (IdentifierExpr IDENTIFIER(int))
+    (NamedType IDENTIFIER(int))
+    (NamedType IDENTIFIER(int))
     (ArrayType
       (NamedType IDENTIFIER(float64))
     )
   )
   (FuncType-Results
-    (IdentifierExpr IDENTIFIER(float64))
+    (NamedType IDENTIFIER(float64))
     (ArrayType
       (NamedType IDENTIFIER(int))
     )
