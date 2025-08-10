@@ -1,0 +1,6 @@
+(FuncType
+  (FuncType-Parameters
+    (NamedType IDENTIFIER(int))
+    (NamedType IDENTIFIER(Package).IDENTIFIER(Type))
+  )
+)

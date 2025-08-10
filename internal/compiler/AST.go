@@ -143,11 +143,11 @@ type Type interface {
 }
 
 type NamedType struct {
-	Package  Token
-	TypeName Token
+	Package  *IdentifierExpr
+	TypeName *IdentifierExpr
 }
 
-func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
+func (e *NamedType) IsPackageQualified() bool { return e.Package != nil }
 func (e *NamedType) exprNode()                {}
 func (e *NamedType) typeExpr()                {}
 func (e *NamedType) SourceRange() SourceRange {

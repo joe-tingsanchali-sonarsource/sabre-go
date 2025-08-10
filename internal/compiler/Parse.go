@@ -481,36 +481,32 @@ func (p *Parser) parseParameterList() (list []Field) {
 }
 
 func (p *Parser) parseParameterDecl() Field {
-	switch p.currentToken().Kind() {
-	case TokenIdentifier:
-		names := []*IdentifierExpr{p.parseIdentifierExpr()}
-		prevTokenIndex := p.currentTokenIndex
-
-		for p.eatTokenIfKind(TokenComma).valid() {
-			if p.currentToken().Kind() == TokenIdentifier {
-				names = append(names, p.parseIdentifierExpr())
-			} else {
-				p.currentTokenIndex = prevTokenIndex
-				return Field{Type: p.convertParsedExprToType(names[0])}
-			}
-		}
-
-		if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
-			return Field{Names: names, Type: p.parseType()}
-		}
-
-		p.currentTokenIndex = prevTokenIndex
-		return Field{Type: p.convertParsedExprToType(names[0])}
-	case TokenLBracket:
-		return Field{Type: p.parseArrayType()}
-	case TokenStruct:
-		return Field{Type: p.parseStructType()}
-	case TokenFunc:
-		return Field{Type: p.parseFuncType()}
-	default:
+	t := p.tryParseType()
+	if t == nil {
 		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
 		return Field{}
 	}
+
+	prevTokenIndex := p.currentTokenIndex
+
+	var types []Type
+	types = append(types, t)
+	for p.eatTokenIfKind(TokenComma).valid() {
+		types = append(types, p.tryParseType())
+	}
+
+	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+		var names []*IdentifierExpr
+		for _, t := range types {
+			if named, ok := t.(*NamedType); ok {
+				names = append(names, named.TypeName)
+			}
+		}
+		return Field{Names: names, Type: p.parseType()}
+	}
+
+	p.currentTokenIndex = prevTokenIndex
+	return Field{Type: types[0]}
 }
 
 func (p *Parser) parseResult() FieldList {
@@ -525,7 +521,7 @@ func (p *Parser) parseResult() FieldList {
 	return FieldList{}
 }
 
-func (p *Parser) parseType() Type {
+func (p *Parser) tryParseType() Type {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
 		return p.parseTypeName()
@@ -536,9 +532,16 @@ func (p *Parser) parseType() Type {
 	case TokenFunc:
 		return p.parseFuncType()
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
 		return nil
 	}
+}
+
+func (p *Parser) parseType() Type {
+	t := p.tryParseType()
+	if t == nil {
+		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
+	}
+	return t
 }
 
 // TypeName = identifier | identifier '.' identifier
@@ -556,23 +559,23 @@ func (p *Parser) parseTypeNameWithFirstId(firstId *IdentifierExpr) *NamedType {
 		if selector == nil {
 			return nil
 		}
-		return &NamedType{Package: firstId.Token, TypeName: selector.Token}
+		return &NamedType{Package: firstId, TypeName: selector}
 	}
 
-	return &NamedType{TypeName: firstId.Token}
+	return &NamedType{TypeName: firstId}
 }
 
 func (p *Parser) convertParsedExprToType(e Expr) Type {
 	switch n := e.(type) {
 	case *IdentifierExpr:
 		return &NamedType{
-			TypeName: n.Token,
+			TypeName: e.(*IdentifierExpr),
 		}
 	case *SelectorExpr:
 		if base, ok := n.Base.(*IdentifierExpr); ok {
 			return &NamedType{
-				Package:  base.Token,
-				TypeName: n.Selector.Token,
+				Package:  base,
+				TypeName: n.Selector,
 			}
 		}
 	case *NamedType:
