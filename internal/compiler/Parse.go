@@ -506,7 +506,12 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 
 		var names []*IdentifierExpr
 		for _, e := range exprs {
-			names = append(names, e.(*IdentifierExpr))
+			if n, ok := e.(*IdentifierExpr); ok {
+				names = append(names, n)
+			} else {
+				p.file.errorf(e.SourceRange(), "expected an identifier")
+				return nil
+			}
 		}
 
 		list = []Field{{Names: names, Type: t}}
@@ -536,7 +541,7 @@ func (p *Parser) tryParseIdentOrTypeExpr() Expr {
 	case TokenIdentifier:
 		expr := p.parseIdentifierExpr()
 		if p.currentToken().Kind() == TokenDot {
-			return p.parseSelectorExpr(expr)
+			return p.parseTypeNameWithFirstId(expr)
 		}
 		return expr
 	case TokenLBracket:
@@ -551,11 +556,19 @@ func (p *Parser) tryParseIdentOrTypeExpr() Expr {
 }
 
 func (p *Parser) parseType() Type {
-	expr := p.tryParseIdentOrTypeExpr()
-	if expr == nil {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		return p.parseTypeName()
+	case TokenLBracket:
+		return p.parseArrayType()
+	case TokenStruct:
+		return p.parseStructType()
+	case TokenFunc:
+		return p.parseFuncType()
+	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
+		return nil
 	}
-	return p.convertParsedExprToType(expr)
 }
 
 // TypeName = identifier | identifier '.' identifier

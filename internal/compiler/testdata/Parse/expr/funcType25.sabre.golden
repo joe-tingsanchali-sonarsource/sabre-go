@@ -1,0 +1,3 @@
+>> 	func(Package.Type, x int)
+>> 	     ^^^^^^^^^^^^         
+Error[internal/compiler/testdata/Parse/expr/funcType25.sabre:1:6]: expected an identifier
