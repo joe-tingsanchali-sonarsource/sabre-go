@@ -475,7 +475,7 @@ func (p *Parser) parseParameters() FieldList {
 func (p *Parser) parseParameterList() (list []Field) {
 	expr := p.tryParseIdentOrTypeExpr()
 	if expr == nil {
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		p.file.errorf(p.currentToken().SourceRange(), "missing parameter name")
 		return nil
 	}
 
@@ -493,7 +493,7 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 		if e := p.tryParseIdentOrTypeExpr(); e != nil {
 			exprs = append(exprs, e)
 		} else {
-			p.file.errorf(p.currentToken().SourceRange(), "expected an identifier or type but found '%v'", p.currentToken())
+			p.file.errorf(p.currentToken().SourceRange(), "missing parameter name")
 			return nil
 		}
 	}
@@ -509,7 +509,7 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 			if n, ok := e.(*IdentifierExpr); ok {
 				names = append(names, n)
 			} else {
-				p.file.errorf(e.SourceRange(), "expected an identifier")
+				p.file.errorf(e.SourceRange(), "missing parameter name")
 				return nil
 			}
 		}
