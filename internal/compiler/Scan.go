@@ -467,8 +467,16 @@ func (s *Scanner) Scan() Token {
 		} else if s.currentChar() == '=' {
 			s.readChar()
 			return s.createTokenFromLocationPoint(TokenAndAssign, start)
+		} else if s.currentChar() == '^' {
+			s.readChar()
+			if s.currentChar() == '=' {
+				s.readChar()
+				return s.createTokenFromLocationPoint(TokenAndNotAssign, start)
+			}
+			return s.createTokenFromLocationPoint(TokenAndNot, start)
+		} else {
+			return s.createTokenFromLocationPoint(TokenAnd, start)
 		}
-		return s.createTokenFromLocationPoint(TokenAnd, start)
 
 	case '|':
 		s.readChar()
