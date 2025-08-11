@@ -175,6 +175,10 @@ func (p *Parser) parseBaseExpr() Expr {
 			if p.isInControlStmt() {
 				return expr
 			} else {
+				if expr == nil {
+					return nil
+				}
+
 				t := p.convertParsedExprToType(expr)
 				if t == nil {
 					p.file.errorf(expr.SourceRange(), "failed to parse type")
