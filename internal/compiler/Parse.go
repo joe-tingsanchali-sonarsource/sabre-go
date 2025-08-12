@@ -289,6 +289,8 @@ func (p *Parser) parseAtom() Expr {
 		return p.parseArrayType()
 	case TokenStruct:
 		return p.parseStructType()
+	case TokenFunc:
+		return p.parseFuncType()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
 	}
@@ -429,6 +431,142 @@ func (p *Parser) parseEmbeddedField(first *IdentifierExpr) Type {
 	return p.parseTypeNameWithFirstId(first)
 }
 
+func (p *Parser) parseFuncType() *FuncType {
+	funcToken := p.eatTokenOrError(TokenFunc)
+	if !funcToken.valid() {
+		return nil
+	}
+
+	parameters, result := p.parseSignature()
+
+	return &FuncType{
+		Func:       funcToken,
+		Parameters: parameters,
+		Result:     result,
+	}
+}
+
+func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
+	parameters = p.parseParameters()
+	result = p.parseResult()
+	return
+}
+
+func (p *Parser) parseParameters() FieldList {
+	openToken := p.eatTokenOrError(TokenLParen)
+
+	var fields []Field
+	if p.currentToken().Kind() != TokenRParen {
+		fields = p.parseParameterList()
+		for p.eatTokenIfKind(TokenComma).valid() {
+			fields = append(fields, p.parseParameterList()...)
+		}
+	}
+
+	if len(fields) > 0 {
+		named := 0
+		for _, f := range fields {
+			if len(f.Names) > 0 {
+				named++
+			} else if named > 0 {
+				p.file.errorf(f.Type.SourceRange(), "missing parameter name")
+				return FieldList{}
+			}
+		}
+	}
+
+	closeToken := p.eatTokenOrError(TokenRParen)
+
+	return FieldList{
+		Open:   openToken,
+		Fields: fields,
+		Close:  closeToken,
+	}
+}
+
+func (p *Parser) parseParameterList() (list []Field) {
+	expr := p.tryParseIdentOrTypeExpr()
+	if expr == nil {
+		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		return nil
+	}
+
+	list = p.parseParameterListWithFirstExpr(expr)
+	return
+}
+
+func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
+	if expr == nil {
+		return nil
+	}
+
+	exprs := []Expr{expr}
+	for p.eatTokenIfKind(TokenComma).valid() {
+		if e := p.tryParseIdentOrTypeExpr(); e != nil {
+			exprs = append(exprs, e)
+		} else {
+			p.file.errorf(p.currentToken().SourceRange(), "expected an identifier or type but found '%v'", p.currentToken())
+			return nil
+		}
+	}
+
+	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenSemicolon {
+		t := p.parseType()
+		if t == nil {
+			return nil
+		}
+
+		var names []*IdentifierExpr
+		for _, e := range exprs {
+			if n, ok := e.(*IdentifierExpr); ok {
+				names = append(names, n)
+			} else {
+				p.file.errorf(e.SourceRange(), "missing parameter name")
+				return nil
+			}
+		}
+
+		list = []Field{{Names: names, Type: t}}
+		return
+	}
+
+	for _, e := range exprs {
+		list = append(list, Field{Type: p.convertParsedExprToType(e)})
+	}
+	return
+}
+
+func (p *Parser) parseResult() FieldList {
+	if p.currentToken().Kind() == TokenLParen {
+		return p.parseParameters()
+	}
+
+	if t := p.convertParsedExprToType(p.tryParseIdentOrTypeExpr()); t != nil {
+		return FieldList{Fields: []Field{{Type: t}}}
+	}
+
+	return FieldList{}
+}
+
+func (p *Parser) tryParseIdentOrTypeExpr() Expr {
+	switch p.currentToken().Kind() {
+	case TokenIdentifier:
+		expr := p.parseIdentifierExpr()
+		if p.currentToken().Kind() == TokenDot {
+			return p.parseTypeNameWithFirstId(expr)
+		}
+		return expr
+	case TokenLBracket:
+		return p.parseArrayType()
+	case TokenStruct:
+		return p.parseStructType()
+	case TokenFunc:
+		return p.parseFuncType()
+	default:
+		return nil
+	}
+}
+
 func (p *Parser) parseType() Type {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
@@ -437,6 +575,8 @@ func (p *Parser) parseType() Type {
 		return p.parseArrayType()
 	case TokenStruct:
 		return p.parseStructType()
+	case TokenFunc:
+		return p.parseFuncType()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
 		return nil
@@ -482,6 +622,8 @@ func (p *Parser) convertParsedExprToType(e Expr) Type {
 	case *ArrayType:
 		return n
 	case *StructType:
+		return n
+	case *FuncType:
 		return n
 	}
 	return nil

@@ -65,6 +65,23 @@ func (v *ASTPrinter) visitPhonyNode(n Node, name string) {
 	v.indentor.print(")")
 }
 
+func (v *ASTPrinter) visitPhonyFieldListNode(n FieldList, name string) {
+	v.indentor.printf("(%v", name)
+	v.indentor.Push()
+	for _, f := range n.Fields {
+		for _, name := range f.Names {
+			v.indentor.NewLine()
+			name.Visit(v)
+		}
+
+		v.indentor.NewLine()
+		f.Type.Visit(v)
+	}
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
 func (v *ASTPrinter) VisitLiteralExpr(n *LiteralExpr) {
 	v.indentor.printf("(LiteralExpr %v)", n.Token)
 }
@@ -244,6 +261,27 @@ func (v *ASTPrinter) VisitStructType(n *StructType) {
 		}
 
 		v.indentor.Pop()
+		v.indentor.NewLine()
+	}
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitFuncType(n *FuncType) {
+	v.indentor.print("(FuncType")
+	v.indentor.Push()
+
+	if len(n.Parameters.Fields) > 0 {
+		v.indentor.NewLine()
+		v.visitPhonyFieldListNode(n.Parameters, "FuncType-Parameters")
+	}
+
+	if len(n.Result.Fields) > 0 {
+		v.indentor.NewLine()
+		v.visitPhonyFieldListNode(n.Result, "FuncType-Results")
+	}
+
+	v.indentor.Pop()
+	if len(n.Parameters.Fields) > 0 || len(n.Result.Fields) > 0 {
 		v.indentor.NewLine()
 	}
 	v.indentor.print(")")

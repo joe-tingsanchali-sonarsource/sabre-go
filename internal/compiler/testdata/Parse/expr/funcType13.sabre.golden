@@ -1,0 +1,17 @@
+(FuncType
+  (FuncType-Parameters
+    (IdentifierExpr IDENTIFIER(int))
+    (IdentifierExpr IDENTIFIER(int))
+    (IdentifierExpr IDENTIFIER(list))
+    (ArrayType
+      (NamedType IDENTIFIER(float64))
+    )
+  )
+  (FuncType-Results
+    (IdentifierExpr IDENTIFIER(float64))
+    (IdentifierExpr IDENTIFIER(list2))
+    (ArrayType
+      (NamedType IDENTIFIER(int))
+    )
+  )
+)

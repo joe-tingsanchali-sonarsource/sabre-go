@@ -1,0 +1,15 @@
+(FuncType
+  (FuncType-Parameters
+    (NamedType IDENTIFIER(int))
+    (NamedType IDENTIFIER(int))
+    (ArrayType
+      (NamedType IDENTIFIER(float64))
+    )
+  )
+  (FuncType-Results
+    (NamedType IDENTIFIER(float64))
+    (ArrayType
+      (NamedType IDENTIFIER(int))
+    )
+  )
+)

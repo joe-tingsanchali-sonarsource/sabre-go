@@ -1,0 +1,1 @@
+func(int, int, list []float64) (float64, list2 []int)
