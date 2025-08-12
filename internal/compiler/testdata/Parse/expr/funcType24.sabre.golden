@@ -1,6 +1,6 @@
 >> 	func(x, 5 int)
 >> 	        ^      
-Error[internal/compiler/testdata/Parse/expr/funcType24.sabre:1:9]: missing parameter name
+Error[internal/compiler/testdata/Parse/expr/funcType24.sabre:1:9]: expected an identifier or type but found 'LITERAL_INT(5)'
 >> 	func(x, 5 int)
 >> 	        ^      
 Error[internal/compiler/testdata/Parse/expr/funcType24.sabre:1:9]: expected ')' but found 'LITERAL_INT'
