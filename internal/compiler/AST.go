@@ -508,6 +508,24 @@ func (e *GenericDecl) Visit(v NodeVisitor) {
 	v.VisitGenericDecl(e)
 }
 
+type FuncDecl struct {
+	Name *IdentifierExpr
+	Type *FuncType
+	Body *BlockStmt
+}
+
+func (e *FuncDecl) declNode() {}
+func (e *FuncDecl) SourceRange() SourceRange {
+	if e.Body != nil {
+		return e.Type.Func.SourceRange().Merge(e.Body.RBrace.SourceRange())
+	} else {
+		return e.Type.Func.SourceRange().Merge(e.Type.SourceRange())
+	}
+}
+func (e *FuncDecl) Visit(v NodeVisitor) {
+	v.VisitFuncDecl(e)
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
@@ -543,6 +561,7 @@ type NodeVisitor interface {
 	VisitValueSpec(n *ValueSpec)
 
 	VisitGenericDecl(n *GenericDecl)
+	VisitFuncDecl(n *FuncDecl)
 }
 
 type DefaultVisitor struct{}
@@ -708,5 +727,13 @@ func (v *DefaultVisitor) VisitValueSpec(n *ValueSpec) {
 func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {
 	for _, s := range n.Specs {
 		s.Visit(v)
+	}
+}
+
+func (v *DefaultVisitor) VisitFuncDecl(n *FuncDecl) {
+	n.Name.Visit(v)
+	n.Type.Visit(v)
+	if n.Body != nil {
+		n.Body.Visit(v)
 	}
 }

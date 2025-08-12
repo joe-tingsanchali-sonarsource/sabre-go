@@ -1,0 +1,1 @@
+func (s string, r rune) int

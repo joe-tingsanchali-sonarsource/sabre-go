@@ -1,0 +1,3 @@
+>> 	func (s string, r rune) int
+>> 	     ^                      
+Error[internal/compiler/testdata/Parse/decl/funcDecl3.sabre:1:6]: expected an identifier but found '('

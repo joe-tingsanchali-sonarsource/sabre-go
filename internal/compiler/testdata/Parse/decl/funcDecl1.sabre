@@ -1,0 +1,2 @@
+func IndexRune(s string, r rune) int {
+}

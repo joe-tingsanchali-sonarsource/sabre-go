@@ -1144,6 +1144,8 @@ func (p *Parser) ParseDecl() Decl {
 		return p.parseGenericDecl(p.eatToken(), p.parseConstSpec)
 	case TokenVar:
 		return p.parseGenericDecl(p.eatToken(), p.parseVarSpec)
+	case TokenFunc:
+		return p.parseFuncDecl()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
 		return nil
@@ -1260,5 +1262,30 @@ func (p *Parser) parseVarSpec() Spec {
 		Type:   varType,
 		Assign: assignToken,
 		RHS:    rhs,
+	}
+}
+
+func (p *Parser) parseFuncDecl() *FuncDecl {
+	funcToken := p.eatTokenOrError(TokenFunc)
+	if !funcToken.valid() {
+		return nil
+	}
+
+	name := p.parseIdentifierExpr()
+	parameters, result := p.parseSignature()
+
+	var body *BlockStmt
+	if p.currentToken().Kind() == TokenLBrace {
+		body = p.parseBlockStmt()
+	}
+
+	return &FuncDecl{
+		Name: name,
+		Type: &FuncType{
+			Func:       funcToken,
+			Parameters: parameters,
+			Result:     result,
+		},
+		Body: body,
 	}
 }

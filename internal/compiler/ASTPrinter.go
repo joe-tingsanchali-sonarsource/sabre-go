@@ -562,3 +562,20 @@ func (v *ASTPrinter) VisitGenericDecl(n *GenericDecl) {
 	v.indentor.NewLine()
 	v.indentor.print(")")
 }
+
+func (v *ASTPrinter) VisitFuncDecl(n *FuncDecl) {
+	v.indentor.printf("(FuncDecl %v", n.Name.Token.Value())
+	v.indentor.Push()
+
+	v.indentor.NewLine()
+	n.Type.Visit(v)
+
+	if n.Body != nil {
+		v.indentor.NewLine()
+		n.Body.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
