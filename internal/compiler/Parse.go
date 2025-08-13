@@ -116,7 +116,7 @@ func (p *Parser) parseBinaryExpr() Expr {
 		{TokenLAnd},
 		{TokenLT, TokenGT, TokenLE, TokenGE, TokenEQ, TokenNE},
 		{TokenAdd, TokenSub, TokenXor, TokenOr},
-		{TokenMul, TokenDiv, TokenMod, TokenAnd, TokenShl, TokenShr},
+		{TokenMul, TokenDiv, TokenMod, TokenAnd, TokenAndNot, TokenShl, TokenShr},
 	}
 	return p.parseBinaryExprWithPrecedenceLevels(precedences)
 }
@@ -707,10 +707,10 @@ func (p *Parser) parseSimpleStmt() (stmt Stmt, isRange bool) {
 	}
 
 	switch p.currentToken().Kind() {
-	// TODO: Add &^ and not assignment
 	case TokenColonAssign, TokenAssign, TokenAddAssign, TokenSubAssign,
 		TokenMulAssign, TokenDivAssign, TokenModAssign, TokenAndAssign,
-		TokenOrAssign, TokenXorAssign, TokenShlAssign, TokenShrAssign:
+		TokenAndNotAssign, TokenOrAssign, TokenXorAssign, TokenShlAssign,
+		TokenShrAssign:
 		operator := p.eatToken()
 
 		if p.currentToken().Kind() == TokenRange && (operator.Kind() == TokenColonAssign || operator.Kind() == TokenAssign) {

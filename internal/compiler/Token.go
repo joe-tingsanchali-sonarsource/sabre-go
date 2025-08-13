@@ -33,39 +33,41 @@ const (
 	TokenColon     // :
 
 	// Operators
-	TokenLT          // <
-	TokenGT          // >
-	TokenLE          // <=
-	TokenGE          // >=
-	TokenAssign      // =
-	TokenEQ          // ==
-	TokenNE          // !=
-	TokenAdd         // +
-	TokenSub         // -
-	TokenMul         // *
-	TokenDiv         // /
-	TokenMod         // %
-	TokenAddAssign   // +=
-	TokenSubAssign   // -=
-	TokenMulAssign   // *=
-	TokenDivAssign   // /=
-	TokenModAssign   // %=
-	TokenColonAssign // :=
-	TokenLOr         // ||
-	TokenLAnd        // &&
-	TokenNot         // !
-	TokenXor         // ^
-	TokenOr          // |
-	TokenAnd         // &
-	TokenShl         // <<
-	TokenShr         // >>
-	TokenShlAssign   // <<=
-	TokenShrAssign   // >>=
-	TokenXorAssign   // ^=
-	TokenOrAssign    // |=
-	TokenAndAssign   // &=
-	TokenInc         // ++
-	TokenDec         // --
+	TokenLT           // <
+	TokenGT           // >
+	TokenLE           // <=
+	TokenGE           // >=
+	TokenAssign       // =
+	TokenEQ           // ==
+	TokenNE           // !=
+	TokenAdd          // +
+	TokenSub          // -
+	TokenMul          // *
+	TokenDiv          // /
+	TokenMod          // %
+	TokenAddAssign    // +=
+	TokenSubAssign    // -=
+	TokenMulAssign    // *=
+	TokenDivAssign    // /=
+	TokenModAssign    // %=
+	TokenColonAssign  // :=
+	TokenLOr          // ||
+	TokenLAnd         // &&
+	TokenNot          // !
+	TokenXor          // ^
+	TokenOr           // |
+	TokenAnd          // &
+	TokenAndNot       // &^
+	TokenShl          // <<
+	TokenShr          // >>
+	TokenShlAssign    // <<=
+	TokenShrAssign    // >>=
+	TokenXorAssign    // ^=
+	TokenOrAssign     // |=
+	TokenAndAssign    // &=
+	TokenAndNotAssign // &^=
+	TokenInc          // ++
+	TokenDec          // --
 
 	// Keywords (Go keywords that make sense in shader context)
 	TokenConst
@@ -195,6 +197,8 @@ func (tk TokenKind) String() string {
 		return "|"
 	case TokenAnd:
 		return "&"
+	case TokenAndNot:
+		return "&^"
 	case TokenShl:
 		return "<<"
 	case TokenShr:
@@ -209,6 +213,8 @@ func (tk TokenKind) String() string {
 		return "|="
 	case TokenAndAssign:
 		return "&="
+	case TokenAndNotAssign:
+		return "&^="
 	case TokenInc:
 		return "++"
 	case TokenDec:
