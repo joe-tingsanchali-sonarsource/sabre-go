@@ -145,7 +145,7 @@ func (u *Unit) Scan() bool {
 
 func (u *Unit) Parse() bool {
 	if u.compilationStage == CompilationStageScanned {
-		if u.rootFile.Scan() {
+		if u.rootFile.Parse() {
 			u.compilationStage = CompliationStageParsed
 			return true
 		} else {
