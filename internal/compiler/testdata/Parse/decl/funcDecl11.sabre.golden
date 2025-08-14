@@ -9,5 +9,10 @@
       (NamedType IDENTIFIER(float32))
     )
   )
-  (Block 0)
+  (Block 1
+    (ReturnStmt
+      (LiteralExpr LITERAL_INT(1))
+      (LiteralExpr LITERAL_FLOAT(1.5))
+    )
+  )
 )
