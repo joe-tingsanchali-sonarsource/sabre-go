@@ -1,0 +1,1 @@
+func (f Foo) f() (int, float32)
