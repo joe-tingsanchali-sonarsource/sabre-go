@@ -508,6 +508,11 @@ func (e *GenericDecl) Visit(v NodeVisitor) {
 	v.VisitGenericDecl(e)
 }
 
+type PackageClause struct {
+	Package Token
+	Name    *IdentifierExpr
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)

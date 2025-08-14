@@ -16,6 +16,7 @@ type UnitFile struct {
 	tokens       []Token
 	errors       []Error
 	decls        []Decl
+	Package      *PackageClause
 }
 
 func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
@@ -74,6 +75,13 @@ func (u *UnitFile) Scan() bool {
 
 func (u *UnitFile) Parse() bool {
 	parser := NewParser(u)
+
+	packageClause := parser.ParsePackageClause()
+	if packageClause == nil {
+		u.errorf(parser.currentToken().SourceRange(), "file should start with package clause")
+		return false
+	}
+
 	for {
 		decl := parser.ParseDecl()
 		if decl == nil {

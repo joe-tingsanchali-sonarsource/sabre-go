@@ -1262,3 +1262,21 @@ func (p *Parser) parseVarSpec() Spec {
 		RHS:    rhs,
 	}
 }
+
+func (p *Parser) ParsePackageClause() *PackageClause {
+	packageToken := p.eatTokenOrError(TokenPackage)
+	if !packageToken.valid() {
+		return nil
+	}
+
+	name := p.parseIdentifierExpr()
+	if name == nil || name.Token.Value() == "_" {
+		p.file.errorf(p.currentToken().SourceRange(), "invalid package clause name")
+		return nil
+	}
+
+	return &PackageClause{
+		Package: packageToken,
+		Name:    name,
+	}
+}
