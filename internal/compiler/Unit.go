@@ -15,6 +15,7 @@ type UnitFile struct {
 	lines        []string
 	tokens       []Token
 	errors       []Error
+	decls        []Decl
 }
 
 func UnitFileFromFile(path string) (unitFile *UnitFile, err error) {
@@ -71,6 +72,18 @@ func (u *UnitFile) Scan() bool {
 	return !u.HasErrors()
 }
 
+func (u *UnitFile) Parse() bool {
+	parser := NewParser(u)
+	for {
+		decl := parser.ParseDecl()
+		if decl == nil {
+			break
+		}
+		u.decls = append(u.decls, decl)
+	}
+	return !u.HasErrors()
+}
+
 func (u *UnitFile) Tokens() []Token {
 	return u.tokens
 }
@@ -80,6 +93,7 @@ type CompilationStage int
 const (
 	CompilationStageStart CompilationStage = iota
 	CompilationStageScanned
+	CompliationStageParsed
 	CompilationStageFailure
 )
 
@@ -120,6 +134,19 @@ func (u *Unit) Scan() bool {
 	if u.compilationStage == CompilationStageStart {
 		if u.rootFile.Scan() {
 			u.compilationStage = CompilationStageScanned
+			return true
+		} else {
+			u.compilationStage = CompilationStageFailure
+			return false
+		}
+	}
+	return !u.HasErrors()
+}
+
+func (u *Unit) Parse() bool {
+	if u.compilationStage == CompilationStageScanned {
+		if u.rootFile.Scan() {
+			u.compilationStage = CompliationStageParsed
 			return true
 		} else {
 			u.compilationStage = CompilationStageFailure
