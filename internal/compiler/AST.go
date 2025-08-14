@@ -205,17 +205,19 @@ func (e *StructType) Visit(v NodeVisitor) {
 
 type FuncType struct {
 	Func       Token
-	Parameters FieldList
-	Result     FieldList
+	Parameters *FieldList
+	Result     *FieldList
 }
 
 func (e *FuncType) exprNode() {}
 func (e *FuncType) typeExpr() {}
 func (e *FuncType) SourceRange() SourceRange {
-	if e.Result.Close.valid() {
-		return e.Func.SourceRange().Merge(e.Result.Close.SourceRange())
-	} else if len(e.Result.Fields) > 0 {
-		return e.Func.SourceRange().Merge(e.Result.Fields[len(e.Result.Fields)-1].Type.SourceRange())
+	if e.Result != nil {
+		if e.Result.Close.valid() {
+			return e.Func.SourceRange().Merge(e.Result.Close.SourceRange())
+		} else {
+			return e.Func.SourceRange().Merge(e.Result.Fields[len(e.Result.Fields)-1].Type.SourceRange())
+		}
 	} else {
 		return e.Func.SourceRange().Merge(e.Parameters.Close.SourceRange())
 	}
@@ -509,9 +511,10 @@ func (e *GenericDecl) Visit(v NodeVisitor) {
 }
 
 type FuncDecl struct {
-	Name *IdentifierExpr
-	Type *FuncType
-	Body *BlockStmt
+	Receiver *FieldList
+	Name     *IdentifierExpr
+	Type     *FuncType
+	Body     *BlockStmt
 }
 
 func (e *FuncDecl) declNode() {}
@@ -731,6 +734,15 @@ func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {
 }
 
 func (v *DefaultVisitor) VisitFuncDecl(n *FuncDecl) {
+	if n.Receiver != nil {
+		for _, e := range n.Receiver.Fields {
+			for _, name := range e.Names {
+				name.Visit(v)
+			}
+			e.Type.Visit(v)
+		}
+	}
+
 	n.Name.Visit(v)
 	n.Type.Visit(v)
 	if n.Body != nil {

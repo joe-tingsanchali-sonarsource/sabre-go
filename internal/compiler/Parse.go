@@ -446,13 +446,13 @@ func (p *Parser) parseFuncType() *FuncType {
 	}
 }
 
-func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
+func (p *Parser) parseSignature() (parameters *FieldList, result *FieldList) {
 	parameters = p.parseParameters()
 	result = p.parseResult()
 	return
 }
 
-func (p *Parser) parseParameters() FieldList {
+func (p *Parser) parseParameters() *FieldList {
 	openToken := p.eatTokenOrError(TokenLParen)
 
 	var fields []Field
@@ -470,14 +470,14 @@ func (p *Parser) parseParameters() FieldList {
 				named++
 			} else if named > 0 {
 				p.file.errorf(f.Type.SourceRange(), "missing parameter name")
-				return FieldList{}
+				return nil
 			}
 		}
 	}
 
 	closeToken := p.eatTokenOrError(TokenRParen)
 
-	return FieldList{
+	return &FieldList{
 		Open:   openToken,
 		Fields: fields,
 		Close:  closeToken,
@@ -536,16 +536,16 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 	return
 }
 
-func (p *Parser) parseResult() FieldList {
+func (p *Parser) parseResult() *FieldList {
 	if p.currentToken().Kind() == TokenLParen {
 		return p.parseParameters()
 	}
 
 	if t := p.convertParsedExprToType(p.tryParseIdentOrTypeExpr()); t != nil {
-		return FieldList{Fields: []Field{{Type: t}}}
+		return &FieldList{Fields: []Field{{Type: t}}}
 	}
 
-	return FieldList{}
+	return nil
 }
 
 func (p *Parser) tryParseIdentOrTypeExpr() Expr {
@@ -1271,7 +1271,17 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 		return nil
 	}
 
+	var receiver *FieldList
+	if p.currentToken().Kind() == TokenLParen {
+		receiver = p.parseParameters()
+		if receiver != nil && len(receiver.Fields) > 1 {
+			p.file.errorf(receiver.Open.SourceRange().Merge(receiver.Close.SourceRange()), "method is expected to have only one receiver")
+			return nil
+		}
+	}
+
 	name := p.parseIdentifierExpr()
+
 	parameters, result := p.parseSignature()
 
 	var body *BlockStmt
@@ -1280,7 +1290,8 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 	}
 
 	return &FuncDecl{
-		Name: name,
+		Receiver: receiver,
+		Name:     name,
 		Type: &FuncType{
 			Func:       funcToken,
 			Parameters: parameters,
