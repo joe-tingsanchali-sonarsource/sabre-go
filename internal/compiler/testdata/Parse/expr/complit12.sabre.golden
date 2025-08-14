@@ -1,3 +1,6 @@
 >> 		x: {1, 2, 3, 4},
 >> 		   ^             
 Error[internal/compiler/testdata/Parse/expr/complit12.sabre:2:5]: expected an expression but found '{'
+>> 		x: {1, 2, 3, 4},
+>> 		   ^             
+Error[internal/compiler/testdata/Parse/expr/complit12.sabre:2:5]: failed to parse type

@@ -157,9 +157,6 @@ func (p *Parser) parseUnaryExpr() Expr {
 
 func (p *Parser) parseBaseExpr() Expr {
 	expr := p.parseAtom()
-	if expr == nil {
-		return nil
-	}
 	for {
 		switch p.currentToken().Kind() {
 		case TokenDot:
@@ -180,7 +177,7 @@ func (p *Parser) parseBaseExpr() Expr {
 			} else {
 				t := p.convertParsedExprToType(expr)
 				if t == nil {
-					p.file.errorf(expr.SourceRange(), "failed to parse type")
+					p.file.errorf(p.currentToken().SourceRange(), "failed to parse type")
 					return nil
 				}
 				if complit := p.parseComplitExpr(t); complit != nil {
