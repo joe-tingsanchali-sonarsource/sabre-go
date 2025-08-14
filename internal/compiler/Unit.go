@@ -76,8 +76,8 @@ func (u *UnitFile) Scan() bool {
 func (u *UnitFile) Parse() bool {
 	parser := NewParser(u)
 
-	packageClause := parser.ParsePackageClause()
-	if packageClause == nil {
+	u.Package = parser.ParsePackageClause()
+	if u.Package == nil {
 		u.errorf(parser.currentToken().SourceRange(), "file should start with package clause")
 		return false
 	}
