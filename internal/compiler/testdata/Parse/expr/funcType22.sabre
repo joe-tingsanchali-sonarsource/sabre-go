@@ -1,0 +1,1 @@
+func(func(), func(int, float32)) (func(), func(int, float32)(int, []int))

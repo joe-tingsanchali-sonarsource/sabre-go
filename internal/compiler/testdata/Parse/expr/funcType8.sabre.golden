@@ -1,0 +1,12 @@
+(FuncType
+  (FuncType-Parameters
+    (IdentifierExpr IDENTIFIER(a))
+    (IdentifierExpr IDENTIFIER(_))
+    (NamedType IDENTIFIER(int))
+    (IdentifierExpr IDENTIFIER(z))
+    (NamedType IDENTIFIER(float32))
+  )
+  (FuncType-Results
+    (NamedType IDENTIFIER(bool))
+  )
+)

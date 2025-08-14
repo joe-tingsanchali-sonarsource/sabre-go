@@ -1,0 +1,3 @@
+>> 	func(x int, Package.Type)
+>> 	            ^^^^^^^^^^^^  
+Error[internal/compiler/testdata/Parse/expr/funcType26.sabre:1:13]: missing parameter name

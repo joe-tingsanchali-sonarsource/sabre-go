@@ -1,0 +1,10 @@
+(FuncType
+  (FuncType-Parameters
+    (IdentifierExpr IDENTIFIER(x))
+    (IdentifierExpr IDENTIFIER(y))
+    (NamedType IDENTIFIER(int))
+  )
+  (FuncType-Results
+    (NamedType IDENTIFIER(int))
+  )
+)
