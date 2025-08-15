@@ -7,3 +7,6 @@ Error[internal/compiler/testdata/Parse/decl/funcDecl4.sabre:1:7]: expected an id
 >> 	func f
 >> 	      ^
 Error[internal/compiler/testdata/Parse/decl/funcDecl4.sabre:1:7]: expected ')' but found 'INVALID'
+>> 	func f
+>> 	      ^
+Error[internal/compiler/testdata/Parse/decl/funcDecl4.sabre:1:7]: expected ';' but found 'INVALID'

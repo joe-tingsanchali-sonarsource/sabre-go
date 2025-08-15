@@ -1281,12 +1281,26 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 	}
 
 	name := p.parseIdentifierExpr()
+	if name == nil {
+		return nil
+	}
 
 	parameters, result := p.parseSignature()
+	if parameters == nil {
+		return nil
+	}
 
 	var body *BlockStmt
 	if p.currentToken().Kind() == TokenLBrace {
 		body = p.parseBlockStmt()
+		if body == nil {
+			return nil
+		}
+	} else {
+		p.eatTokenOrError(TokenSemicolon)
+		if p.currentToken().kind == TokenLBrace {
+			p.file.errorf(funcToken.SourceRange().Merge(p.currentToken().SourceRange()), "{ should be on the same line as the function declaration")
+		}
 	}
 
 	return &FuncDecl{
