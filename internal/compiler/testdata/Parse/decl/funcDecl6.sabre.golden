@@ -1,0 +1,3 @@
+>> 	func (f Foo) () int
+>> 	             ^      
+Error[internal/compiler/testdata/Parse/decl/funcDecl6.sabre:1:14]: expected an identifier but found '('

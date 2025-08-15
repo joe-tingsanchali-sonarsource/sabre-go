@@ -1,0 +1,3 @@
+>> 	func (f Foo) f() (int, float32) {
+>> 	                                 ^
+Error[internal/compiler/testdata/Parse/decl/funcDecl10.sabre:1:34]: expected '}' but found 'INVALID'
