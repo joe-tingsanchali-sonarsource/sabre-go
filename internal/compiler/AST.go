@@ -205,17 +205,19 @@ func (e *StructType) Visit(v NodeVisitor) {
 
 type FuncType struct {
 	Func       Token
-	Parameters FieldList
-	Result     FieldList
+	Parameters *FieldList
+	Result     *FieldList
 }
 
 func (e *FuncType) exprNode() {}
 func (e *FuncType) typeExpr() {}
 func (e *FuncType) SourceRange() SourceRange {
-	if e.Result.Close.valid() {
-		return e.Func.SourceRange().Merge(e.Result.Close.SourceRange())
-	} else if len(e.Result.Fields) > 0 {
-		return e.Func.SourceRange().Merge(e.Result.Fields[len(e.Result.Fields)-1].Type.SourceRange())
+	if e.Result != nil {
+		if e.Result.Close.valid() {
+			return e.Func.SourceRange().Merge(e.Result.Close.SourceRange())
+		} else {
+			return e.Func.SourceRange().Merge(e.Result.Fields[len(e.Result.Fields)-1].Type.SourceRange())
+		}
 	} else {
 		return e.Func.SourceRange().Merge(e.Parameters.Close.SourceRange())
 	}
@@ -508,6 +510,25 @@ func (e *GenericDecl) Visit(v NodeVisitor) {
 	v.VisitGenericDecl(e)
 }
 
+type FuncDecl struct {
+	Receiver *FieldList
+	Name     *IdentifierExpr
+	Type     *FuncType
+	Body     *BlockStmt
+}
+
+func (e *FuncDecl) declNode() {}
+func (e *FuncDecl) SourceRange() SourceRange {
+	if e.Body != nil {
+		return e.Type.Func.SourceRange().Merge(e.Body.RBrace.SourceRange())
+	} else {
+		return e.Type.Func.SourceRange().Merge(e.Type.SourceRange())
+	}
+}
+func (e *FuncDecl) Visit(v NodeVisitor) {
+	v.VisitFuncDecl(e)
+}
+
 type PackageClause struct {
 	Package Token
 	Name    *IdentifierExpr
@@ -548,6 +569,7 @@ type NodeVisitor interface {
 	VisitValueSpec(n *ValueSpec)
 
 	VisitGenericDecl(n *GenericDecl)
+	VisitFuncDecl(n *FuncDecl)
 }
 
 type DefaultVisitor struct{}
@@ -713,5 +735,22 @@ func (v *DefaultVisitor) VisitValueSpec(n *ValueSpec) {
 func (v *DefaultVisitor) VisitGenericDecl(n *GenericDecl) {
 	for _, s := range n.Specs {
 		s.Visit(v)
+	}
+}
+
+func (v *DefaultVisitor) VisitFuncDecl(n *FuncDecl) {
+	if n.Receiver != nil {
+		for _, e := range n.Receiver.Fields {
+			for _, name := range e.Names {
+				name.Visit(v)
+			}
+			e.Type.Visit(v)
+		}
+	}
+
+	n.Name.Visit(v)
+	n.Type.Visit(v)
+	if n.Body != nil {
+		n.Body.Visit(v)
 	}
 }

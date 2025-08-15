@@ -1,0 +1,13 @@
+(FuncDecl IndexRune
+  (FuncType
+    (FuncType-Parameters
+      (IdentifierExpr IDENTIFIER(s))
+      (NamedType IDENTIFIER(string))
+      (IdentifierExpr IDENTIFIER(r))
+      (NamedType IDENTIFIER(rune))
+    )
+    (FuncType-Results
+      (NamedType IDENTIFIER(int))
+    )
+  )
+)

@@ -1,0 +1,13 @@
+(MethodDecl f
+  (MethodDecl-Receiver
+    (IdentifierExpr IDENTIFIER(f))
+    (NamedType IDENTIFIER(Foo))
+  )
+  (FuncType
+    (FuncType-Results
+      (NamedType IDENTIFIER(int))
+      (NamedType IDENTIFIER(float32))
+    )
+  )
+  (Block 0)
+)

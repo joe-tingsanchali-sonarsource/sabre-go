@@ -1,0 +1,11 @@
+(MethodDecl foo
+  (MethodDecl-Receiver
+    (IdentifierExpr IDENTIFIER(f))
+    (NamedType IDENTIFIER(Foo))
+  )
+  (FuncType
+    (FuncType-Results
+      (NamedType IDENTIFIER(int))
+    )
+  )
+)

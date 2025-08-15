@@ -65,7 +65,7 @@ func (v *ASTPrinter) visitPhonyNode(n Node, name string) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) visitPhonyFieldListNode(n FieldList, name string) {
+func (v *ASTPrinter) visitPhonyFieldListNode(n *FieldList, name string) {
 	v.indentor.printf("(%v", name)
 	v.indentor.Push()
 	for _, f := range n.Fields {
@@ -270,18 +270,20 @@ func (v *ASTPrinter) VisitFuncType(n *FuncType) {
 	v.indentor.print("(FuncType")
 	v.indentor.Push()
 
-	if len(n.Parameters.Fields) > 0 {
+	parametersExist := n.Parameters != nil && len(n.Parameters.Fields) > 0
+	if parametersExist {
 		v.indentor.NewLine()
 		v.visitPhonyFieldListNode(n.Parameters, "FuncType-Parameters")
 	}
 
-	if len(n.Result.Fields) > 0 {
+	resultExist := n.Result != nil && len(n.Result.Fields) > 0
+	if n.Result != nil && len(n.Result.Fields) > 0 {
 		v.indentor.NewLine()
 		v.visitPhonyFieldListNode(n.Result, "FuncType-Results")
 	}
 
 	v.indentor.Pop()
-	if len(n.Parameters.Fields) > 0 || len(n.Result.Fields) > 0 {
+	if parametersExist || resultExist {
 		v.indentor.NewLine()
 	}
 	v.indentor.print(")")
@@ -556,6 +558,32 @@ func (v *ASTPrinter) VisitGenericDecl(n *GenericDecl) {
 	for _, s := range n.Specs {
 		v.indentor.NewLine()
 		s.Visit(v)
+	}
+
+	v.indentor.Pop()
+	v.indentor.NewLine()
+	v.indentor.print(")")
+}
+
+func (v *ASTPrinter) VisitFuncDecl(n *FuncDecl) {
+	if n.Receiver != nil {
+		v.indentor.printf("(MethodDecl %v", n.Name.Token.Value())
+	} else {
+		v.indentor.printf("(FuncDecl %v", n.Name.Token.Value())
+	}
+	v.indentor.Push()
+
+	if n.Receiver != nil {
+		v.indentor.NewLine()
+		v.visitPhonyFieldListNode(n.Receiver, "MethodDecl-Receiver")
+	}
+
+	v.indentor.NewLine()
+	n.Type.Visit(v)
+
+	if n.Body != nil {
+		v.indentor.NewLine()
+		n.Body.Visit(v)
 	}
 
 	v.indentor.Pop()

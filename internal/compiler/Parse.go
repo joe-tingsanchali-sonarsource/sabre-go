@@ -446,14 +446,18 @@ func (p *Parser) parseFuncType() *FuncType {
 	}
 }
 
-func (p *Parser) parseSignature() (parameters FieldList, result FieldList) {
+func (p *Parser) parseSignature() (parameters *FieldList, result *FieldList) {
 	parameters = p.parseParameters()
 	result = p.parseResult()
 	return
 }
 
-func (p *Parser) parseParameters() FieldList {
-	openToken := p.eatTokenOrError(TokenLParen)
+func (p *Parser) parseParameters() *FieldList {
+	openToken := p.eatTokenIfKind(TokenLParen)
+	if !openToken.valid() {
+		p.file.errorf(p.currentToken().SourceRange(), "missing parameter list")
+		return nil
+	}
 
 	var fields []Field
 	if p.currentToken().Kind() != TokenRParen {
@@ -470,14 +474,14 @@ func (p *Parser) parseParameters() FieldList {
 				named++
 			} else if named > 0 {
 				p.file.errorf(f.Type.SourceRange(), "missing parameter name")
-				return FieldList{}
+				return nil
 			}
 		}
 	}
 
 	closeToken := p.eatTokenOrError(TokenRParen)
 
-	return FieldList{
+	return &FieldList{
 		Open:   openToken,
 		Fields: fields,
 		Close:  closeToken,
@@ -536,16 +540,16 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 	return
 }
 
-func (p *Parser) parseResult() FieldList {
+func (p *Parser) parseResult() *FieldList {
 	if p.currentToken().Kind() == TokenLParen {
 		return p.parseParameters()
 	}
 
 	if t := p.convertParsedExprToType(p.tryParseIdentOrTypeExpr()); t != nil {
-		return FieldList{Fields: []Field{{Type: t}}}
+		return &FieldList{Fields: []Field{{Type: t}}}
 	}
 
-	return FieldList{}
+	return nil
 }
 
 func (p *Parser) tryParseIdentOrTypeExpr() Expr {
@@ -1144,6 +1148,8 @@ func (p *Parser) ParseDecl() Decl {
 		return p.parseGenericDecl(p.eatToken(), p.parseConstSpec)
 	case TokenVar:
 		return p.parseGenericDecl(p.eatToken(), p.parseVarSpec)
+	case TokenFunc:
+		return p.parseFuncDecl()
 	default:
 		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
 		return nil
@@ -1260,6 +1266,56 @@ func (p *Parser) parseVarSpec() Spec {
 		Type:   varType,
 		Assign: assignToken,
 		RHS:    rhs,
+	}
+}
+
+func (p *Parser) parseFuncDecl() *FuncDecl {
+	funcToken := p.eatTokenOrError(TokenFunc)
+	if !funcToken.valid() {
+		return nil
+	}
+
+	var receiver *FieldList
+	if p.currentToken().Kind() == TokenLParen {
+		receiver = p.parseParameters()
+		if receiver != nil && len(receiver.Fields) > 1 {
+			p.file.errorf(receiver.Open.SourceRange().Merge(receiver.Close.SourceRange()), "method is expected to have only one receiver")
+			return nil
+		}
+	}
+
+	name := p.parseIdentifierExpr()
+	if name == nil {
+		return nil
+	}
+
+	parameters, result := p.parseSignature()
+	if parameters == nil {
+		return nil
+	}
+
+	if p.eatTokenIfKind(TokenSemicolon).valid() && p.currentToken().Kind() == TokenLBrace {
+		p.file.errorf(funcToken.SourceRange().Merge(p.currentToken().SourceRange()), "{ should be on the same line as the function declaration")
+		return nil
+	}
+
+	var body *BlockStmt
+	if p.currentToken().Kind() == TokenLBrace {
+		body = p.parseBlockStmt()
+		if body == nil {
+			return nil
+		}
+	}
+
+	return &FuncDecl{
+		Receiver: receiver,
+		Name:     name,
+		Type: &FuncType{
+			Func:       funcToken,
+			Parameters: parameters,
+			Result:     result,
+		},
+		Body: body,
 	}
 }
 

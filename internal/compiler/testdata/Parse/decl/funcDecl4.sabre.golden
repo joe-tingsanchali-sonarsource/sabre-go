@@ -1,0 +1,3 @@
+>> 	func f
+>> 	      ^
+Error[internal/compiler/testdata/Parse/decl/funcDecl4.sabre:1:7]: missing parameter list
