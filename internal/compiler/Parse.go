@@ -454,6 +454,9 @@ func (p *Parser) parseSignature() (parameters *FieldList, result *FieldList) {
 
 func (p *Parser) parseParameters() *FieldList {
 	openToken := p.eatTokenOrError(TokenLParen)
+	if !openToken.valid() {
+		return nil
+	}
 
 	var fields []Field
 	if p.currentToken().Kind() != TokenRParen {
@@ -476,6 +479,9 @@ func (p *Parser) parseParameters() *FieldList {
 	}
 
 	closeToken := p.eatTokenOrError(TokenRParen)
+	if !closeToken.valid() {
+		return nil
+	}
 
 	return &FieldList{
 		Open:   openToken,
@@ -1290,16 +1296,16 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 		return nil
 	}
 
+	if p.eatTokenIfKind(TokenSemicolon).valid() && p.currentToken().Kind() == TokenLBrace {
+		p.file.errorf(funcToken.SourceRange().Merge(p.currentToken().SourceRange()), "{ should be on the same line as the function declaration")
+		return nil
+	}
+
 	var body *BlockStmt
 	if p.currentToken().Kind() == TokenLBrace {
 		body = p.parseBlockStmt()
 		if body == nil {
 			return nil
-		}
-	} else {
-		p.eatTokenOrError(TokenSemicolon)
-		if p.currentToken().kind == TokenLBrace {
-			p.file.errorf(funcToken.SourceRange().Merge(p.currentToken().SourceRange()), "{ should be on the same line as the function declaration")
 		}
 	}
 
