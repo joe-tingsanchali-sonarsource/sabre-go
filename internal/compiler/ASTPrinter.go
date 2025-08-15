@@ -203,7 +203,7 @@ func (v *ASTPrinter) VisitComplitExpr(n *ComplitExpr) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitNamedType(n *NamedType) {
+func (v *ASTPrinter) VisitNamedType(n *NamedTypeExpr) {
 	if n.Package.valid() {
 		v.indentor.printf("(NamedType %v.%v)", n.Package, n.TypeName)
 	} else {
@@ -211,7 +211,7 @@ func (v *ASTPrinter) VisitNamedType(n *NamedType) {
 	}
 }
 
-func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
+func (v *ASTPrinter) VisitArrayType(n *ArrayTypeExpr) {
 	v.indentor.print("(ArrayType")
 	v.indentor.Push()
 
@@ -228,7 +228,7 @@ func (v *ASTPrinter) VisitArrayType(n *ArrayType) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitStructType(n *StructType) {
+func (v *ASTPrinter) VisitStructType(n *StructTypeExpr) {
 	v.indentor.printf("(StructType %v", len(n.FieldList.Fields))
 
 	if len(n.FieldList.Fields) > 0 {
@@ -266,7 +266,7 @@ func (v *ASTPrinter) VisitStructType(n *StructType) {
 	v.indentor.print(")")
 }
 
-func (v *ASTPrinter) VisitFuncType(n *FuncType) {
+func (v *ASTPrinter) VisitFuncType(n *FuncTypeExpr) {
 	v.indentor.print("(FuncType")
 	v.indentor.Push()
 

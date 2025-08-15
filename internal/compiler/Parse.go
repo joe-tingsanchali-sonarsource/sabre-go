@@ -333,7 +333,7 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 	return nil
 }
 
-func (p *Parser) parseArrayType() *ArrayType {
+func (p *Parser) parseArrayType() *ArrayTypeExpr {
 	lBracket := p.eatTokenOrError(TokenLBracket)
 	if !lBracket.valid() {
 		return nil
@@ -357,7 +357,7 @@ func (p *Parser) parseArrayType() *ArrayType {
 		return nil
 	}
 
-	return &ArrayType{
+	return &ArrayTypeExpr{
 		LBracket:    lBracket,
 		Length:      length,
 		RBracket:    rBracket,
@@ -365,7 +365,7 @@ func (p *Parser) parseArrayType() *ArrayType {
 	}
 }
 
-func (p *Parser) parseStructType() *StructType {
+func (p *Parser) parseStructType() *StructTypeExpr {
 	structToken := p.eatTokenOrError(TokenStruct)
 	if !structToken.valid() {
 		return nil
@@ -384,7 +384,7 @@ func (p *Parser) parseStructType() *StructType {
 
 	rBraceToken := p.eatTokenOrError(TokenRBrace)
 
-	return &StructType{
+	return &StructTypeExpr{
 		Struct:    structToken,
 		FieldList: FieldList{Open: lBraceToken, Fields: fields, Close: rBraceToken},
 	}
@@ -427,11 +427,11 @@ func (p *Parser) parseFieldDecl() *Field {
 }
 
 // EmbeddedField = TypeName ; (subset without pointer / type args).
-func (p *Parser) parseEmbeddedField(first *IdentifierExpr) Type {
+func (p *Parser) parseEmbeddedField(first *IdentifierExpr) TypeExpr {
 	return p.parseTypeNameWithFirstId(first)
 }
 
-func (p *Parser) parseFuncType() *FuncType {
+func (p *Parser) parseFuncType() *FuncTypeExpr {
 	funcToken := p.eatTokenOrError(TokenFunc)
 	if !funcToken.valid() {
 		return nil
@@ -439,7 +439,7 @@ func (p *Parser) parseFuncType() *FuncType {
 
 	parameters, result := p.parseSignature()
 
-	return &FuncType{
+	return &FuncTypeExpr{
 		Func:       funcToken,
 		Parameters: parameters,
 		Result:     result,
@@ -571,7 +571,7 @@ func (p *Parser) tryParseIdentOrTypeExpr() Expr {
 	}
 }
 
-func (p *Parser) parseType() Type {
+func (p *Parser) parseType() TypeExpr {
 	switch p.currentToken().Kind() {
 	case TokenIdentifier:
 		return p.parseTypeName()
@@ -588,11 +588,11 @@ func (p *Parser) parseType() Type {
 }
 
 // TypeName = identifier | identifier '.' identifier
-func (p *Parser) parseTypeName() *NamedType {
+func (p *Parser) parseTypeName() *NamedTypeExpr {
 	return p.parseTypeNameWithFirstId(p.parseIdentifierExpr())
 }
 
-func (p *Parser) parseTypeNameWithFirstId(firstId *IdentifierExpr) *NamedType {
+func (p *Parser) parseTypeNameWithFirstId(firstId *IdentifierExpr) *NamedTypeExpr {
 	if firstId == nil {
 		return nil
 	}
@@ -602,38 +602,38 @@ func (p *Parser) parseTypeNameWithFirstId(firstId *IdentifierExpr) *NamedType {
 		if selector == nil {
 			return nil
 		}
-		return &NamedType{Package: firstId.Token, TypeName: selector.Token}
+		return &NamedTypeExpr{Package: firstId.Token, TypeName: selector.Token}
 	}
 
-	return &NamedType{TypeName: firstId.Token}
+	return &NamedTypeExpr{TypeName: firstId.Token}
 }
 
-func (p *Parser) convertParsedExprToType(e Expr) Type {
+func (p *Parser) convertParsedExprToType(e Expr) TypeExpr {
 	switch n := e.(type) {
 	case *IdentifierExpr:
-		return &NamedType{
+		return &NamedTypeExpr{
 			TypeName: n.Token,
 		}
 	case *SelectorExpr:
 		if base, ok := n.Base.(*IdentifierExpr); ok {
-			return &NamedType{
+			return &NamedTypeExpr{
 				Package:  base.Token,
 				TypeName: n.Selector.Token,
 			}
 		}
-	case *NamedType:
+	case *NamedTypeExpr:
 		return n
-	case *ArrayType:
+	case *ArrayTypeExpr:
 		return n
-	case *StructType:
+	case *StructTypeExpr:
 		return n
-	case *FuncType:
+	case *FuncTypeExpr:
 		return n
 	}
 	return nil
 }
 
-func (p *Parser) parseComplitExpr(t Type) *ComplitExpr {
+func (p *Parser) parseComplitExpr(t TypeExpr) *ComplitExpr {
 	lBrace := p.eatTokenOrError(TokenLBrace)
 	if !lBrace.valid() {
 		return nil
@@ -1211,7 +1211,7 @@ func (p *Parser) parseTypeSpec() Spec {
 func (p *Parser) parseConstSpec() Spec {
 	lhs := p.parseIdentifierExprList()
 
-	var constType Type
+	var constType TypeExpr
 	if p.currentToken().Kind() != TokenAssign && p.currentToken().Kind() != TokenSemicolon {
 		constType = p.parseType()
 	}
@@ -1244,7 +1244,7 @@ func (p *Parser) parseConstSpec() Spec {
 func (p *Parser) parseVarSpec() Spec {
 	lhs := p.parseIdentifierExprList()
 
-	var varType Type
+	var varType TypeExpr
 	if p.currentToken().Kind() != TokenAssign {
 		varType = p.parseType()
 	}
@@ -1310,7 +1310,7 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 	return &FuncDecl{
 		Receiver: receiver,
 		Name:     name,
-		Type: &FuncType{
+		Type: &FuncTypeExpr{
 			Func:       funcToken,
 			Parameters: parameters,
 			Result:     result,

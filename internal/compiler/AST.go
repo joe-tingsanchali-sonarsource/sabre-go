@@ -122,7 +122,7 @@ type ComplitElement struct {
 }
 
 type ComplitExpr struct {
-	Type     Type
+	Type     TypeExpr
 	LBrace   Token
 	Elements []ComplitElement
 	RBrace   Token
@@ -136,50 +136,50 @@ func (e *ComplitExpr) Visit(v NodeVisitor) {
 	v.VisitComplitExpr(e)
 }
 
-// Type expressions
-type Type interface {
+// TypeExpr expressions
+type TypeExpr interface {
 	Expr
 	typeExpr()
 }
 
-type NamedType struct {
+type NamedTypeExpr struct {
 	Package  Token
 	TypeName Token
 }
 
-func (e *NamedType) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
-func (e *NamedType) exprNode()                {}
-func (e *NamedType) typeExpr()                {}
-func (e *NamedType) SourceRange() SourceRange {
+func (e *NamedTypeExpr) IsPackageQualified() bool { return e.Package.Kind() == TokenIdentifier }
+func (e *NamedTypeExpr) exprNode()                {}
+func (e *NamedTypeExpr) typeExpr()                {}
+func (e *NamedTypeExpr) SourceRange() SourceRange {
 	if e.IsPackageQualified() {
 		return e.Package.SourceRange().Merge(e.TypeName.SourceRange())
 	} else {
 		return e.TypeName.SourceRange()
 	}
 }
-func (e *NamedType) Visit(v NodeVisitor) {
+func (e *NamedTypeExpr) Visit(v NodeVisitor) {
 	v.VisitNamedType(e)
 }
 
-type ArrayType struct {
+type ArrayTypeExpr struct {
 	LBracket    Token
 	Length      Expr
 	RBracket    Token
-	ElementType Type
+	ElementType TypeExpr
 }
 
-func (e *ArrayType) exprNode() {}
-func (e *ArrayType) typeExpr() {}
-func (e *ArrayType) SourceRange() SourceRange {
+func (e *ArrayTypeExpr) exprNode() {}
+func (e *ArrayTypeExpr) typeExpr() {}
+func (e *ArrayTypeExpr) SourceRange() SourceRange {
 	return e.LBracket.SourceRange().Merge(e.ElementType.SourceRange())
 }
-func (e *ArrayType) Visit(v NodeVisitor) {
+func (e *ArrayTypeExpr) Visit(v NodeVisitor) {
 	v.VisitArrayType(e)
 }
 
 type Field struct {
 	Names []*IdentifierExpr
-	Type  Type
+	Type  TypeExpr
 	Tag   Token
 }
 
@@ -189,29 +189,29 @@ type FieldList struct {
 	Close  Token // } or )
 }
 
-type StructType struct {
+type StructTypeExpr struct {
 	Struct    Token
 	FieldList FieldList
 }
 
-func (e *StructType) exprNode() {}
-func (e *StructType) typeExpr() {}
-func (e *StructType) SourceRange() SourceRange {
+func (e *StructTypeExpr) exprNode() {}
+func (e *StructTypeExpr) typeExpr() {}
+func (e *StructTypeExpr) SourceRange() SourceRange {
 	return e.Struct.SourceRange().Merge(e.FieldList.Close.SourceRange())
 }
-func (e *StructType) Visit(v NodeVisitor) {
+func (e *StructTypeExpr) Visit(v NodeVisitor) {
 	v.VisitStructType(e)
 }
 
-type FuncType struct {
+type FuncTypeExpr struct {
 	Func       Token
 	Parameters *FieldList
 	Result     *FieldList
 }
 
-func (e *FuncType) exprNode() {}
-func (e *FuncType) typeExpr() {}
-func (e *FuncType) SourceRange() SourceRange {
+func (e *FuncTypeExpr) exprNode() {}
+func (e *FuncTypeExpr) typeExpr() {}
+func (e *FuncTypeExpr) SourceRange() SourceRange {
 	if e.Result != nil {
 		if e.Result.Close.valid() {
 			return e.Func.SourceRange().Merge(e.Result.Close.SourceRange())
@@ -222,7 +222,7 @@ func (e *FuncType) SourceRange() SourceRange {
 		return e.Func.SourceRange().Merge(e.Parameters.Close.SourceRange())
 	}
 }
-func (e *FuncType) Visit(v NodeVisitor) {
+func (e *FuncTypeExpr) Visit(v NodeVisitor) {
 	v.VisitFuncType(e)
 }
 
@@ -451,7 +451,7 @@ type Spec interface {
 type TypeSpec struct {
 	Name   *IdentifierExpr
 	Assign Token // = token or nil
-	Type   Type
+	Type   TypeExpr
 }
 
 func (e *TypeSpec) specNode() {}
@@ -464,7 +464,7 @@ func (e *TypeSpec) Visit(v NodeVisitor) {
 
 type ValueSpec struct {
 	LHS    []*IdentifierExpr
-	Type   Type
+	Type   TypeExpr
 	Assign Token
 	RHS    []Expr
 }
@@ -513,7 +513,7 @@ func (e *GenericDecl) Visit(v NodeVisitor) {
 type FuncDecl struct {
 	Receiver *FieldList
 	Name     *IdentifierExpr
-	Type     *FuncType
+	Type     *FuncTypeExpr
 	Body     *BlockStmt
 }
 
@@ -546,10 +546,10 @@ type NodeVisitor interface {
 	VisitBinaryExpr(n *BinaryExpr)
 	VisitComplitExpr(n *ComplitExpr)
 
-	VisitNamedType(n *NamedType)
-	VisitArrayType(n *ArrayType)
-	VisitStructType(n *StructType)
-	VisitFuncType(n *FuncType)
+	VisitNamedType(n *NamedTypeExpr)
+	VisitArrayType(n *ArrayTypeExpr)
+	VisitStructType(n *StructTypeExpr)
+	VisitFuncType(n *FuncTypeExpr)
 
 	VisitExprStmt(n *ExprStmt)
 	VisitReturnStmt(n *ReturnStmt)
@@ -610,12 +610,12 @@ func (v *DefaultVisitor) VisitComplitExpr(n *ComplitExpr) {
 	}
 }
 
-func (v *DefaultVisitor) VisitNamedType(n *NamedType) {}
-func (v *DefaultVisitor) VisitArrayType(n *ArrayType) {
+func (v *DefaultVisitor) VisitNamedType(n *NamedTypeExpr) {}
+func (v *DefaultVisitor) VisitArrayType(n *ArrayTypeExpr) {
 	n.Length.Visit(v)
 	n.ElementType.Visit(v)
 }
-func (v *DefaultVisitor) VisitStructType(n *StructType) {
+func (v *DefaultVisitor) VisitStructType(n *StructTypeExpr) {
 	for _, e := range n.FieldList.Fields {
 		for _, name := range e.Names {
 			name.Visit(v)
@@ -623,7 +623,7 @@ func (v *DefaultVisitor) VisitStructType(n *StructType) {
 		e.Type.Visit(v)
 	}
 }
-func (v *DefaultVisitor) VisitFuncType(n *FuncType) {
+func (v *DefaultVisitor) VisitFuncType(n *FuncTypeExpr) {
 	for _, e := range n.Parameters.Fields {
 		for _, name := range e.Names {
 			name.Visit(v)
