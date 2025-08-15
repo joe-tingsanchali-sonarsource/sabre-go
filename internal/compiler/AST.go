@@ -529,6 +529,11 @@ func (e *FuncDecl) Visit(v NodeVisitor) {
 	v.VisitFuncDecl(e)
 }
 
+type PackageClause struct {
+	Package Token
+	Name    *IdentifierExpr
+}
+
 // Visitor Interface
 type NodeVisitor interface {
 	VisitLiteralExpr(n *LiteralExpr)
