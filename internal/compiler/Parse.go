@@ -103,7 +103,9 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 		return tkn
 	}
 	p.file.errorf(tkn.SourceRange(), "expected '%v' but found '%v'", kind, tkn.Kind())
-	return tkn
+	return Token{
+		kind: TokenInvalid,
+	}
 }
 
 func (p *Parser) ParseExpr() Expr {
@@ -455,6 +457,7 @@ func (p *Parser) parseSignature() (parameters *FieldList, result *FieldList) {
 func (p *Parser) parseParameters() *FieldList {
 	openToken := p.eatTokenOrError(TokenLParen)
 	if !openToken.valid() {
+		p.file.errorf(p.currentToken().SourceRange(), "missing parameter list")
 		return nil
 	}
 
