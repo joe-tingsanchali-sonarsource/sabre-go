@@ -136,7 +136,7 @@ func (checker *Checker) shallowWalkGenericDecl(d *GenericDecl) {
 		for _, s := range d.Specs {
 			spec := s.(*ValueSpec)
 			for _, name := range spec.LHS {
-				sym := NewConstSymbol(name.Token, d)
+				sym := NewConstSymbol(name.Token, d, d.SourceRange())
 				checker.addSymbol(sym)
 			}
 		}
@@ -144,7 +144,7 @@ func (checker *Checker) shallowWalkGenericDecl(d *GenericDecl) {
 		for _, s := range d.Specs {
 			spec := s.(*ValueSpec)
 			for _, name := range spec.LHS {
-				sym := NewVarSymbol(name.Token, d)
+				sym := NewVarSymbol(name.Token, d, d.SourceRange())
 				checker.addSymbol(sym)
 			}
 		}
@@ -156,7 +156,7 @@ func (checker *Checker) shallowWalkGenericDecl(d *GenericDecl) {
 }
 
 func (checker *Checker) shallowWalkFuncDecl(d *FuncDecl) {
-	sym := NewFuncSymbol(d.Name.Token, d)
+	sym := NewFuncSymbol(d.Name.Token, d, d.SourceRange())
 	checker.addSymbol(sym)
 }
 
@@ -214,11 +214,11 @@ func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) {
 	checker.enterScope(scope)
 	defer checker.leaveScope()
 
-	funcDecl := sym.Decl.(*FuncDecl)
+	funcDecl := sym.SymDecl.(*FuncDecl)
 
 	for _, field := range funcDecl.Type.Parameters.Fields {
 		for _, name := range field.Names {
-			v := NewVarSymbol(name.Token, nil)
+			v := NewVarSymbol(name.Token, nil, name.SourceRange())
 			v.Type = checker.resolveExpr(field.Type)
 			v.SetResolveState(ResolveStateResolved)
 			checker.addSymbol(v)
@@ -233,7 +233,7 @@ func (checker *Checker) resolveFuncBody(sym *FuncSymbol) {
 	checker.enterScope(scope)
 	defer checker.leaveScope()
 
-	funcDecl := sym.Decl.(*FuncDecl)
+	funcDecl := sym.SymDecl.(*FuncDecl)
 
 	for _, stmt := range funcDecl.Body.Stmts {
 		checker.resolveStmt(stmt)
