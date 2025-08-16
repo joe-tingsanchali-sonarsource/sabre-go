@@ -1,3 +1,6 @@
 >> 	func (f Foo) f() (int, float32
 >> 	                              ^
 Error[internal/compiler/testdata/Parse/decl/funcDecl8.sabre:1:31]: expected ')' but found ';'
+>> 	func (f Foo) f() (int, float32
+>> 	                              ^
+Error[internal/compiler/testdata/Parse/decl/funcDecl8.sabre:1:31]: expected ';' but found 'INVALID'

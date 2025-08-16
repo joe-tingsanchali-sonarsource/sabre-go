@@ -102,12 +102,14 @@ const (
 	CompilationStageStart CompilationStage = iota
 	CompilationStageScanned
 	CompliationStageParsed
+	CompilationStageChecked
 	CompilationStageFailure
 )
 
 type Unit struct {
 	compilationStage CompilationStage
 	rootFile         *UnitFile
+	semanticInfo     *SemanticInfo
 }
 
 func UnitFromFile(path string) (unit *Unit, err error) {
@@ -155,6 +157,20 @@ func (u *Unit) Parse() bool {
 	if u.compilationStage == CompilationStageScanned {
 		if u.rootFile.Parse() {
 			u.compilationStage = CompliationStageParsed
+			return true
+		} else {
+			u.compilationStage = CompilationStageFailure
+			return false
+		}
+	}
+	return !u.HasErrors()
+}
+
+func (u *Unit) Check() bool {
+	if u.compilationStage == CompliationStageParsed {
+		checker := NewChecker(u)
+		if checker.Check() {
+			u.compilationStage = CompilationStageChecked
 			return true
 		} else {
 			u.compilationStage = CompilationStageFailure

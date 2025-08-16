@@ -5,7 +5,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Scan",
+			"name": "scan",
 			"type": "go",
 			"request": "launch",
 			"mode": "auto",
@@ -13,8 +13,56 @@
 			"cwd": "${workspaceFolder}",
 			"args": [
 				"scan",
-				"./internal/compiler/testdata/Scan/comments.sabre"
+				"${file}"
 			]
-		}
+		},
+		{
+			"name": "parse-expr",
+			"type": "go",
+			"request": "launch",
+			"mode": "auto",
+			"program": "${workspaceFolder}/cmd/sabre",
+			"cwd": "${workspaceFolder}",
+			"args": [
+				"parse-expr",
+				"${file}"
+			]
+		},
+		{
+			"name": "parse-stmt",
+			"type": "go",
+			"request": "launch",
+			"mode": "auto",
+			"program": "${workspaceFolder}/cmd/sabre",
+			"cwd": "${workspaceFolder}",
+			"args": [
+				"parse-stmt",
+				"${file}"
+			]
+		},
+		{
+			"name": "parse-decl",
+			"type": "go",
+			"request": "launch",
+			"mode": "auto",
+			"program": "${workspaceFolder}/cmd/sabre",
+			"cwd": "${workspaceFolder}",
+			"args": [
+				"parse-decl",
+				"${file}"
+			]
+		},
+		{
+			"name": "check",
+			"type": "go",
+			"request": "launch",
+			"mode": "auto",
+			"program": "${workspaceFolder}/cmd/sabre",
+			"cwd": "${workspaceFolder}",
+			"args": [
+				"check",
+				"${file}"
+			]
+		},
 	]
 }
