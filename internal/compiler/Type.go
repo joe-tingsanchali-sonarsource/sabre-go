@@ -70,6 +70,16 @@ func (Float64Type) Align() int      { return 8 }
 func (Float64Type) Signed() bool    { return true }
 func (Float64Type) HashKey() string { return "float64" }
 
+type StringType struct{}
+
+var BuiltinStringType = &StringType{}
+
+func (StringType) aType()          {}
+func (StringType) Size() int       { return 0 }
+func (StringType) Align() int      { return 0 }
+func (StringType) Signed() bool    { return false }
+func (StringType) HashKey() string { return "string" }
+
 type FuncType struct {
 	ArgTypes    []Type
 	ReturnTypes []Type

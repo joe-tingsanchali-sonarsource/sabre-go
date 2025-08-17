@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"go/constant"
+	"strconv"
 )
 
 type SemanticInfo struct {
@@ -273,6 +274,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 	}
 
 	switch e := expr.(type) {
+	case *LiteralExpr:
+		t = checker.resolveLiteralExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
 	default:
@@ -281,6 +284,54 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 
 	checker.unit.semanticInfo.SetTypeOf(expr, t)
 	return t
+}
+
+func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
+	typeFromToken := func(token Token) Type {
+		switch token.Kind() {
+		case TokenLiteralInt:
+			return BuiltinIntType
+		case TokenLiteralFloat:
+			return BuiltinFloat32Type
+		case TokenLiteralString:
+			return BuiltinStringType
+		case TokenTrue:
+			return BuiltinBoolType
+		case TokenFalse:
+			return BuiltinBoolType
+		default:
+			return BuiltinVoidType
+		}
+	}
+
+	valueFromToken := func(token Token) constant.Value {
+		switch token.Kind() {
+		case TokenLiteralInt:
+			if i, err := strconv.ParseInt(token.Value(), 0, 64); err == nil {
+				return constant.MakeInt64(i)
+			}
+			panic("invalid integer literal")
+		case TokenLiteralFloat:
+			if f, err := strconv.ParseFloat(token.Value(), 64); err == nil {
+				return constant.MakeFloat64(f)
+			}
+			panic("invalid float literal")
+		case TokenLiteralString:
+			return constant.MakeString(token.Value())
+		case TokenTrue:
+			return constant.MakeBool(true)
+		case TokenFalse:
+			return constant.MakeBool(false)
+		default:
+			return nil
+		}
+	}
+
+	return &TypeAndValue{
+		Mode:  AddressModeConstant,
+		Type:  typeFromToken(e.Token),
+		Value: valueFromToken(e.Token),
+	}
 }
 
 func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
