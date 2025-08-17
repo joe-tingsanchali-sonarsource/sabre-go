@@ -173,7 +173,7 @@ func (checker *Checker) addSymbol(sym Symbol) Symbol {
 	}
 	scope.Add(sym)
 	sym.SetScope(scope)
-	return nil
+	return sym
 }
 
 func (checker *Checker) errorf(sourceRange SourceRange, format string, a ...any) {
