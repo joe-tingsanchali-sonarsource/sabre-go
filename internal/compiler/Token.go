@@ -453,11 +453,38 @@ func (r SourceRange) HighlightCodeRange() string {
 
 // Error specification
 
-type Error struct {
+type ErrorNote struct {
 	SourceRange SourceRange
 	Message     string
 }
 
+type Error struct {
+	SourceRange SourceRange
+	Message     string
+	Notes       []ErrorNote
+}
+
+func NewError(sourceRange SourceRange, format string, a ...any) Error {
+	return Error{
+		SourceRange: sourceRange,
+		Message:     fmt.Sprintf(format, a...),
+		Notes:       make([]ErrorNote, 0),
+	}
+}
+
 func (e Error) String() string {
-	return fmt.Sprintf("%v\nError[%v]: %v", e.SourceRange.HighlightCodeRange(), e.SourceRange.Begin(), e.Message)
+	var result strings.Builder
+	fmt.Fprintf(&result, "%v\nError[%v]: %v", e.SourceRange.HighlightCodeRange(), e.SourceRange.Begin(), e.Message)
+	for _, note := range e.Notes {
+		fmt.Fprintf(&result, "\n%v\nNote[%v]: %v", note.SourceRange.HighlightCodeRange(), note.SourceRange.Begin(), note.Message)
+	}
+	return result.String()
+}
+
+func (e Error) Note(sourceRange SourceRange, format string, a ...any) Error {
+	e.Notes = append(e.Notes, ErrorNote{
+		SourceRange: sourceRange,
+		Message:     fmt.Sprintf(format, a...),
+	})
+	return e
 }

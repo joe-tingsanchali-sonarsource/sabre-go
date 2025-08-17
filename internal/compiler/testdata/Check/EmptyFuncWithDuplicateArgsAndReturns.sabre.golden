@@ -1,3 +1,6 @@
 >> 	func foo(a int) (a int) {}
 >> 	                 ^         
-Error[internal/compiler/testdata/Check/EmptyFuncWithDuplicateArgsAndReturns.sabre:3:18]: symbol 'a' redefinition, first declared in internal/compiler/testdata/Check/EmptyFuncWithDuplicateArgsAndReturns.sabre:3:10
+Error[internal/compiler/testdata/Check/EmptyFuncWithDuplicateArgsAndReturns.sabre:3:18]: symbol 'a' redefinition
+>> 	func foo(a int) (a int) {}
+>> 	         ^                 
+Note[internal/compiler/testdata/Check/EmptyFuncWithDuplicateArgsAndReturns.sabre:3:10]: first declared here
