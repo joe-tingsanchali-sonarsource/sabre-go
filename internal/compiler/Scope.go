@@ -1,19 +1,53 @@
 package compiler
 
+type ResolveState byte
+
+const (
+	ResolveStateUnresolved ResolveState = iota
+	ResolveStateResolving
+	ResolveStateResolved
+)
+
 type Symbol interface {
 	aSymbol()
+	Scope() *Scope
+	SetScope(scope *Scope)
 	Name() string
+	Decl() Decl
+	SourceRange() SourceRange
+	ResolveState() ResolveState
+	SetResolveState(r ResolveState)
 }
 
 type SymbolBase struct {
-	Scope   *Scope
-	SymName string
-	Decl    Decl
-	Type    Type
+	SymScope        *Scope
+	SymName         string
+	SymDecl         Decl
+	SymSourceRange  SourceRange
+	Type            Type
+	SymResolveState ResolveState
 }
 
+func (sym SymbolBase) Scope() *Scope {
+	return sym.SymScope
+}
+func (sym *SymbolBase) SetScope(scope *Scope) {
+	sym.SymScope = scope
+}
 func (sym SymbolBase) Name() string {
 	return sym.SymName
+}
+func (sym SymbolBase) Decl() Decl {
+	return sym.Decl()
+}
+func (sym SymbolBase) SourceRange() SourceRange {
+	return sym.SymSourceRange
+}
+func (sym SymbolBase) ResolveState() ResolveState {
+	return sym.SymResolveState
+}
+func (sym *SymbolBase) SetResolveState(r ResolveState) {
+	sym.SymResolveState = r
 }
 
 type FuncSymbol struct {
@@ -21,13 +55,14 @@ type FuncSymbol struct {
 }
 
 func (FuncSymbol) aSymbol() {}
-func NewFuncSymbol(name Token, decl Decl) *FuncSymbol {
+func NewFuncSymbol(name Token, decl Decl, sourceRange SourceRange) *FuncSymbol {
 	return &FuncSymbol{
 		SymbolBase: SymbolBase{
-			Scope:   nil,
-			SymName: name.Value(),
-			Decl:    decl,
-			Type:    BuiltinVoidType,
+			SymScope:       nil,
+			SymName:        name.Value(),
+			SymDecl:        decl,
+			SymSourceRange: sourceRange,
+			Type:           BuiltinVoidType,
 		},
 	}
 }
@@ -37,13 +72,14 @@ type VarSymbol struct {
 }
 
 func (VarSymbol) aSymbol() {}
-func NewVarSymbol(name Token, decl Decl) *VarSymbol {
+func NewVarSymbol(name Token, decl Decl, sourceRange SourceRange) *VarSymbol {
 	return &VarSymbol{
 		SymbolBase: SymbolBase{
-			Scope:   nil,
-			SymName: name.Value(),
-			Decl:    decl,
-			Type:    BuiltinVoidType,
+			SymScope:       nil,
+			SymName:        name.Value(),
+			SymDecl:        decl,
+			SymSourceRange: sourceRange,
+			Type:           BuiltinVoidType,
 		},
 	}
 }
@@ -53,13 +89,14 @@ type ConstSymbol struct {
 }
 
 func (ConstSymbol) aSymbol() {}
-func NewConstSymbol(name Token, decl Decl) *ConstSymbol {
+func NewConstSymbol(name Token, decl Decl, sourceRange SourceRange) *ConstSymbol {
 	return &ConstSymbol{
 		SymbolBase: SymbolBase{
-			Scope:   nil,
-			SymName: name.Value(),
-			Decl:    decl,
-			Type:    BuiltinVoidType,
+			SymScope:       nil,
+			SymName:        name.Value(),
+			SymDecl:        decl,
+			SymSourceRange: sourceRange,
+			Type:           BuiltinVoidType,
 		},
 	}
 }
@@ -68,6 +105,14 @@ type Scope struct {
 	Parent *Scope
 	Name   string
 	Table  map[string]Symbol
+}
+
+func NewScope(parent *Scope, name string) *Scope {
+	return &Scope{
+		Parent: parent,
+		Name:   name,
+		Table:  make(map[string]Symbol),
+	}
 }
 
 func (s Scope) ShallowFind(name string) Symbol {

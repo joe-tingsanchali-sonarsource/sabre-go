@@ -1151,7 +1151,6 @@ func (p *Parser) ParseDecl() Decl {
 	case TokenFunc:
 		return p.parseFuncDecl()
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "unexpected declaration")
 		return nil
 	}
 }
@@ -1294,17 +1293,25 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 		return nil
 	}
 
-	if p.eatTokenIfKind(TokenSemicolon).valid() && p.currentToken().Kind() == TokenLBrace {
-		p.file.errorf(funcToken.SourceRange().Merge(p.currentToken().SourceRange()), "{ should be on the same line as the function declaration")
-		return nil
-	}
-
 	var body *BlockStmt
-	if p.currentToken().Kind() == TokenLBrace {
+	switch p.currentToken().Kind() {
+	case TokenLBrace:
 		body = p.parseBlockStmt()
 		if body == nil {
 			return nil
 		}
+		p.eatTokenOrError(TokenSemicolon)
+	case TokenSemicolon:
+		p.eatToken()
+		if p.currentToken().Kind() == TokenLBrace {
+			p.file.errorf(
+				funcToken.SourceRange().Merge(p.currentToken().SourceRange()),
+				"{ should be on the same line as the function declaration",
+			)
+			return nil
+		}
+	default:
+		p.eatTokenOrError(TokenSemicolon)
 	}
 
 	return &FuncDecl{
@@ -1330,6 +1337,7 @@ func (p *Parser) ParsePackageClause() *PackageClause {
 		p.file.errorf(p.currentToken().SourceRange(), "invalid package clause name")
 		return nil
 	}
+	p.eatTokenOrError(TokenSemicolon)
 
 	return &PackageClause{
 		Package: packageToken,

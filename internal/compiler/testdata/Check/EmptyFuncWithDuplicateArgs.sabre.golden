@@ -1,0 +1,3 @@
+>> 	func foo(x, x int) {}
+>> 	            ^         
+Error[internal/compiler/testdata/Check/EmptyFuncWithDuplicateArgs.sabre:3:13]: symbol 'x' redefinition, first declared in internal/compiler/testdata/Check/EmptyFuncWithDuplicateArgs.sabre:3:10
