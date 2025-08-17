@@ -24,7 +24,6 @@ type SymbolBase struct {
 	SymName         string
 	SymDecl         Decl
 	SymSourceRange  SourceRange
-	Type            Type
 	SymResolveState ResolveState
 }
 
@@ -62,7 +61,6 @@ func NewFuncSymbol(name Token, decl Decl, sourceRange SourceRange) *FuncSymbol {
 			SymName:        name.Value(),
 			SymDecl:        decl,
 			SymSourceRange: sourceRange,
-			Type:           BuiltinVoidType,
 		},
 	}
 }
@@ -79,7 +77,6 @@ func NewVarSymbol(name Token, decl Decl, sourceRange SourceRange) *VarSymbol {
 			SymName:        name.Value(),
 			SymDecl:        decl,
 			SymSourceRange: sourceRange,
-			Type:           BuiltinVoidType,
 		},
 	}
 }
@@ -96,7 +93,6 @@ func NewConstSymbol(name Token, decl Decl, sourceRange SourceRange) *ConstSymbol
 			SymName:        name.Value(),
 			SymDecl:        decl,
 			SymSourceRange: sourceRange,
-			Type:           BuiltinVoidType,
 		},
 	}
 }
