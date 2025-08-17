@@ -509,7 +509,7 @@ func (s *Scanner) Scan() Token {
 		// revert insertSemi
 		insertSemi = s.insertSemi
 		s.readChar()
-		s.file.error(Error{s.createSourceRange(start, s.currentLocation), "unknown token"})
+		s.file.error(NewError(s.createSourceRange(start, s.currentLocation), "unknown token"))
 		return s.createTokenFromLocationPoint(TokenInvalid, start)
 	}
 }

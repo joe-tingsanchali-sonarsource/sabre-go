@@ -102,7 +102,7 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 	if tkn.Kind() == kind {
 		return tkn
 	}
-	p.file.errorf(tkn.SourceRange(), "expected '%v' but found '%v'", kind, tkn.Kind())
+	p.file.error(NewError(tkn.SourceRange(), "expected '%v' but found '%v'", kind, tkn.Kind()))
 	return tkn
 }
 
@@ -131,7 +131,7 @@ func (p *Parser) parseBinaryExprWithPrecedenceLevels(levels [][]TokenKind) Expr 
 		op := p.eatToken()
 		rhs := p.parseBinaryExprWithPrecedenceLevels(levels[1:])
 		if rhs == nil {
-			p.file.errorf(op.SourceRange(), "missing right handside")
+			p.file.error(NewError(op.SourceRange(), "missing right handside"))
 			break
 		}
 		expr = &BinaryExpr{
@@ -177,7 +177,7 @@ func (p *Parser) parseBaseExpr() Expr {
 			} else {
 				t := p.convertParsedExprToType(expr)
 				if t == nil {
-					p.file.errorf(p.currentToken().SourceRange(), "failed to parse type")
+					p.file.error(NewError(p.currentToken().SourceRange(), "failed to parse type"))
 					return nil
 				}
 				if complit := p.parseComplitExpr(t); complit != nil {
@@ -210,7 +210,7 @@ func (p *Parser) parseIdentifierExpr() *IdentifierExpr {
 			Token: p.eatToken(),
 		}
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		p.file.error(NewError(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken()))
 	}
 	return nil
 }
@@ -292,7 +292,7 @@ func (p *Parser) parseAtom() Expr {
 	case TokenFunc:
 		return p.parseFuncType()
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
+		p.file.error(NewError(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken()))
 	}
 	return nil
 }
@@ -312,7 +312,7 @@ func (p *Parser) parseLiteralExpr() *LiteralExpr {
 			Token: p.eatToken(),
 		}
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken())
+		p.file.error(NewError(p.currentToken().SourceRange(), "expected an expression but found '%v'", p.currentToken()))
 	}
 	return nil
 }
@@ -328,7 +328,7 @@ func (p *Parser) parseParenExpr() *ParenExpr {
 			Rparen: p.eatTokenOrError(TokenRParen),
 		}
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected a left parenthesis but found '%v'", p.currentToken())
+		p.file.error(NewError(p.currentToken().SourceRange(), "expected a left parenthesis but found '%v'", p.currentToken()))
 	}
 	return nil
 }
@@ -455,7 +455,7 @@ func (p *Parser) parseSignature() (parameters *FieldList, result *FieldList) {
 func (p *Parser) parseParameters() *FieldList {
 	openToken := p.eatTokenIfKind(TokenLParen)
 	if !openToken.valid() {
-		p.file.errorf(p.currentToken().SourceRange(), "missing parameter list")
+		p.file.error(NewError(p.currentToken().SourceRange(), "missing parameter list"))
 		return nil
 	}
 
@@ -473,7 +473,7 @@ func (p *Parser) parseParameters() *FieldList {
 			if len(f.Names) > 0 {
 				named++
 			} else if named > 0 {
-				p.file.errorf(f.Type.SourceRange(), "missing parameter name")
+				p.file.error(NewError(f.Type.SourceRange(), "missing parameter name"))
 				return nil
 			}
 		}
@@ -491,7 +491,7 @@ func (p *Parser) parseParameters() *FieldList {
 func (p *Parser) parseParameterList() (list []Field) {
 	expr := p.tryParseIdentOrTypeExpr()
 	if expr == nil {
-		p.file.errorf(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken())
+		p.file.error(NewError(p.currentToken().SourceRange(), "expected an identifier but found '%v'", p.currentToken()))
 		return nil
 	}
 
@@ -509,7 +509,7 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 		if e := p.tryParseIdentOrTypeExpr(); e != nil {
 			exprs = append(exprs, e)
 		} else {
-			p.file.errorf(p.currentToken().SourceRange(), "expected an identifier or type but found '%v'", p.currentToken())
+			p.file.error(NewError(p.currentToken().SourceRange(), "expected an identifier or type but found '%v'", p.currentToken()))
 			return nil
 		}
 	}
@@ -525,7 +525,7 @@ func (p *Parser) parseParameterListWithFirstExpr(expr Expr) (list []Field) {
 			if n, ok := e.(*IdentifierExpr); ok {
 				names = append(names, n)
 			} else {
-				p.file.errorf(e.SourceRange(), "missing parameter name")
+				p.file.error(NewError(e.SourceRange(), "missing parameter name"))
 				return nil
 			}
 		}
@@ -582,7 +582,7 @@ func (p *Parser) parseType() TypeExpr {
 	case TokenFunc:
 		return p.parseFuncType()
 	default:
-		p.file.errorf(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken())
+		p.file.error(NewError(p.currentToken().SourceRange(), "expected type but found %v", p.currentToken()))
 		return nil
 	}
 }
@@ -735,7 +735,7 @@ func (p *Parser) parseSimpleStmt() (stmt Stmt, isRange bool) {
 	}
 
 	if len(exprs) > 1 {
-		p.file.errorf(exprs[0].SourceRange().Merge(exprs[len(exprs)-1].SourceRange()), "Expected 1 expression but found %v", len(exprs))
+		p.file.error(NewError(exprs[0].SourceRange().Merge(exprs[len(exprs)-1].SourceRange()), "Expected 1 expression but found %v", len(exprs)))
 		// continue with first expression
 	}
 
@@ -999,7 +999,7 @@ func (p *Parser) parseIfStmt() *IfStmt {
 			elseStmt = p.parseBlockStmt()
 			p.eatTokenOrError(TokenSemicolon)
 		default:
-			p.file.errorf(p.currentToken().SourceRange(), "Expected if statement or block")
+			p.file.error(NewError(p.currentToken().SourceRange(), "Expected if statement or block"))
 		}
 	} else {
 		p.eatTokenOrError(TokenSemicolon)
@@ -1039,10 +1039,10 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 		if exprStmt, ok := condStmt.(*ExprStmt); ok {
 			cond = exprStmt.Expr
 		} else {
-			p.file.errorf(condStmt.SourceRange(), "Expected boolean expression as condition in if statement")
+			p.file.error(NewError(condStmt.SourceRange(), "Expected boolean expression as condition in if statement"))
 		}
 	} else {
-		p.file.errorf(p.currentToken().SourceRange(), "Missing condition in if statement")
+		p.file.error(NewError(p.currentToken().SourceRange(), "Missing condition in if statement"))
 	}
 
 	return
@@ -1096,7 +1096,7 @@ func (p *Parser) parseForStmt() Stmt {
 				case 2:
 					// nothing to do
 				default:
-					p.file.errorf(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most two iteration variables in range for statement")
+					p.file.error(NewError(assignStmt.LHS[len(assignStmt.LHS)-1].SourceRange(), "expected at most two iteration variables in range for statement"))
 					return nil
 				}
 
@@ -1218,7 +1218,7 @@ func (p *Parser) parseConstSpec() Spec {
 	assignToken := p.eatTokenIfKind(TokenAssign)
 
 	if constType != nil && !assignToken.valid() {
-		p.file.errorf(p.currentToken().SourceRange(), "constant declaration must have an init value")
+		p.file.error(NewError(p.currentToken().SourceRange(), "constant declaration must have an init value"))
 		return nil
 	}
 
@@ -1278,7 +1278,7 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 	if p.currentToken().Kind() == TokenLParen {
 		receiver = p.parseParameters()
 		if receiver != nil && len(receiver.Fields) > 1 {
-			p.file.errorf(receiver.Open.SourceRange().Merge(receiver.Close.SourceRange()), "method is expected to have only one receiver")
+			p.file.error(NewError(receiver.Open.SourceRange().Merge(receiver.Close.SourceRange()), "method is expected to have only one receiver"))
 			return nil
 		}
 	}
@@ -1304,10 +1304,10 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 	case TokenSemicolon:
 		p.eatToken()
 		if p.currentToken().Kind() == TokenLBrace {
-			p.file.errorf(
+			p.file.error(NewError(
 				funcToken.SourceRange().Merge(p.currentToken().SourceRange()),
 				"{ should be on the same line as the function declaration",
-			)
+			))
 			return nil
 		}
 	default:
@@ -1334,7 +1334,7 @@ func (p *Parser) ParsePackageClause() *PackageClause {
 
 	name := p.parseIdentifierExpr()
 	if name == nil || name.Token.Value() == "_" {
-		p.file.errorf(p.currentToken().SourceRange(), "invalid package clause name")
+		p.file.error(NewError(p.currentToken().SourceRange(), "invalid package clause name"))
 		return nil
 	}
 	p.eatTokenOrError(TokenSemicolon)

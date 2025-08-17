@@ -171,11 +171,9 @@ func (checker *Checker) shallowWalkFuncDecl(d *FuncDecl) {
 func (checker *Checker) addSymbol(sym Symbol) Symbol {
 	scope := checker.currentScope()
 	if oldSym := scope.ShallowFind(sym.Name()); oldSym != nil {
-		checker.errorf(
-			sym.SourceRange(),
-			"symbol '%v' redefinition, first declared in %v",
-			sym.Name(),
-			oldSym.SourceRange().Begin(),
+		checker.error(
+			NewError(sym.SourceRange(), "symbol '%v' redefinition", sym.Name()).
+				Note(oldSym.SourceRange(), "first declared here"),
 		)
 		return oldSym
 	}
@@ -184,19 +182,17 @@ func (checker *Checker) addSymbol(sym Symbol) Symbol {
 	return sym
 }
 
-func (checker *Checker) errorf(sourceRange SourceRange, format string, a ...any) {
-	checker.unit.rootFile.errorf(
-		sourceRange,
-		format,
-		a...,
-	)
+func (checker *Checker) error(e Error) {
+	checker.unit.rootFile.error(e)
 }
 
 func (checker *Checker) resolveSymbol(sym Symbol) *TypeAndValue {
 	if sym.ResolveState() == ResolveStateResolved {
 		return checker.unit.semanticInfo.TypeOf(sym)
 	} else if sym.ResolveState() == ResolveStateResolving {
-		checker.errorf(sym.SourceRange(), "symbol %v has a cyclic dependency", sym.Name())
+		checker.error(
+			NewError(sym.SourceRange(), "symbol %v has a cyclic dependency", sym.Name()),
+		)
 	}
 
 	var symType *TypeAndValue

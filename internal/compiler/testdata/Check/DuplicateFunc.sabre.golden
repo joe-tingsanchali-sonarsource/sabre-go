@@ -1,3 +1,6 @@
 >> 	func foo() {}
 >> 	^^^^^^^^^^^^^ 
-Error[internal/compiler/testdata/Check/DuplicateFunc.sabre:4:1]: symbol 'foo' redefinition, first declared in internal/compiler/testdata/Check/DuplicateFunc.sabre:3:1
+Error[internal/compiler/testdata/Check/DuplicateFunc.sabre:4:1]: symbol 'foo' redefinition
+>> 	func foo() {}
+>> 	^^^^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/DuplicateFunc.sabre:3:1]: first declared here
