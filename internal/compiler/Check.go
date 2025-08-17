@@ -1,22 +1,30 @@
 package compiler
 
-import "go/constant"
+import (
+	"go/constant"
+)
 
 type SemanticInfo struct {
-	Types  map[Expr]TypeAndValue
-	Scopes map[any]*Scope
+	Types        map[any]*TypeAndValue
+	Scopes       map[any]*Scope
+	TypeInterner *TypeInterner
 }
 
 func NewSemanticInfo() *SemanticInfo {
 	return &SemanticInfo{
-		Types:  make(map[Expr]TypeAndValue),
-		Scopes: make(map[any]*Scope),
+		Types:        make(map[any]*TypeAndValue),
+		Scopes:       make(map[any]*Scope),
+		TypeInterner: NewTypeInterner(),
 	}
 }
 
-func (info SemanticInfo) TypeOf(e Expr) Type {
+func (info *SemanticInfo) SetTypeOf(e any, t *TypeAndValue) {
+	info.Types[e] = t
+}
+
+func (info SemanticInfo) TypeOf(e any) *TypeAndValue {
 	if t, ok := info.Types[e]; ok {
-		return t.Type
+		return t
 	}
 	return nil
 }
@@ -184,21 +192,24 @@ func (checker *Checker) errorf(sourceRange SourceRange, format string, a ...any)
 	)
 }
 
-func (checker *Checker) resolveSymbol(sym Symbol) {
+func (checker *Checker) resolveSymbol(sym Symbol) *TypeAndValue {
 	if sym.ResolveState() == ResolveStateResolved {
-		return
+		return checker.unit.semanticInfo.TypeOf(sym)
 	} else if sym.ResolveState() == ResolveStateResolving {
 		checker.errorf(sym.SourceRange(), "symbol %v has a cyclic dependency", sym.Name())
 	}
 
+	var symType *TypeAndValue
 	sym.SetResolveState(ResolveStateResolving)
 	switch symbol := sym.(type) {
 	case *FuncSymbol:
-		checker.resolveFuncSymbol(symbol)
+		symType = checker.resolveFuncSymbol(symbol)
 	default:
 		panic("unexpected symbol type")
 	}
 	sym.SetResolveState(ResolveStateResolved)
+
+	checker.unit.semanticInfo.SetTypeOf(sym, symType)
 
 	switch symbol := sym.(type) {
 	case *FuncSymbol:
@@ -206,9 +217,11 @@ func (checker *Checker) resolveSymbol(sym Symbol) {
 	default:
 		panic("unexpected symbol type")
 	}
+
+	return symType
 }
 
-func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) {
+func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) *TypeAndValue {
 	scope := checker.unit.semanticInfo.createScopeFor(sym, checker.currentScope(), sym.Name())
 
 	checker.enterScope(scope)
@@ -216,16 +229,34 @@ func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) {
 
 	funcDecl := sym.SymDecl.(*FuncDecl)
 
-	for _, field := range funcDecl.Type.Parameters.Fields {
-		for _, name := range field.Names {
-			v := NewVarSymbol(name.Token, nil, name.SourceRange())
-			v.Type = checker.resolveExpr(field.Type)
-			v.SetResolveState(ResolveStateResolved)
-			checker.addSymbol(v)
+	processFields := func(fields []Field) (types []Type) {
+		for _, field := range fields {
+			for _, name := range field.Names {
+				v := NewVarSymbol(name.Token, nil, name.SourceRange())
+				v.SetResolveState(ResolveStateResolved)
+				fieldType := checker.resolveExpr(field.Type)
+				checker.unit.semanticInfo.SetTypeOf(v, fieldType)
+				checker.addSymbol(v)
+				types = append(types, fieldType.Type)
+			}
 		}
+		return types
 	}
 
-	// TODO: in the future we should resolve the function type and return it to caller
+	argTypes := processFields(funcDecl.Type.Parameters.Fields)
+	var returnTypes []Type
+	if funcDecl.Type.Result != nil {
+		returnTypes = processFields(funcDecl.Type.Result.Fields)
+	}
+
+	funcType := &TypeAndValue{
+		Mode:  AddressModeType,
+		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(argTypes, returnTypes),
+		Value: nil,
+	}
+
+	checker.unit.semanticInfo.SetTypeOf(sym.SymDecl, funcType)
+	return funcType
 }
 
 func (checker *Checker) resolveFuncBody(sym *FuncSymbol) {
@@ -240,24 +271,31 @@ func (checker *Checker) resolveFuncBody(sym *FuncSymbol) {
 	}
 }
 
-func (checker *Checker) resolveExpr(expr Expr) Type {
-	if t := checker.unit.semanticInfo.TypeOf(expr); t != nil {
-		return t
+func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
+	if exprType := checker.unit.semanticInfo.TypeOf(expr); exprType != nil {
+		return exprType
 	}
 
 	switch e := expr.(type) {
 	case *NamedTypeExpr:
-		return checker.resolveNamedTypeExpr(e)
+		t = checker.resolveNamedTypeExpr(e)
 	default:
 		panic("unexpected expr type")
 	}
+
+	checker.unit.semanticInfo.SetTypeOf(expr, t)
+	return t
 }
 
-func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) Type {
+func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 	if e.Package.valid() {
 		panic("we don't support packages yet")
 	}
-	return typeFromName(e.TypeName)
+	return &TypeAndValue{
+		Mode:  AddressModeType,
+		Type:  typeFromName(e.TypeName),
+		Value: nil,
+	}
 }
 
 func typeFromName(name Token) Type {
@@ -277,10 +315,10 @@ func typeFromName(name Token) Type {
 	}
 }
 
-func (checker *Checker) resolveStmt(stmt Stmt) Type {
+func (checker *Checker) resolveStmt(stmt Stmt) {
 	switch s := stmt.(type) {
 	case *ExprStmt:
-		return checker.resolveExpr(s.Expr)
+		checker.resolveExpr(s.Expr)
 	default:
 		panic("unexpected stmt type")
 	}
