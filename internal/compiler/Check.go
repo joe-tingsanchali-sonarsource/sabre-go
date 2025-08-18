@@ -417,34 +417,33 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
-	expectedTypes := funcType.ReturnTypes
-
-	var types []Type
+	var returnTypes []Type
 	for _, e := range s.Exprs {
-		types = append(types, checker.resolveExpr(e).Type)
+		returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
 	}
 
-	named := false
-	if funcDecl.Type.Result != nil {
-		named = len(funcDecl.Type.Result.Fields[0].Names) > 0
-		if len(types) == 0 {
-			if !named {
-				checker.error(NewError(s.SourceRange(), "missing return values"))
-				return
-			}
-		} else if len(types) < len(expectedTypes) {
+	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
+	if len(s.Exprs) == 0 && len(expectedReturnTypes) == 0 {
+		return
+	}
+
+	named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
+	if len(returnTypes) == 0 {
+		if !named {
 			checker.error(NewError(s.SourceRange(), "missing return values"))
 			return
-		} else if len(types) > len(expectedTypes) {
-			checker.error(NewError(s.SourceRange(), "too many return values"))
-			return
 		}
+	} else if len(returnTypes) < len(expectedReturnTypes) {
+		checker.error(NewError(s.SourceRange(), "missing return values"))
+		return
+	} else if len(returnTypes) > len(expectedReturnTypes) {
+		checker.error(NewError(s.SourceRange(), "too many return values"))
+		return
 	}
 
 	if !named {
-		for i, et := range expectedTypes {
-			t := types[i]
+		for i, et := range expectedReturnTypes {
+			t := returnTypes[i]
 			if !typeCanMatch(t, et) {
 				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.HashKey(), et.HashKey()))
 			}
