@@ -385,14 +385,16 @@ func typeFromName(name Token) Type {
 	}
 }
 
-func typeCanMatch(a, b Type) bool {
-	if (a == BuiltinIntType || a == BuiltinUintType) && (b == BuiltinIntType || b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
-		return true
-	} else if a == BuiltinFloat32Type && (b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
-		return true
+func typeCanMatch(a *TypeAndValue, b Type) bool {
+	if a.Mode == AddressModeConstant {
+		if (a.Type == BuiltinIntType) && (b == BuiltinIntType || b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
+			return true
+		} else if a.Type == BuiltinFloat32Type && (b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
+			return true
+		}
 	}
 
-	return a == b
+	return a.Type == b
 }
 
 func (checker *Checker) resolveStmt(stmt Stmt) {
@@ -413,9 +415,9 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	var returnTypes []Type
+	var returnTypes []*TypeAndValue
 	for _, e := range s.Exprs {
-		returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
+		returnTypes = append(returnTypes, checker.resolveExpr(e))
 	}
 
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
@@ -441,7 +443,7 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		for i, et := range expectedReturnTypes {
 			t := returnTypes[i]
 			if !typeCanMatch(t, et) {
-				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.HashKey(), et.HashKey()))
+				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.Type.HashKey(), et.HashKey()))
 			}
 		}
 	}
