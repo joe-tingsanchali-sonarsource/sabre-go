@@ -385,6 +385,7 @@ func typeFromName(name Token) Type {
 	}
 }
 
+// TODO: Probably we can make a distinct type for literals like (BuiltinIntLiteralType) and compare against that.
 func typeCanMatch(a *TypeAndValue, b Type) bool {
 	if a.Mode == AddressModeConstant {
 		if (a.Type == BuiltinIntType) && (b == BuiltinIntType || b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
