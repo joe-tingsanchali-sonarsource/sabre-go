@@ -276,6 +276,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 	switch e := expr.(type) {
 	case *LiteralExpr:
 		t = checker.resolveLiteralExpr(e)
+	case *ParenExpr:
+		t = checker.resolveParenExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
 	default:
@@ -332,6 +334,10 @@ func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 		Type:  typeFromToken(e.Token),
 		Value: valueFromToken(e.Token),
 	}
+}
+
+func (checker *Checker) resolveParenExpr(e *ParenExpr) *TypeAndValue {
+	return checker.resolveExpr(e.Base)
 }
 
 func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
