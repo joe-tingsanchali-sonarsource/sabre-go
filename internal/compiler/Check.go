@@ -425,20 +425,29 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		types = append(types, checker.resolveExpr(e).Type)
 	}
 
-	if len(types) < len(expectedTypes) {
-		checker.error(NewError(s.SourceRange(), "missing return values"))
-		return
+	named := false
+	if funcDecl.Type.Result != nil {
+		named = len(funcDecl.Type.Result.Fields[0].Names) > 0
+		if len(types) == 0 {
+			if !named {
+				checker.error(NewError(s.SourceRange(), "missing return values"))
+				return
+			}
+		} else if len(types) < len(expectedTypes) {
+			checker.error(NewError(s.SourceRange(), "missing return values"))
+			return
+		} else if len(types) > len(expectedTypes) {
+			checker.error(NewError(s.SourceRange(), "too many return values"))
+			return
+		}
 	}
 
-	if len(types) > len(expectedTypes) {
-		checker.error(NewError(s.SourceRange(), "too many return values"))
-		return
-	}
-
-	for i, et := range expectedTypes {
-		t := types[i]
-		if !typeCanMatch(t, et) {
-			checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.HashKey(), et.HashKey()))
+	if !named {
+		for i, et := range expectedTypes {
+			t := types[i]
+			if !typeCanMatch(t, et) {
+				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.HashKey(), et.HashKey()))
+			}
 		}
 	}
 }
