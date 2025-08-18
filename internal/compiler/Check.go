@@ -263,8 +263,8 @@ func (checker *Checker) resolveFuncBody(sym *FuncSymbol) {
 
 	funcDecl := sym.SymDecl.(*FuncDecl)
 
+	funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
 	for _, stmt := range funcDecl.Body.Stmts {
-		funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
 		checker.resolveStmt(stmt, funcType.ReturnTypes)
 	}
 }
