@@ -318,8 +318,6 @@ func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 			return BuiltinIntType
 		case TokenLiteralFloat:
 			return BuiltinFloat32Type
-		case TokenLiteralString:
-			return BuiltinStringType
 		case TokenTrue:
 			return BuiltinBoolType
 		case TokenFalse:
@@ -382,8 +380,6 @@ func typeFromName(name Token) Type {
 		return BuiltinFloat32Type
 	case "float64":
 		return BuiltinFloat64Type
-	case "string":
-		return BuiltinStringType
 	default:
 		return BuiltinVoidType
 	}

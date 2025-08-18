@@ -1,5 +1,5 @@
 package main
 
-func foo() int {
-    return "1"
+func foo() bool {
+    return 1
 }
