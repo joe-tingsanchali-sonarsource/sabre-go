@@ -228,13 +228,13 @@ func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) *TypeAndValue {
 
 	processFields := func(fields []Field) (types []Type) {
 		for _, field := range fields {
+			fieldType := checker.resolveExpr(field.Type)
+			types = append(types, fieldType.Type)
 			for _, name := range field.Names {
 				v := NewVarSymbol(name.Token, nil, name.SourceRange())
 				v.SetResolveState(ResolveStateResolved)
-				fieldType := checker.resolveExpr(field.Type)
 				checker.unit.semanticInfo.SetTypeOf(v, fieldType)
 				checker.addSymbol(v)
-				types = append(types, fieldType.Type)
 			}
 		}
 		return types
@@ -264,7 +264,8 @@ func (checker *Checker) resolveFuncBody(sym *FuncSymbol) {
 	funcDecl := sym.SymDecl.(*FuncDecl)
 
 	for _, stmt := range funcDecl.Body.Stmts {
-		checker.resolveStmt(stmt)
+		funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
+		checker.resolveStmt(stmt, funcType.ReturnTypes)
 	}
 }
 
@@ -357,16 +358,54 @@ func typeFromName(name Token) Type {
 		return BuiltinFloat32Type
 	case "float64":
 		return BuiltinFloat64Type
+	case "string":
+		return BuiltinStringType
 	default:
 		return BuiltinVoidType
 	}
 }
 
-func (checker *Checker) resolveStmt(stmt Stmt) {
+func typeCanMatch(a, b Type) bool {
+	if (a == BuiltinIntType || a == BuiltinUintType) && (b == BuiltinIntType || b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
+		return true
+	} else if a == BuiltinFloat32Type && (b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
+		return true
+	}
+
+	return a == b
+}
+
+func (checker *Checker) resolveStmt(stmt Stmt, expectedTypes []Type) {
 	switch s := stmt.(type) {
 	case *ExprStmt:
 		checker.resolveExpr(s.Expr)
+	case *ReturnStmt:
+		checker.resolveReturnStmt(s, expectedTypes)
 	default:
 		panic("unexpected stmt type")
+	}
+}
+
+func (checker *Checker) resolveReturnStmt(s *ReturnStmt, expectedTypes []Type) {
+	var types []Type
+	for _, e := range s.Exprs {
+		types = append(types, checker.resolveExpr(e).Type)
+	}
+
+	if len(types) < len(expectedTypes) {
+		checker.error(NewError(s.SourceRange(), "missing return values"))
+		return
+	}
+
+	if len(types) > len(expectedTypes) {
+		checker.error(NewError(s.SourceRange(), "too many return values"))
+		return
+	}
+
+	for i, et := range expectedTypes {
+		t := types[i]
+		if !typeCanMatch(t, et) {
+			checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.HashKey(), et.HashKey()))
+		}
 	}
 }

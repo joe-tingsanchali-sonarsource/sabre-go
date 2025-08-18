@@ -1,0 +1,3 @@
+>> 	    return "1"
+>> 	           ^^^ 
+Error[internal/compiler/testdata/Check/FuncWithWrongReturnValue.sabre:4:12]: incorrect return type 'string', expected 'int'
