@@ -305,6 +305,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveParenExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
+	case *ArrayTypeExpr:
+		t = checker.resolveArrayTypeExpr(e)
 	default:
 		panic("unexpected expr type")
 	}
@@ -385,6 +387,38 @@ func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 		Type:  typeFromName(e.TypeName),
 		Value: nil,
 	}
+}
+
+func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
+	lengthType := checker.resolveExpr(e.Length)
+	elementType := checker.resolveExpr(e.ElementType)
+
+	res := &TypeAndValue{
+		Mode:  AddressModeType,
+		Type:  BuiltinVoidType,
+		Value: nil,
+	}
+
+	lengthAsInt := 0
+	if lengthType.Mode != AddressModeConstant {
+		checker.error(NewError(e.Length.SourceRange(), "array type length should be constant"))
+		return res
+	}
+	if lengthType.Value != nil {
+		if lengthType.Value.Kind() != constant.Int {
+			checker.error(NewError(e.Length.SourceRange(), "array type length should be integer"))
+			return res
+		}
+		valueAsInt, exact := constant.Int64Val(lengthType.Value)
+		if !exact {
+			checker.error(NewError(e.Length.SourceRange(), "array type length does not fit in 64bit integer"))
+			return res
+		}
+		lengthAsInt = int(valueAsInt)
+	}
+
+	res.Type = checker.unit.semanticInfo.TypeInterner.InternArrayType(lengthAsInt, elementType.Type)
+	return res
 }
 
 func typeFromName(name Token) Type {
