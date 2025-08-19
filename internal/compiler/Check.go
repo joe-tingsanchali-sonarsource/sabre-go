@@ -422,30 +422,18 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 	}
 
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
-	if len(s.Exprs) == 0 && len(expectedReturnTypes) == 0 {
-		return
-	}
-
-	named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
-	if len(returnTypes) == 0 {
-		if !named {
-			checker.error(NewError(s.SourceRange(), "missing return values"))
-			return
-		}
-	} else if len(returnTypes) < len(expectedReturnTypes) {
-		checker.error(NewError(s.SourceRange(), "missing return values"))
-		return
-	} else if len(returnTypes) > len(expectedReturnTypes) {
-		checker.error(NewError(s.SourceRange(), "too many return values"))
-		return
-	}
-
-	if !named {
+	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
 			t := returnTypes[i]
 			if !typeCanMatch(t, et) {
-				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.Type.HashKey(), et.HashKey()))
+				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.Type.String(), et.String()))
 			}
+		}
+	} else {
+		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
+		if len(returnTypes) != 0 || !named {
+			checker.error(NewError(s.SourceRange(), "expected '%v' return values, but found '%v'", len(expectedReturnTypes), len(returnTypes)))
+			return
 		}
 	}
 }
