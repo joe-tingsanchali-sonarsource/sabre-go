@@ -85,8 +85,9 @@ func (v TypeAndValue) IsAssignable() bool {
 
 type Checker struct {
 	DefaultVisitor
-	unit       *Unit
-	scopeStack []*Scope
+	unit          *Unit
+	scopeStack    []*Scope
+	functionStack []*FuncDecl
 }
 
 func NewChecker(u *Unit) *Checker {
@@ -108,6 +109,21 @@ func (checker *Checker) enterScope(scope *Scope) {
 
 func (checker *Checker) leaveScope() {
 	checker.scopeStack = checker.scopeStack[:len(checker.scopeStack)-1]
+}
+
+func (checker *Checker) currentFunction() *FuncDecl {
+	return checker.functionStack[len(checker.functionStack)-1]
+}
+
+func (checker *Checker) enterFunction(function *FuncDecl) {
+	if function == nil {
+		panic("entering nil function")
+	}
+	checker.functionStack = append(checker.functionStack, function)
+}
+
+func (checker *Checker) leaveFunction() {
+	checker.functionStack = checker.functionStack[:len(checker.functionStack)-1]
 }
 
 func (checker *Checker) Check() bool {
@@ -226,14 +242,21 @@ func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) *TypeAndValue {
 
 	funcDecl := sym.SymDecl.(*FuncDecl)
 
+	checker.enterFunction(funcDecl)
+	defer checker.leaveFunction()
+
 	processFields := func(fields []Field) (types []Type) {
 		for _, field := range fields {
-			for _, name := range field.Names {
-				v := NewVarSymbol(name.Token, nil, name.SourceRange())
-				v.SetResolveState(ResolveStateResolved)
-				fieldType := checker.resolveExpr(field.Type)
-				checker.unit.semanticInfo.SetTypeOf(v, fieldType)
-				checker.addSymbol(v)
+			fieldType := checker.resolveExpr(field.Type)
+			if len(field.Names) > 0 {
+				for _, name := range field.Names {
+					v := NewVarSymbol(name.Token, nil, name.SourceRange())
+					v.SetResolveState(ResolveStateResolved)
+					checker.unit.semanticInfo.SetTypeOf(v, fieldType)
+					checker.addSymbol(v)
+					types = append(types, fieldType.Type)
+				}
+			} else {
 				types = append(types, fieldType.Type)
 			}
 		}
@@ -262,6 +285,8 @@ func (checker *Checker) resolveFuncBody(sym *FuncSymbol) {
 	defer checker.leaveScope()
 
 	funcDecl := sym.SymDecl.(*FuncDecl)
+	checker.enterFunction(funcDecl)
+	defer checker.leaveFunction()
 
 	for _, stmt := range funcDecl.Body.Stmts {
 		checker.resolveStmt(stmt)
@@ -295,8 +320,6 @@ func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 			return BuiltinIntType
 		case TokenLiteralFloat:
 			return BuiltinFloat32Type
-		case TokenLiteralString:
-			return BuiltinStringType
 		case TokenTrue:
 			return BuiltinBoolType
 		case TokenFalse:
@@ -372,7 +395,38 @@ func (checker *Checker) resolveStmt(stmt Stmt) {
 	switch s := stmt.(type) {
 	case *ExprStmt:
 		checker.resolveExpr(s.Expr)
+	case *ReturnStmt:
+		checker.resolveReturnStmt(s)
 	default:
 		panic("unexpected stmt type")
+	}
+}
+
+func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
+	funcDecl := checker.currentFunction()
+	if funcDecl == nil {
+		checker.error(NewError(s.SourceRange(), "unexpected return statement"))
+		return
+	}
+
+	var returnTypes []Type
+	for _, e := range s.Exprs {
+		returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
+	}
+
+	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
+	if len(returnTypes) == len(expectedReturnTypes) {
+		for i, et := range expectedReturnTypes {
+			t := returnTypes[i]
+			if t != et {
+				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t, et))
+			}
+		}
+	} else {
+		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
+		if len(returnTypes) != 0 || !named {
+			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)))
+			return
+		}
 	}
 }
