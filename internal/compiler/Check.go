@@ -385,19 +385,6 @@ func typeFromName(name Token) Type {
 	}
 }
 
-// TODO: Probably we can make a distinct type for literals like (BuiltinIntLiteralType) and compare against that.
-func typeCanMatch(a *TypeAndValue, b Type) bool {
-	if a.Mode == AddressModeConstant {
-		if (a.Type == BuiltinIntType) && (b == BuiltinIntType || b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
-			return true
-		} else if a.Type == BuiltinFloat32Type && (b == BuiltinFloat32Type || b == BuiltinFloat64Type) {
-			return true
-		}
-	}
-
-	return a.Type == b
-}
-
 func (checker *Checker) resolveStmt(stmt Stmt) {
 	switch s := stmt.(type) {
 	case *ExprStmt:
@@ -416,17 +403,17 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	var returnTypes []*TypeAndValue
+	var returnTypes []Type
 	for _, e := range s.Exprs {
-		returnTypes = append(returnTypes, checker.resolveExpr(e))
+		returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
 	}
 
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
 			t := returnTypes[i]
-			if !typeCanMatch(t, et) {
-				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.Type.String(), et.String()))
+			if t != et {
+				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.String(), et.String()))
 			}
 		}
 	} else {
