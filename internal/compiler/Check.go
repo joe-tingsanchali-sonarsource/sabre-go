@@ -413,13 +413,13 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		for i, et := range expectedReturnTypes {
 			t := returnTypes[i]
 			if t != et {
-				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t.String(), et.String()))
+				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t, et))
 			}
 		}
 	} else {
 		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
 		if len(returnTypes) != 0 || !named {
-			checker.error(NewError(s.SourceRange(), "expected '%v' return values, but found '%v'", len(expectedReturnTypes), len(returnTypes)))
+			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)))
 			return
 		}
 	}
