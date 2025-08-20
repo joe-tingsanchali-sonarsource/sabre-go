@@ -384,26 +384,70 @@ func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 
 func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
 	t := checker.resolveExpr(e.Base)
+
+	res := &TypeAndValue{
+		Mode:  AddressModeInvalid,
+		Type:  t.Type,
+		Value: nil,
+	}
+
 	switch e.Operator.Kind() {
 	case TokenAdd:
 		fallthrough
 	case TokenSub:
 		if !typeIsArithmetic(t.Type) {
 			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for arithmetic types, but expression type is '%v'", e.Operator, t.Type))
+			return res
 		}
 	case TokenNot:
 		if t.Type != BuiltinBoolType {
 			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for boolean types, but expression type is '%v'", e.Operator, t.Type))
+			return res
 		}
 	case TokenXor:
 		if t.Type != BuiltinIntType && t.Type != BuiltinUintType {
 			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for integer types, but expression type is '%v'", e.Operator, t.Type))
+			return res
 		}
 	default:
 		panic("invalid unary operator")
 	}
 
-	return t
+	res.Mode = t.Mode
+	if res.Mode != AddressModeConstant {
+		res.Mode = AddressModeComputedValue
+	}
+	res.Value = checker.computeUnaryExprValue(e, t.Value)
+	return res
+}
+
+func (checker *Checker) computeUnaryExprValue(e *UnaryExpr, v constant.Value) constant.Value {
+	switch e.Operator.Kind() {
+	case TokenAdd:
+		return v
+	case TokenSub:
+		if v.Kind() == constant.Int {
+			if valueAsInt, exact := constant.Int64Val(v); exact {
+				return constant.MakeInt64(-valueAsInt)
+			}
+			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit integer"))
+		} else if v.Kind() == constant.Float {
+			if valueAsFloat, exact := constant.Float64Val(v); exact {
+				return constant.MakeFloat64(-valueAsFloat)
+			}
+			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit float"))
+		}
+	case TokenNot:
+		return constant.MakeBool(!constant.BoolVal(v))
+	case TokenXor:
+		if v.Kind() == constant.Int {
+			if valueAsInt, exact := constant.Int64Val(v); exact {
+				return constant.MakeInt64(^valueAsInt)
+			}
+			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit integer"))
+		}
+	}
+	return nil
 }
 
 func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
