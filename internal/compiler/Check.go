@@ -290,48 +290,61 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 }
 
 func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
-	typeFromToken := func(token Token) Type {
-		switch token.Kind() {
-		case TokenLiteralInt:
-			return BuiltinIntType
-		case TokenLiteralFloat:
-			return BuiltinFloat32Type
-		case TokenTrue:
-			return BuiltinBoolType
-		case TokenFalse:
-			return BuiltinBoolType
-		default:
-			return BuiltinVoidType
-		}
-	}
-
-	valueFromToken := func(token Token) constant.Value {
-		switch token.Kind() {
-		case TokenLiteralInt:
-			if i, err := strconv.ParseInt(token.Value(), 0, 64); err == nil {
-				return constant.MakeInt64(i)
+	switch e.Token.Kind() {
+	case TokenLiteralInt:
+		i, err := strconv.ParseInt(e.Token.Value(), 0, 64)
+		if err == nil {
+			return &TypeAndValue{
+				Mode:  AddressModeConstant,
+				Type:  BuiltinIntType,
+				Value: constant.MakeInt64(i),
 			}
-			panic("invalid integer literal")
-		case TokenLiteralFloat:
-			if f, err := strconv.ParseFloat(token.Value(), 64); err == nil {
-				return constant.MakeFloat64(f)
+		} else {
+			checker.error(NewError(e.Token.SourceRange(), "invalid integer value").
+				Note(e.Token.SourceRange(), "%v", err),
+			)
+			return &TypeAndValue{
+				Mode:  AddressModeInvalid,
+				Type:  BuiltinVoidType,
+				Value: nil,
 			}
-			panic("invalid float literal")
-		case TokenLiteralString:
-			return constant.MakeString(token.Value())
-		case TokenTrue:
-			return constant.MakeBool(true)
-		case TokenFalse:
-			return constant.MakeBool(false)
-		default:
-			return nil
 		}
-	}
-
-	return &TypeAndValue{
-		Mode:  AddressModeConstant,
-		Type:  typeFromToken(e.Token),
-		Value: valueFromToken(e.Token),
+	case TokenLiteralFloat:
+		f, err := strconv.ParseFloat(e.Token.Value(), 64)
+		if err == nil {
+			return &TypeAndValue{
+				Mode:  AddressModeConstant,
+				Type:  BuiltinFloat32Type,
+				Value: constant.MakeFloat64(f),
+			}
+		} else {
+			checker.error(NewError(e.Token.SourceRange(), "invalid float value").
+				Note(e.Token.SourceRange(), "%v", err),
+			)
+			return &TypeAndValue{
+				Mode:  AddressModeInvalid,
+				Type:  BuiltinVoidType,
+				Value: nil,
+			}
+		}
+	case TokenTrue:
+		return &TypeAndValue{
+			Mode:  AddressModeConstant,
+			Type:  BuiltinBoolType,
+			Value: constant.MakeBool(true),
+		}
+	case TokenFalse:
+		return &TypeAndValue{
+			Mode:  AddressModeConstant,
+			Type:  BuiltinBoolType,
+			Value: constant.MakeBool(false),
+		}
+	default:
+		return &TypeAndValue{
+			Mode:  AddressModeInvalid,
+			Type:  BuiltinVoidType,
+			Value: nil,
+		}
 	}
 }
 

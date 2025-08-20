@@ -807,18 +807,7 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 
 	var exprs []Expr
 	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().Kind() != TokenRBrace {
-		initialExpr := p.ParseExpr()
-		if initialExpr == nil {
-			return nil
-		}
-		exprs = append(exprs, initialExpr)
-		for p.eatTokenIfKind(TokenComma).valid() {
-			expr := p.ParseExpr()
-			if expr == nil {
-				return nil
-			}
-			exprs = append(exprs, expr)
-		}
+		exprs = p.parseExprList()
 	}
 	p.eatTokenOrError(TokenSemicolon)
 
