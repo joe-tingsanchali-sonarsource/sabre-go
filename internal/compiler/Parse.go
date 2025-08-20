@@ -809,7 +809,7 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().Kind() != TokenRBrace {
 		exprs = p.parseExprList()
 	}
-	p.eatTokenIfKind(TokenSemicolon)
+	p.eatTokenOrError(TokenSemicolon)
 
 	return &ReturnStmt{
 		Return: returnToken,

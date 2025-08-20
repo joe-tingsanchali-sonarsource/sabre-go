@@ -1,1 +1,11 @@
-
+>> 	}
+>> 	^ 
+Error[internal/compiler/testdata/Check/LiteralExprBoolFalse.sabre:5:1]: expected ';' but found '}'
+>> 	}
+>> 	 ^
+>> 	
+>> 	 
+Error[internal/compiler/testdata/Check/LiteralExprBoolFalse.sabre:5:2]: expected an expression but found ';(\n)'
+>> 	
+>> 	^
+Error[internal/compiler/testdata/Check/LiteralExprBoolFalse.sabre:6:1]: expected '}' but found 'INVALID'
