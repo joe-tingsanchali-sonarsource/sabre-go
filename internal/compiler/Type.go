@@ -1,6 +1,9 @@
 package compiler
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Type interface {
 	aType()
@@ -118,6 +121,22 @@ func (t FuncType) String() string {
 }
 func (t FuncType) HashKey() string { return t.String() }
 
+type ArrayType struct {
+	Length      int
+	ElementType Type
+}
+
+func (ArrayType) aType()         {}
+func (t ArrayType) Size() int    { return t.ElementType.Size() * t.Length }
+func (t ArrayType) Align() int   { return t.ElementType.Align() }
+func (t ArrayType) Signed() bool { return t.ElementType.Signed() }
+func (t ArrayType) String() string {
+	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.String())
+}
+func (t ArrayType) HashKey() string {
+	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.HashKey())
+}
+
 type TypeInterner struct {
 	types map[string]Type
 }
@@ -141,4 +160,19 @@ func (t *TypeInterner) InternFuncType(args []Type, returns []Type) Type {
 
 	t.types[key] = &funcType
 	return &funcType
+}
+
+func (t *TypeInterner) InternArrayType(length int, elementType Type) Type {
+	arrayType := ArrayType{
+		Length:      length,
+		ElementType: elementType,
+	}
+	key := arrayType.HashKey()
+
+	if v, ok := t.types[key]; ok {
+		return v
+	}
+
+	t.types[key] = &arrayType
+	return &arrayType
 }
