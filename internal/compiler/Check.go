@@ -279,6 +279,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveParenExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
+	case *UnaryExpr:
+		t = checker.resolveUnaryExpr(e)
 	case *FuncTypeExpr:
 		t = checker.resolveFuncTypeExpr(e)
 	default:
@@ -378,6 +380,30 @@ func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 	}
 }
 
+func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
+	t := checker.resolveExpr(e.Base)
+	switch e.Operator.Kind() {
+	case TokenAdd:
+		fallthrough
+	case TokenSub:
+		if !typeIsArithmetic(t.Type) {
+			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for arithmetic types, but expression type is '%v'", e.Operator, t.Type))
+		}
+	case TokenNot:
+		if t.Type != BuiltinBoolType {
+			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for boolean types, but expression type is '%v'", e.Operator, t.Type))
+		}
+	case TokenXor:
+		if t.Type != BuiltinIntType && t.Type != BuiltinUintType {
+			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for integer types, but expression type is '%v'", e.Operator, t.Type))
+		}
+	default:
+		panic("invalid unary operator")
+	}
+
+	return t
+}
+
 func (checker *Checker) resolveFuncTypeExpr(e *FuncTypeExpr) *TypeAndValue {
 	processFields := func(fields []Field) (types []Type) {
 		for _, field := range fields {
@@ -425,6 +451,10 @@ func typeFromName(name Token) Type {
 	default:
 		return BuiltinVoidType
 	}
+}
+
+func typeIsArithmetic(t Type) bool {
+	return t == BuiltinIntType || t == BuiltinUintType || t == BuiltinFloat32Type || t == BuiltinFloat64Type
 }
 
 func (checker *Checker) resolveStmt(stmt Stmt) {
