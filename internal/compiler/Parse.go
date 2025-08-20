@@ -106,6 +106,14 @@ func (p *Parser) eatTokenOrError(kind TokenKind) Token {
 	return tkn
 }
 
+func (p *Parser) eatSemicolonOrError() bool {
+	// To allow complex statements to occupy a single line, a semicolon may be omitted before a closing ")" or "}".
+	if p.currentToken().Kind() != TokenRParen && p.currentToken().Kind() != TokenRBrace {
+		return p.eatTokenOrError(TokenSemicolon).valid()
+	}
+	return true
+}
+
 func (p *Parser) ParseExpr() Expr {
 	return p.parseBinaryExpr()
 }
@@ -409,7 +417,7 @@ func (p *Parser) parseFieldDecl() *Field {
 			return nil
 		}
 		tag := p.eatTokenIfKind(TokenLiteralString)
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 		return &Field{Type: embeddedType, Tag: tag}
 	}
 
@@ -422,7 +430,7 @@ func (p *Parser) parseFieldDecl() *Field {
 	}
 
 	tag := p.eatTokenIfKind(TokenLiteralString)
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 	return &Field{Names: names, Type: fieldType, Tag: tag}
 }
 
@@ -691,7 +699,7 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseContinueStmt()
 	case TokenLBrace:
 		stmt := p.parseBlockStmt()
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 		return stmt
 	case TokenIf:
 		return p.parseIfStmt()
@@ -699,7 +707,7 @@ func (p *Parser) ParseStmt() Stmt {
 		return p.parseForStmt()
 	default:
 		stmt, _ := p.parseSimpleStmt()
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 		return stmt
 	}
 }
@@ -809,7 +817,7 @@ func (p *Parser) parseReturnStmt() *ReturnStmt {
 	if p.currentToken().Kind() != TokenSemicolon && p.currentToken().Kind() != TokenRBrace {
 		exprs = p.parseExprList()
 	}
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &ReturnStmt{
 		Return: returnToken,
@@ -825,7 +833,7 @@ func (p *Parser) parseBreakStmt() *BreakStmt {
 
 	labelToken := p.eatTokenIfKind(TokenIdentifier)
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &BreakStmt{
 		Break: breakToken,
@@ -839,7 +847,7 @@ func (p *Parser) parseFallthroughStmt() *FallthroughStmt {
 		return nil
 	}
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &FallthroughStmt{
 		Fallthrough: fallthroughToken,
@@ -894,7 +902,7 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 		init = nil
 	} else {
 		if init != nil {
-			p.eatTokenOrError(TokenSemicolon)
+			p.eatSemicolonOrError()
 		}
 
 		if p.currentToken().Kind() != TokenLBrace {
@@ -909,7 +917,7 @@ func (p *Parser) parseSwitchStmt() *SwitchStmt {
 		list = append(list, p.parseSwitchCaseStmt())
 	}
 	rBraceToken := p.eatTokenOrError(TokenRBrace)
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &SwitchStmt{
 		Switch: switchToken,
@@ -927,7 +935,7 @@ func (p *Parser) parseContinueStmt() *ContinueStmt {
 
 	labelToken := p.eatTokenIfKind(TokenIdentifier)
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &ContinueStmt{
 		Continue: continueToken,
@@ -986,12 +994,12 @@ func (p *Parser) parseIfStmt() *IfStmt {
 			elseStmt = p.parseIfStmt()
 		case TokenLBrace:
 			elseStmt = p.parseBlockStmt()
-			p.eatTokenOrError(TokenSemicolon)
+			p.eatSemicolonOrError()
 		default:
 			p.file.error(NewError(p.currentToken().SourceRange(), "Expected if statement or block"))
 		}
 	} else {
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 	}
 
 	return &IfStmt{
@@ -1015,7 +1023,7 @@ func (p *Parser) parseIfHeader() (init Stmt, cond Expr) {
 
 	var condStmt Stmt
 	if p.currentToken().Kind() != TokenLBrace {
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 		if p.currentToken().Kind() != TokenLBrace {
 			condStmt, _ = p.parseSimpleStmt()
 		}
@@ -1105,14 +1113,14 @@ func (p *Parser) parseForStmt() Stmt {
 	}
 
 	// for [init]; [cond]; [post] {}
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	var cond Expr
 	if p.currentToken().Kind() != TokenSemicolon {
 		cond = p.ParseExpr()
 	}
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	var post Stmt
 	if p.currentToken().Kind() != TokenLBrace {
@@ -1155,7 +1163,7 @@ func (p *Parser) parseGenericDecl(token Token, parseFunc func() Spec) *GenericDe
 			list = append(list, s)
 		}
 		rParen := p.eatTokenOrError(TokenRParen)
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 		return &GenericDecl{
 			DeclToken: token,
 			LParen:    lParen,
@@ -1187,7 +1195,7 @@ func (p *Parser) parseTypeSpec() Spec {
 		return nil
 	}
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &TypeSpec{
 		Name:   name,
@@ -1219,7 +1227,7 @@ func (p *Parser) parseConstSpec() Spec {
 		}
 	}
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &ValueSpec{
 		LHS:    lhs,
@@ -1247,7 +1255,7 @@ func (p *Parser) parseVarSpec() Spec {
 		}
 	}
 
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &ValueSpec{
 		LHS:    lhs,
@@ -1289,7 +1297,7 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 		if body == nil {
 			return nil
 		}
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 	case TokenSemicolon:
 		p.eatToken()
 		if p.currentToken().Kind() == TokenLBrace {
@@ -1300,7 +1308,7 @@ func (p *Parser) parseFuncDecl() *FuncDecl {
 			return nil
 		}
 	default:
-		p.eatTokenOrError(TokenSemicolon)
+		p.eatSemicolonOrError()
 	}
 
 	return &FuncDecl{
@@ -1326,7 +1334,7 @@ func (p *Parser) ParsePackageClause() *PackageClause {
 		p.file.error(NewError(p.currentToken().SourceRange(), "invalid package clause name"))
 		return nil
 	}
-	p.eatTokenOrError(TokenSemicolon)
+	p.eatSemicolonOrError()
 
 	return &PackageClause{
 		Package: packageToken,
