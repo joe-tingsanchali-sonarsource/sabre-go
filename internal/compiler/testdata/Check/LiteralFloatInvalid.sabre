@@ -1,0 +1,5 @@
+package main
+
+func IsValid() float32 {
+    return 1e
+}

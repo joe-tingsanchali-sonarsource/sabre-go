@@ -1,0 +1,9 @@
+>> 	    return 1e
+>> 	           ^^ 
+Error[internal/compiler/testdata/Check/LiteralFloatInvalid.sabre:4:12]: invalid float value
+>> 	    return 1e
+>> 	           ^^ 
+Note[internal/compiler/testdata/Check/LiteralFloatInvalid.sabre:4:12]: strconv.ParseFloat: parsing "1e": invalid syntax
+>> 	    return 1e
+>> 	           ^^ 
+Error[internal/compiler/testdata/Check/LiteralFloatInvalid.sabre:4:12]: incorrect return type 'void', expected 'float32'

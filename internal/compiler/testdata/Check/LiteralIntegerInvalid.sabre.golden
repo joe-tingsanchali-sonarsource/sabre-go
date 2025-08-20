@@ -1,0 +1,9 @@
+>> 	    return 123123123123123123123123123123123123123123123123123123123123123123
+>> 	           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/LiteralIntegerInvalid.sabre:4:12]: invalid integer value
+>> 	    return 123123123123123123123123123123123123123123123123123123123123123123
+>> 	           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/LiteralIntegerInvalid.sabre:4:12]: strconv.ParseInt: parsing "123123123123123123123123123123123123123123123123123123123123123123": value out of range
+>> 	    return 123123123123123123123123123123123123123123123123123123123123123123
+>> 	           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/LiteralIntegerInvalid.sabre:4:12]: incorrect return type 'void', expected 'int'
