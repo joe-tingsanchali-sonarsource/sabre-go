@@ -1,0 +1,5 @@
+package main
+
+func foo() float32 {
+    return -1.5
+}
