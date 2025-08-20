@@ -37,7 +37,7 @@ func (sym SymbolBase) Name() string {
 	return sym.SymName
 }
 func (sym SymbolBase) Decl() Decl {
-	return sym.Decl()
+	return sym.SymDecl
 }
 func (sym SymbolBase) SourceRange() SourceRange {
 	return sym.SymSourceRange

@@ -1,0 +1,3 @@
+>> 	    return 1, 1.5
+>> 	    ^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/FuncWithWrongMultipleReturnValues.sabre:4:5]: expected 1 return values, but found 2
