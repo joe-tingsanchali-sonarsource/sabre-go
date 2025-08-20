@@ -316,32 +316,40 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 	switch e.Token.Kind() {
 	case TokenLiteralInt:
-		if i, err := strconv.ParseInt(e.Token.Value(), 0, 64); err == nil {
+		i, err := strconv.ParseInt(e.Token.Value(), 0, 64)
+		if err == nil {
 			return &TypeAndValue{
 				Mode:  AddressModeConstant,
 				Type:  BuiltinIntType,
 				Value: constant.MakeInt64(i),
 			}
-		}
-		checker.error(NewError(e.Token.SourceRange(), "invalid integer literal"))
-		return &TypeAndValue{
-			Mode:  AddressModeInvalid,
-			Type:  BuiltinVoidType,
-			Value: nil,
+		} else {
+			checker.error(NewError(e.Token.SourceRange(), "invalid integer value").
+				Note(e.Token.SourceRange(), "%v", err),
+			)
+			return &TypeAndValue{
+				Mode:  AddressModeInvalid,
+				Type:  BuiltinVoidType,
+				Value: nil,
+			}
 		}
 	case TokenLiteralFloat:
-		if f, err := strconv.ParseFloat(e.Token.Value(), 64); err == nil {
+		f, err := strconv.ParseFloat(e.Token.Value(), 64)
+		if err == nil {
 			return &TypeAndValue{
 				Mode:  AddressModeConstant,
 				Type:  BuiltinFloat32Type,
 				Value: constant.MakeFloat64(f),
 			}
-		}
-		checker.error(NewError(e.Token.SourceRange(), "invalid float literal"))
-		return &TypeAndValue{
-			Mode:  AddressModeInvalid,
-			Type:  BuiltinVoidType,
-			Value: nil,
+		} else {
+			checker.error(NewError(e.Token.SourceRange(), "invalid float value").
+				Note(e.Token.SourceRange(), "%v", err),
+			)
+			return &TypeAndValue{
+				Mode:  AddressModeInvalid,
+				Type:  BuiltinVoidType,
+				Value: nil,
+			}
 		}
 	case TokenTrue:
 		return &TypeAndValue{
