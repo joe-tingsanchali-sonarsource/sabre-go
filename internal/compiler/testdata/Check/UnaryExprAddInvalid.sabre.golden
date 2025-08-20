@@ -1,0 +1,6 @@
+>> 	    return +true
+>> 	            ^^^^ 
+Error[internal/compiler/testdata/Check/UnaryExprAddInvalid.sabre:4:13]: '+' is only allowed for arithmetic types, but expression type is 'bool'
+>> 	    return +true
+>> 	           ^^^^^ 
+Error[internal/compiler/testdata/Check/UnaryExprAddInvalid.sabre:4:12]: incorrect return type 'bool', expected 'int'

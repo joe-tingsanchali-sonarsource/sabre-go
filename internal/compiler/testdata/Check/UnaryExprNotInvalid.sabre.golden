@@ -1,0 +1,6 @@
+>> 	    return !1
+>> 	            ^ 
+Error[internal/compiler/testdata/Check/UnaryExprNotInvalid.sabre:4:13]: '!' is only allowed for boolean types, but expression type is 'int'
+>> 	    return !1
+>> 	           ^^ 
+Error[internal/compiler/testdata/Check/UnaryExprNotInvalid.sabre:4:12]: incorrect return type 'int', expected 'bool'

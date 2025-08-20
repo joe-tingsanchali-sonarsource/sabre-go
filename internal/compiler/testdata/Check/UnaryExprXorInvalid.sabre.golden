@@ -1,0 +1,6 @@
+>> 	    return ^1.5
+>> 	            ^^^ 
+Error[internal/compiler/testdata/Check/UnaryExprXorInvalid.sabre:4:13]: '^' is only allowed for integer types, but expression type is 'float32'
+>> 	    return ^1.5
+>> 	           ^^^^ 
+Error[internal/compiler/testdata/Check/UnaryExprXorInvalid.sabre:4:12]: incorrect return type 'float32', expected 'int'
