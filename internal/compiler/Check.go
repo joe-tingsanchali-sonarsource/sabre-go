@@ -390,7 +390,6 @@ func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 }
 
 func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
-	lengthType := checker.resolveExpr(e.Length)
 	elementType := checker.resolveExpr(e.ElementType)
 
 	res := &TypeAndValue{
@@ -400,21 +399,24 @@ func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
 	}
 
 	lengthAsInt := 0
-	if lengthType.Mode != AddressModeConstant {
-		checker.error(NewError(e.Length.SourceRange(), "array type length should be constant"))
-		return res
-	}
-	if lengthType.Value != nil {
-		if lengthType.Value.Kind() != constant.Int {
-			checker.error(NewError(e.Length.SourceRange(), "array type length should be integer"))
+	if e.Length != nil {
+		lengthType := checker.resolveExpr(e.Length)
+		if lengthType.Mode != AddressModeConstant {
+			checker.error(NewError(e.Length.SourceRange(), "array type length should be constant"))
 			return res
 		}
-		valueAsInt, exact := constant.Int64Val(lengthType.Value)
-		if !exact {
-			checker.error(NewError(e.Length.SourceRange(), "array type length does not fit in 64bit integer"))
-			return res
+		if lengthType.Value != nil {
+			if lengthType.Value.Kind() != constant.Int {
+				checker.error(NewError(e.Length.SourceRange(), "array type length should be integer"))
+				return res
+			}
+			valueAsInt, exact := constant.Int64Val(lengthType.Value)
+			if !exact {
+				checker.error(NewError(e.Length.SourceRange(), "array type length does not fit in 64bit integer"))
+				return res
+			}
+			lengthAsInt = int(valueAsInt)
 		}
-		lengthAsInt = int(valueAsInt)
 	}
 
 	res.Type = checker.unit.semanticInfo.TypeInterner.InternArrayType(lengthAsInt, elementType.Type)

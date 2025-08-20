@@ -1,0 +1,3 @@
+>> 	func foo(x [3.5]int) {}
+>> 	            ^^^         
+Error[internal/compiler/testdata/Check/ArrayTypeFloatLength.sabre:3:13]: array type length should be integer

@@ -127,11 +127,14 @@ type ArrayType struct {
 }
 
 func (ArrayType) aType()         {}
-func (a ArrayType) Size() int    { return a.ElementType.Size() * a.Length }
-func (a ArrayType) Align() int   { return a.ElementType.Align() }
-func (a ArrayType) Signed() bool { return a.ElementType.Signed() }
-func (a ArrayType) HashKey() string {
-	return fmt.Sprintf("[%v]%v", a.Length, a.ElementType.HashKey())
+func (t ArrayType) Size() int    { return t.ElementType.Size() * t.Length }
+func (t ArrayType) Align() int   { return t.ElementType.Align() }
+func (t ArrayType) Signed() bool { return t.ElementType.Signed() }
+func (t ArrayType) String() string {
+	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.String())
+}
+func (t ArrayType) HashKey() string {
+	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.HashKey())
 }
 
 type TypeInterner struct {
