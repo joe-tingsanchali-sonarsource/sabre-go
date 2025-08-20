@@ -323,7 +323,12 @@ func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 				Value: constant.MakeInt64(i),
 			}
 		}
-		panic("invalid integer literal")
+		checker.error(NewError(e.Token.SourceRange(), "invalid integer literal"))
+		return &TypeAndValue{
+			Mode:  AddressModeInvalid,
+			Type:  BuiltinVoidType,
+			Value: nil,
+		}
 	case TokenLiteralFloat:
 		if f, err := strconv.ParseFloat(e.Token.Value(), 64); err == nil {
 			return &TypeAndValue{
@@ -332,7 +337,12 @@ func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 				Value: constant.MakeFloat64(f),
 			}
 		}
-		panic("invalid float literal")
+		checker.error(NewError(e.Token.SourceRange(), "invalid float literal"))
+		return &TypeAndValue{
+			Mode:  AddressModeInvalid,
+			Type:  BuiltinVoidType,
+			Value: nil,
+		}
 	case TokenTrue:
 		return &TypeAndValue{
 			Mode:  AddressModeConstant,
