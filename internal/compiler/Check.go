@@ -484,7 +484,9 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 	}
 
 	res.Mode = AddressModeComputedValue
-	res.Type = funcType
+	if len(funcType.ReturnTypes) == 1 {
+		res.Type = funcType.ReturnTypes[0]
+	}
 	return res
 }
 
