@@ -417,7 +417,9 @@ func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
 	if res.Mode != AddressModeConstant {
 		res.Mode = AddressModeComputedValue
 	}
-	res.Value = checker.computeUnaryExprValue(e, t.Value)
+	if t.Value != nil {
+		res.Value = checker.computeUnaryExprValue(e, t.Value)
+	}
 	return res
 }
 
