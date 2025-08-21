@@ -107,7 +107,7 @@ func (t FuncType) String() string {
 		if i > 0 {
 			b.WriteRune(',')
 		}
-		b.WriteString(a.HashKey())
+		b.WriteString(a.String())
 	}
 	b.WriteRune(')')
 	if len(t.ReturnTypes) > 0 {
@@ -116,7 +116,7 @@ func (t FuncType) String() string {
 			if i > 0 {
 				b.WriteRune(',')
 			}
-			b.WriteString(a.HashKey())
+			b.WriteString(a.String())
 		}
 		b.WriteRune(')')
 	}
