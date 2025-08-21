@@ -486,6 +486,8 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 	res.Mode = AddressModeComputedValue
 	if len(funcType.ReturnTypes) == 1 {
 		res.Type = funcType.ReturnTypes[0]
+	} else if len(funcType.ReturnTypes) > 1 {
+		res.Type = checker.unit.semanticInfo.TypeInterner.InternTupleType(funcType.ReturnTypes)
 	}
 	return res
 }
@@ -602,14 +604,21 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 
 	var returnTypes []Type
 	for _, e := range s.Exprs {
-		returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
+		t := checker.resolveExpr(e).Type
+		if tt, ok := t.(*TupleType); ok {
+			returnTypes = append(returnTypes, tt.Types...)
+		} else {
+			returnTypes = append(returnTypes, t)
+		}
 	}
 
-	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
+	funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
+	expectedReturnTypes := checker.unit.semanticInfo.TypeInterner.InternTupleType(funcType.ReturnTypes).(*TupleType).Types
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
 			t := returnTypes[i]
 			if t != et {
+				// TODO: Off by one error reporting in test case CallExprMultipleReturnValues4.sabre
 				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t, et))
 			}
 		}

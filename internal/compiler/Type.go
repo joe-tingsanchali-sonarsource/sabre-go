@@ -140,6 +140,42 @@ func (t ArrayType) HashKey() string {
 	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.HashKey())
 }
 
+type TupleType struct {
+	Types []Type
+}
+
+func (TupleType) aType() {}
+func (t TupleType) Size() int {
+	size := 0
+	for _, typ := range t.Types {
+		size += typ.Size()
+	}
+	return size
+}
+func (t TupleType) Align() int {
+	align := 0
+	for _, typ := range t.Types {
+		if typ.Align() > align {
+			align = typ.Align()
+		}
+	}
+	return align
+}
+func (t TupleType) Signed() bool { return false }
+func (t TupleType) String() string {
+	var b strings.Builder
+	b.WriteRune('(')
+	for i, typ := range t.Types {
+		if i > 0 {
+			b.WriteRune(',')
+		}
+		b.WriteString(typ.String())
+	}
+	b.WriteRune(')')
+	return b.String()
+}
+func (t TupleType) HashKey() string { return t.String() }
+
 type TypeInterner struct {
 	types map[string]Type
 }
@@ -178,4 +214,18 @@ func (t *TypeInterner) InternArrayType(length int, elementType Type) Type {
 
 	t.types[key] = &arrayType
 	return &arrayType
+}
+
+func (t *TypeInterner) InternTupleType(types []Type) Type {
+	tupleType := TupleType{
+		Types: types,
+	}
+	key := tupleType.HashKey()
+
+	if v, ok := t.types[key]; ok {
+		return v
+	}
+
+	t.types[key] = &tupleType
+	return &tupleType
 }
