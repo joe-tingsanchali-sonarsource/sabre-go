@@ -281,6 +281,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveNamedTypeExpr(e)
 	case *UnaryExpr:
 		t = checker.resolveUnaryExpr(e)
+	case *CallExpr:
+		t = checker.resolveCallExpr(e)
 	case *ArrayTypeExpr:
 		t = checker.resolveArrayTypeExpr(e)
 	case *FuncTypeExpr:
@@ -452,6 +454,40 @@ func (checker *Checker) computeUnaryExprValue(e *UnaryExpr, v constant.Value) co
 	return nil
 }
 
+func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
+	t := checker.resolveExpr(e.Base)
+
+	res := &TypeAndValue{
+		Mode:  AddressModeInvalid,
+		Type:  BuiltinVoidType,
+		Value: nil,
+	}
+
+	if !typeIsFunc(t.Type) {
+		checker.error(NewError(e.SourceRange(), "invalid call expression, type is not a function"))
+		return res
+	}
+
+	funcType := t.Type.(*FuncType)
+	if len(e.Args) != len(funcType.ArgTypes) {
+		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ArgTypes), len(e.Args)))
+		return res
+	}
+
+	for i, a := range e.Args {
+		callArg := checker.resolveExpr(a)
+		funcArgType := funcType.ArgTypes[i]
+		if callArg.Type != funcArgType {
+			checker.error(NewError(e.SourceRange(), "incorrect argument type '%v', expected '%v'", callArg.Type, funcArgType))
+			return res
+		}
+	}
+
+	res.Mode = AddressModeComputedValue
+	res.Type = funcType
+	return res
+}
+
 func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
 	elementType := checker.resolveExpr(e.ElementType)
 
@@ -537,6 +573,11 @@ func typeFromName(name Token) Type {
 
 func typeIsArithmetic(t Type) bool {
 	return t == BuiltinIntType || t == BuiltinUintType || t == BuiltinFloat32Type || t == BuiltinFloat64Type
+}
+
+func typeIsFunc(t Type) bool {
+	_, ok := t.(*FuncType)
+	return ok
 }
 
 func (checker *Checker) resolveStmt(stmt Stmt) {
