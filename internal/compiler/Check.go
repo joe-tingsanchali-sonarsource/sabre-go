@@ -245,35 +245,7 @@ func (checker *Checker) resolveFuncSymbol(sym *FuncSymbol) *TypeAndValue {
 	checker.enterFunction(funcDecl)
 	defer checker.leaveFunction()
 
-	processFields := func(fields []Field) (types []Type) {
-		for _, field := range fields {
-			fieldType := checker.resolveExpr(field.Type)
-			if len(field.Names) > 0 {
-				for _, name := range field.Names {
-					v := NewVarSymbol(name.Token, nil, name.SourceRange())
-					v.SetResolveState(ResolveStateResolved)
-					checker.unit.semanticInfo.SetTypeOf(v, fieldType)
-					checker.addSymbol(v)
-					types = append(types, fieldType.Type)
-				}
-			} else {
-				types = append(types, fieldType.Type)
-			}
-		}
-		return types
-	}
-
-	argTypes := processFields(funcDecl.Type.Parameters.Fields)
-	var returnTypes []Type
-	if funcDecl.Type.Result != nil {
-		returnTypes = processFields(funcDecl.Type.Result.Fields)
-	}
-
-	funcType := &TypeAndValue{
-		Mode:  AddressModeType,
-		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(argTypes, returnTypes),
-		Value: nil,
-	}
+	funcType := checker.resolveFuncTypeExpr(funcDecl.Type)
 
 	checker.unit.semanticInfo.SetTypeOf(sym.SymDecl, funcType)
 	return funcType
@@ -301,12 +273,16 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 	switch e := expr.(type) {
 	case *LiteralExpr:
 		t = checker.resolveLiteralExpr(e)
+	case *IdentifierExpr:
+		t = checker.resolveIdentifierExpr(e)
 	case *ParenExpr:
 		t = checker.resolveParenExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
 	case *ArrayTypeExpr:
 		t = checker.resolveArrayTypeExpr(e)
+	case *FuncTypeExpr:
+		t = checker.resolveFuncTypeExpr(e)
 	default:
 		panic("unexpected expr type")
 	}
@@ -374,6 +350,21 @@ func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 	}
 }
 
+func (checker *Checker) resolveIdentifierExpr(e *IdentifierExpr) *TypeAndValue {
+	scope := checker.currentScope()
+	symbol := scope.Find(e.Token.Value())
+	if symbol == nil {
+		checker.error(NewError(e.SourceRange(), "undeclared identifier"))
+		return &TypeAndValue{
+			Mode:  AddressModeInvalid,
+			Type:  BuiltinVoidType,
+			Value: nil,
+		}
+	}
+
+	return checker.resolveSymbol(symbol)
+}
+
 func (checker *Checker) resolveParenExpr(e *ParenExpr) *TypeAndValue {
 	return checker.resolveExpr(e.Base)
 }
@@ -421,6 +412,38 @@ func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
 
 	res.Type = checker.unit.semanticInfo.TypeInterner.InternArrayType(lengthAsInt, elementType.Type)
 	return res
+}
+
+func (checker *Checker) resolveFuncTypeExpr(e *FuncTypeExpr) *TypeAndValue {
+	processFields := func(fields []Field) (types []Type) {
+		for _, field := range fields {
+			fieldType := checker.resolveExpr(field.Type)
+			if len(field.Names) > 0 {
+				for _, name := range field.Names {
+					v := NewVarSymbol(name.Token, nil, name.SourceRange())
+					v.SetResolveState(ResolveStateResolved)
+					checker.unit.semanticInfo.SetTypeOf(v, fieldType)
+					checker.addSymbol(v)
+					types = append(types, fieldType.Type)
+				}
+			} else {
+				types = append(types, fieldType.Type)
+			}
+		}
+		return types
+	}
+
+	argTypes := processFields(e.Parameters.Fields)
+	var returnTypes []Type
+	if e.Result != nil {
+		returnTypes = processFields(e.Result.Fields)
+	}
+
+	return &TypeAndValue{
+		Mode:  AddressModeType,
+		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(argTypes, returnTypes),
+		Value: nil,
+	}
 }
 
 func typeFromName(name Token) Type {
@@ -475,7 +498,6 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
 		if len(returnTypes) != 0 || !named {
 			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)))
-			return
 		}
 	}
 }

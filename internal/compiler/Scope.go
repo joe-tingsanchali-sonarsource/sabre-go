@@ -128,7 +128,7 @@ func (s *Scope) Add(sym Symbol) bool {
 }
 
 func (s Scope) Find(name string) Symbol {
-	for it := &s; it != nil; it = s.Parent {
+	for it := &s; it != nil; it = it.Parent {
 		if sym := it.ShallowFind(name); sym != nil {
 			return sym
 		}

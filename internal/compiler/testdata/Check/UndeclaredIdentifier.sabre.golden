@@ -1,0 +1,6 @@
+>> 	    return baz
+>> 	           ^^^ 
+Error[internal/compiler/testdata/Check/UndeclaredIdentifier.sabre:4:12]: undeclared identifier
+>> 	    return baz
+>> 	           ^^^ 
+Error[internal/compiler/testdata/Check/UndeclaredIdentifier.sabre:4:12]: incorrect return type 'void', expected 'func()'

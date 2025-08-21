@@ -1,0 +1,3 @@
+>> 	    return foo
+>> 	           ^^^ 
+Error[internal/compiler/testdata/Check/FuncWithInvalidFuncAsReturn.sabre:8:12]: incorrect return type 'func()(int)', expected 'func()'

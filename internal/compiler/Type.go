@@ -107,16 +107,19 @@ func (t FuncType) String() string {
 		if i > 0 {
 			b.WriteRune(',')
 		}
-		b.WriteString(a.HashKey())
+		b.WriteString(a.String())
 	}
-	b.WriteString(")(")
-	for i, a := range t.ReturnTypes {
-		if i > 0 {
-			b.WriteRune(',')
+	b.WriteRune(')')
+	if len(t.ReturnTypes) > 0 {
+		b.WriteRune('(')
+		for i, a := range t.ReturnTypes {
+			if i > 0 {
+				b.WriteRune(',')
+			}
+			b.WriteString(a.String())
 		}
-		b.WriteString(a.HashKey())
+		b.WriteRune(')')
 	}
-	b.WriteString(")")
 	return b.String()
 }
 func (t FuncType) HashKey() string { return t.String() }
