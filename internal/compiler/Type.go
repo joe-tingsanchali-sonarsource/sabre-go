@@ -122,7 +122,28 @@ func (t FuncType) String() string {
 	}
 	return b.String()
 }
-func (t FuncType) HashKey() string { return t.String() }
+func (t FuncType) HashKey() string {
+	var b strings.Builder
+	b.WriteString("func(")
+	for i, a := range t.ArgTypes {
+		if i > 0 {
+			b.WriteRune(',')
+		}
+		b.WriteString(a.HashKey())
+	}
+	b.WriteRune(')')
+	if len(t.ReturnTypes) > 0 {
+		b.WriteRune('(')
+		for i, a := range t.ReturnTypes {
+			if i > 0 {
+				b.WriteRune(',')
+			}
+			b.WriteString(a.HashKey())
+		}
+		b.WriteRune(')')
+	}
+	return b.String()
+}
 
 type ArrayType struct {
 	Length      int
@@ -174,7 +195,18 @@ func (t TupleType) String() string {
 	b.WriteRune(')')
 	return b.String()
 }
-func (t TupleType) HashKey() string { return t.String() }
+func (t TupleType) HashKey() string {
+	var b strings.Builder
+	b.WriteRune('(')
+	for i, typ := range t.Types {
+		if i > 0 {
+			b.WriteRune(',')
+		}
+		b.WriteString(typ.HashKey())
+	}
+	b.WriteRune(')')
+	return b.String()
+}
 
 type TypeInterner struct {
 	types map[string]Type

@@ -1,1 +1,3 @@
-
+>> 	    return foo(), 1
+>> 	    ^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/CallExprMultipleReturnValues3.sabre:8:5]: expected 3 return values, but found 2

@@ -602,23 +602,11 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	var returnTypes []Type
-	for _, e := range s.Exprs {
-		switch t := checker.resolveExpr(e).Type.(type) {
-		case *TupleType:
-			returnTypes = append(returnTypes, t.Types...)
-		default:
-			returnTypes = append(returnTypes, t)
-		}
-	}
-
-	funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
-	expectedReturnTypes := funcType.ReturnTypes
+	returnTypes := checker.resolveReturnStmtTypes(s)
+	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
-			t := returnTypes[i]
-			if t != et {
-				// TODO: Off by one error reporting in test case CallExprMultipleReturnValues4.sabre
+			if t := returnTypes[i]; t != et {
 				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t, et))
 			}
 		}
@@ -628,4 +616,20 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)))
 		}
 	}
+}
+
+func (checker *Checker) resolveReturnStmtTypes(s *ReturnStmt) (returnTypes []Type) {
+	if len(s.Exprs) == 1 {
+		t := checker.resolveExpr(s.Exprs[0]).Type
+		if tuple, ok := t.(*TupleType); ok {
+			returnTypes = append(returnTypes, tuple.Types...)
+		} else {
+			returnTypes = append(returnTypes, t)
+		}
+	} else {
+		for _, e := range s.Exprs {
+			returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
+		}
+	}
+	return
 }
