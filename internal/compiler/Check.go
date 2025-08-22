@@ -604,8 +604,6 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 
 	returnTypes, sourceRanges := checker.resolveReturnStmtTypes(s)
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
-	art := checker.unit.semanticInfo.TypeInterner.InternTupleType(returnTypes)
-	ert := checker.unit.semanticInfo.TypeInterner.InternTupleType(expectedReturnTypes)
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
 			if t := returnTypes[i]; t != et {
@@ -616,7 +614,7 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
 		if len(returnTypes) != 0 || !named {
 			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)).
-				Note(s.SourceRange(), "have %v, want %v", art, ert),
+				Note(s.SourceRange(), "have %v, want %v", TupleType{Types: returnTypes}, TupleType{Types: expectedReturnTypes}),
 			)
 		}
 	}
