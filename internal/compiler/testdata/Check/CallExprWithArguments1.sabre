@@ -1,0 +1,9 @@
+package main
+
+func foo(x int) int {
+    return x
+}
+
+func bar() int {
+    return foo(1)
+}
