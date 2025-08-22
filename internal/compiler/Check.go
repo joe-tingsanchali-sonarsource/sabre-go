@@ -604,16 +604,16 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 
 	var returnTypes []Type
 	for _, e := range s.Exprs {
-		t := checker.resolveExpr(e).Type
-		if tt, ok := t.(*TupleType); ok {
-			returnTypes = append(returnTypes, tt.Types...)
-		} else {
+		switch t := checker.resolveExpr(e).Type.(type) {
+		case *TupleType:
+			returnTypes = append(returnTypes, t.Types...)
+		default:
 			returnTypes = append(returnTypes, t)
 		}
 	}
 
 	funcType := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType)
-	expectedReturnTypes := checker.unit.semanticInfo.TypeInterner.InternTupleType(funcType.ReturnTypes).(*TupleType).Types
+	expectedReturnTypes := funcType.ReturnTypes
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
 			t := returnTypes[i]
