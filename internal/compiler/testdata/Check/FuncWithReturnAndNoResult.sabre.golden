@@ -1,3 +1,6 @@
 >> 		return 1, 2
 >> 		^^^^^^^^^^^ 
 Error[internal/compiler/testdata/Check/FuncWithReturnAndNoResult.sabre:4:2]: expected 0 return values, but found 2
+>> 		return 1, 2
+>> 		^^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/FuncWithReturnAndNoResult.sabre:4:2]: have (int,int), want ()

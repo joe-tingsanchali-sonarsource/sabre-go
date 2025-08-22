@@ -1,3 +1,0 @@
->> 	    return foo()
->> 	           ^^^^^ 
-Error[internal/compiler/testdata/Check/CallExprOneReturnValueInvalid.sabre:8:12]: incorrect return type 'float32', expected 'int'

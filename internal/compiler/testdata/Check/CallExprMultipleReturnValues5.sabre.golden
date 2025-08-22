@@ -1,0 +1,3 @@
+>> 	    return foo()
+>> 	           ^^^^^ 
+Error[internal/compiler/testdata/Check/CallExprMultipleReturnValues5.sabre:8:12]: incorrect return type 'float32', expected 'int'

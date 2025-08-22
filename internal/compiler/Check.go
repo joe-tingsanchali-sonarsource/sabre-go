@@ -602,33 +602,43 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	returnTypes := checker.resolveReturnStmtTypes(s)
+	returnTypes, sourceRanges := checker.resolveReturnStmtTypes(s)
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
+	art := checker.unit.semanticInfo.TypeInterner.InternTupleType(returnTypes)
+	ert := checker.unit.semanticInfo.TypeInterner.InternTupleType(expectedReturnTypes)
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
 			if t := returnTypes[i]; t != et {
-				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t, et))
+				checker.error(NewError(sourceRanges[i], "incorrect return type '%v', expected '%v'", t, et))
 			}
 		}
 	} else {
 		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
 		if len(returnTypes) != 0 || !named {
-			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)))
+			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)).
+				Note(s.SourceRange(), "have %v, want %v", art, ert),
+			)
 		}
 	}
 }
 
-func (checker *Checker) resolveReturnStmtTypes(s *ReturnStmt) (returnTypes []Type) {
+func (checker *Checker) resolveReturnStmtTypes(s *ReturnStmt) (returnTypes []Type, sourceRanges []SourceRange) {
 	if len(s.Exprs) == 1 {
-		t := checker.resolveExpr(s.Exprs[0]).Type
-		if tuple, ok := t.(*TupleType); ok {
-			returnTypes = append(returnTypes, tuple.Types...)
-		} else {
+		e := s.Exprs[0]
+		switch t := checker.resolveExpr(e).Type.(type) {
+		case *TupleType:
+			for _, tt := range t.Types {
+				returnTypes = append(returnTypes, tt)
+				sourceRanges = append(sourceRanges, e.SourceRange())
+			}
+		default:
 			returnTypes = append(returnTypes, t)
+			sourceRanges = append(sourceRanges, e.SourceRange())
 		}
 	} else {
 		for _, e := range s.Exprs {
 			returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
+			sourceRanges = append(sourceRanges, e.SourceRange())
 		}
 	}
 	return
