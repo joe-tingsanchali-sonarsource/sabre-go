@@ -9,6 +9,7 @@ type TypeProperties struct {
 	Size, Align                           int
 	Signed, Integral, Floating            bool
 	HasBitOps, HasArithmetic, HasLogicOps bool
+	HasCompare, HasEquality               bool
 }
 
 type Type interface {
@@ -39,6 +40,7 @@ func (BoolType) Properties() TypeProperties {
 		Size:        1,
 		Align:       4,
 		HasLogicOps: true,
+		HasEquality: true,
 	}
 }
 func (BoolType) String() string    { return "bool" }
@@ -57,6 +59,8 @@ func (IntType) Properties() TypeProperties {
 		Integral:      true,
 		HasBitOps:     true,
 		HasArithmetic: true,
+		HasCompare:    true,
+		HasEquality:   true,
 	}
 }
 func (IntType) String() string    { return "int" }
@@ -74,6 +78,8 @@ func (UintType) Properties() TypeProperties {
 		Integral:      true,
 		HasBitOps:     true,
 		HasArithmetic: true,
+		HasCompare:    true,
+		HasEquality:   true,
 	}
 }
 func (UintType) String() string    { return "uint" }
@@ -91,6 +97,8 @@ func (Float32Type) Properties() TypeProperties {
 		Signed:        true,
 		Floating:      true,
 		HasArithmetic: true,
+		HasCompare:    true,
+		HasEquality:   true,
 	}
 }
 func (Float32Type) String() string    { return "float32" }
@@ -108,6 +116,8 @@ func (Float64Type) Properties() TypeProperties {
 		Signed:        true,
 		Floating:      true,
 		HasArithmetic: true,
+		HasCompare:    true,
+		HasEquality:   true,
 	}
 }
 func (Float64Type) String() string    { return "float64" }
@@ -165,11 +175,8 @@ type ArrayType struct {
 func (ArrayType) aType() {}
 func (t ArrayType) Properties() TypeProperties {
 	return TypeProperties{
-		Size:     t.ElementType.Properties().Size * t.Length,
-		Align:    t.ElementType.Properties().Align,
-		Signed:   t.ElementType.Properties().Signed,
-		Integral: t.ElementType.Properties().Integral,
-		Floating: t.ElementType.Properties().Floating,
+		Size:  t.ElementType.Properties().Size * t.Length,
+		Align: t.ElementType.Properties().Align,
 	}
 }
 func (t ArrayType) String() string {

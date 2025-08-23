@@ -172,7 +172,7 @@ func (a *TypeAndValue) CompareWithType(op TokenKind, b *TypeAndValue, t Type) (r
 		Type: t,
 	}
 	if res.Mode == AddressModeConstant {
-		res.Value = constant.BinaryOp(a.Value, convertTokenToConstantToken(op), b.Value)
+		res.Value = constant.MakeBool(constant.Compare(a.Value, convertTokenToConstantToken(op), b.Value))
 	}
 	return
 }
@@ -497,7 +497,7 @@ func (checker *Checker) resolveBinaryExpr(e *BinaryExpr) *TypeAndValue {
 		return true
 	}
 
-	hasTypeFeature := func(e Expr, t Type, hasFeature bool, capName string) bool {
+	hasTypeProperty := func(e Expr, t Type, hasFeature bool, capName string) bool {
 		if !hasFeature {
 			checker.error(NewError(
 				e.SourceRange(),
@@ -518,25 +518,33 @@ func (checker *Checker) resolveBinaryExpr(e *BinaryExpr) *TypeAndValue {
 	switch e.Operator.Kind() {
 	case TokenOr, TokenAnd, TokenXor, TokenAndNot:
 		if equalTypes(e, lhsType.Type, rhsType.Type) &&
-			hasTypeFeature(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") &&
-			hasTypeFeature(e.RHS, rhsType.Type, rhsType.Type.Properties().HasBitOps, "bitwise operations") {
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasBitOps, "bitwise operations") {
 			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
 		}
 	case TokenAdd, TokenSub, TokenMul, TokenDiv, TokenMod:
 		if equalTypes(e, lhsType.Type, rhsType.Type) &&
-			hasTypeFeature(e.LHS, lhsType.Type, lhsType.Type.Properties().HasArithmetic, "arithmetic operations") &&
-			hasTypeFeature(e.RHS, rhsType.Type, rhsType.Type.Properties().HasArithmetic, "arithmetic operations") {
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasArithmetic, "arithmetic operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasArithmetic, "arithmetic operations") {
 			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
 		}
 	case TokenLOr, TokenLAnd:
 		if equalTypes(e, lhsType.Type, rhsType.Type) &&
-			hasTypeFeature(e.LHS, lhsType.Type, lhsType.Type.Properties().HasLogicOps, "logic operations") &&
-			hasTypeFeature(e.RHS, rhsType.Type, rhsType.Type.Properties().HasLogicOps, "logic operations") {
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasLogicOps, "logic operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasLogicOps, "logic operations") {
 			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
 		}
-	case TokenLT, TokenGT, TokenLE, TokenGE, TokenEQ, TokenNE:
-		if equalTypes(e, lhsType.Type, rhsType.Type) {
-			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+	case TokenLT, TokenGT, TokenLE, TokenGE:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasCompare, "compare operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasCompare, "compare operations") {
+			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, BuiltinBoolType)
+		}
+	case TokenEQ, TokenNE:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasEquality, "equality operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasEquality, "equality operations") {
+			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, BuiltinBoolType)
 		}
 	case TokenShl, TokenShr:
 		if !rhsType.Type.Properties().Integral {
@@ -557,7 +565,7 @@ func (checker *Checker) resolveBinaryExpr(e *BinaryExpr) *TypeAndValue {
 			return invalidResult
 		}
 
-		if hasTypeFeature(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") {
+		if hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") {
 			return lhsType.ShiftWithType(e.Operator.Kind(), rhsType, lhsType.Type)
 		}
 	default:

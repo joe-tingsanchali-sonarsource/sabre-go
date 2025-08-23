@@ -1,0 +1,23 @@
+package main
+
+func correct() {
+	1 + 2
+	1 - 2
+	1 * 2
+	1 / 2
+	1 % 2
+}
+
+func incorrect() {
+	1 + 2.5
+	1 - 2.5
+	1 * 2.5
+	1 / 2.5
+	1 % 2.5
+
+	1 + true
+	1 - true
+	1 * true
+	1 / true
+	1 % true
+}

@@ -1,0 +1,18 @@
+>> 		1 >> 2.5
+>> 		     ^^^ 
+Error[internal/compiler/testdata/Check/BinaryShiftOps.sabre:9:7]: shift operator should be integral type instead of 'float32'
+>> 		2.5 << 1
+>> 		^^^      
+Error[internal/compiler/testdata/Check/BinaryShiftOps.sabre:10:2]: type 'float32' doesn't support bitwise operations
+>> 		true >> 1
+>> 		^^^^      
+Error[internal/compiler/testdata/Check/BinaryShiftOps.sabre:12:2]: type 'bool' doesn't support bitwise operations
+>> 		1 << true
+>> 		     ^^^^ 
+Error[internal/compiler/testdata/Check/BinaryShiftOps.sabre:13:7]: shift operator should be integral type instead of 'bool'
+>> 		2.5 >> true
+>> 		       ^^^^ 
+Error[internal/compiler/testdata/Check/BinaryShiftOps.sabre:15:9]: shift operator should be integral type instead of 'bool'
+>> 		true << 2.5
+>> 		        ^^^ 
+Error[internal/compiler/testdata/Check/BinaryShiftOps.sabre:16:10]: shift operator should be integral type instead of 'float32'

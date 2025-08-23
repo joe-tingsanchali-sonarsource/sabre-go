@@ -1,0 +1,30 @@
+>> 		1 + 2.5
+>> 		^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:12:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+>> 		1 - 2.5
+>> 		^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:13:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+>> 		1 * 2.5
+>> 		^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:14:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+>> 		1 / 2.5
+>> 		^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:15:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+>> 		1 % 2.5
+>> 		^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:16:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+>> 		1 + true
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:18:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+>> 		1 - true
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:19:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+>> 		1 * true
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:20:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+>> 		1 / true
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:21:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+>> 		1 % true
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryArithmeticOps.sabre:22:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'

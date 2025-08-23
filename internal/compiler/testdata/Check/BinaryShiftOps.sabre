@@ -1,0 +1,17 @@
+package main
+
+func correct() {
+	1 >> 1
+	1 << 1
+}
+
+func incorrect() {
+	1 >> 2.5
+	2.5 << 1
+
+	true >> 1
+	1 << true
+
+	2.5 >> true
+	true << 2.5
+}
