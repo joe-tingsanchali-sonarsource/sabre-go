@@ -163,6 +163,8 @@ func (a *TypeAndValue) UnaryOp(op TokenKind) (res *TypeAndValue) {
 	}
 	if res.Mode == AddressModeConstant {
 		res.Value = constant.UnaryOp(convertTokenToConstantToken(op), a.Value, 0)
+	} else {
+		res.Mode = AddressModeComputedValue
 	}
 	return
 }
@@ -398,12 +400,12 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveIdentifierExpr(e)
 	case *ParenExpr:
 		t = checker.resolveParenExpr(e)
+	case *UnaryExpr:
+		t = checker.resolveUnaryExpr(e)
 	case *BinaryExpr:
 		t = checker.resolveBinaryExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
-	case *UnaryExpr:
-		t = checker.resolveUnaryExpr(e)
 	case *CallExpr:
 		t = checker.resolveCallExpr(e)
 	case *ArrayTypeExpr:
@@ -642,9 +644,6 @@ func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
 		panic("invalid unary operator")
 	}
 
-	if t.Mode != AddressModeConstant {
-		t.Mode = AddressModeComputedValue
-	}
 	return t.UnaryOp(e.Operator.Kind())
 }
 
