@@ -663,10 +663,11 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 
 	var arguments []Type
 	for _, a := range e.Args {
-		if tt, ok := checker.resolveExpr(a).Type.(*TupleType); ok {
+		t := checker.resolveExpr(a)
+		if tt, ok := t.Type.(*TupleType); ok {
 			arguments = append(arguments, tt.Types...)
 		} else {
-			arguments = append(arguments, checker.resolveExpr(a).Type)
+			arguments = append(arguments, t.Type)
 		}
 	}
 
