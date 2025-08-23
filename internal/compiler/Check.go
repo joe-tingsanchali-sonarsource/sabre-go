@@ -420,7 +420,7 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 	return t
 }
 
-func (checker *Checker) resolveExprList(exprs []Expr) (types []Type, sourceRanges []SourceRange) {
+func (checker *Checker) resolveAndUnpackTypesFromExprList(exprs []Expr) (types []Type, sourceRanges []SourceRange) {
 	if len(exprs) == 1 {
 		e := exprs[0]
 		switch t := checker.resolveExpr(e).Type.(type) {
@@ -683,7 +683,7 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 		return res
 	}
 
-	arguments, sourceRanges := checker.resolveExprList(e.Args)
+	arguments, sourceRanges := checker.resolveAndUnpackTypesFromExprList(e.Args)
 	funcType := t.Type.(*FuncType)
 	if len(arguments) != len(funcType.ParameterTypes) {
 		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ParameterTypes), len(e.Args)).
@@ -810,7 +810,7 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	returnTypes, sourceRanges := checker.resolveExprList(s.Exprs)
+	returnTypes, sourceRanges := checker.resolveAndUnpackTypesFromExprList(s.Exprs)
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
