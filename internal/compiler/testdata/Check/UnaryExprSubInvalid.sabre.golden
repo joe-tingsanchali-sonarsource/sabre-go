@@ -1,0 +1,6 @@
+>> 	    return -false
+>> 	            ^^^^^ 
+Error[internal/compiler/testdata/Check/UnaryExprSubInvalid.sabre:4:13]: type 'bool' doesn't support arithmetic operations
+>> 	    return -false
+>> 	           ^^^^^^ 
+Error[internal/compiler/testdata/Check/UnaryExprSubInvalid.sabre:4:12]: incorrect return type 'void', expected 'int'

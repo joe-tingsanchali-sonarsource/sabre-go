@@ -1,0 +1,6 @@
+>> 	    return !1
+>> 	            ^ 
+Error[internal/compiler/testdata/Check/UnaryExprNotInvalid.sabre:4:13]: type 'int' doesn't support logic operations
+>> 	    return !1
+>> 	           ^^ 
+Error[internal/compiler/testdata/Check/UnaryExprNotInvalid.sabre:4:12]: incorrect return type 'void', expected 'bool'
