@@ -81,7 +81,6 @@ func (a AddressMode) Combine(b AddressMode) AddressMode {
 	default:
 		panic("unexpected AddressMode")
 	}
-	return AddressModeInvalid
 }
 
 type TypeAndValue struct {
@@ -142,6 +141,8 @@ func convertTokenToConstantToken(op TokenKind) token.Token {
 		return token.XOR
 	case TokenOr:
 		return token.OR
+	case TokenNot:
+		return token.NOT
 	case TokenAnd:
 		return token.AND
 	case TokenAndNot:
@@ -153,6 +154,17 @@ func convertTokenToConstantToken(op TokenKind) token.Token {
 	default:
 		panic("unexpected binary operator token")
 	}
+}
+
+func (a *TypeAndValue) UnaryOp(op TokenKind) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode,
+		Type: a.Type,
+	}
+	if res.Mode == AddressModeConstant {
+		res.Value = constant.UnaryOp(convertTokenToConstantToken(op), a.Value, 0)
+	}
+	return
 }
 
 func (a *TypeAndValue) BinaryOpWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
@@ -590,71 +602,48 @@ func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
 	t := checker.resolveExpr(e.Base)
 
-	res := &TypeAndValue{
+	invalidResult := &TypeAndValue{
 		Mode:  AddressModeInvalid,
-		Type:  t.Type,
+		Type:  BuiltinVoidType,
 		Value: nil,
+	}
+
+	hasTypeProperty := func(e Expr, t Type, hasFeature bool, capName string) bool {
+		if !hasFeature {
+			checker.error(NewError(
+				e.SourceRange(),
+				"type '%v' doesn't support %v",
+				t,
+				capName,
+			))
+			return false
+		}
+		return true
 	}
 
 	switch e.Operator.Kind() {
 	case TokenAdd:
 		fallthrough
 	case TokenSub:
-		if !typeIsArithmetic(t.Type) {
-			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for arithmetic types, but expression type is '%v'", e.Operator, t.Type))
-			return res
+		if !hasTypeProperty(e.Base, t.Type, t.Type.Properties().HasArithmetic, "arithmetic operations") {
+			return invalidResult
 		}
 	case TokenNot:
-		if t.Type != BuiltinBoolType {
-			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for boolean types, but expression type is '%v'", e.Operator, t.Type))
-			return res
+		if !hasTypeProperty(e.Base, t.Type, t.Type.Properties().HasLogicOps, "logic operations") {
+			return invalidResult
 		}
 	case TokenXor:
-		if t.Type != BuiltinIntType && t.Type != BuiltinUintType {
-			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for integer types, but expression type is '%v'", e.Operator, t.Type))
-			return res
+		if !hasTypeProperty(e.Base, t.Type, t.Type.Properties().HasBitOps, "bitwise operations") {
+			return invalidResult
 		}
 	default:
 		panic("invalid unary operator")
 	}
 
-	res.Mode = t.Mode
-	if res.Mode != AddressModeConstant {
-		res.Mode = AddressModeComputedValue
+	if t.Mode != AddressModeConstant {
+		t.Mode = AddressModeComputedValue
 	}
-	if t.Value != nil {
-		res.Value = checker.computeUnaryExprValue(e, t.Value)
-	}
-	return res
-}
-
-func (checker *Checker) computeUnaryExprValue(e *UnaryExpr, v constant.Value) constant.Value {
-	switch e.Operator.Kind() {
-	case TokenAdd:
-		return v
-	case TokenSub:
-		if v.Kind() == constant.Int {
-			if valueAsInt, exact := constant.Int64Val(v); exact {
-				return constant.MakeInt64(-valueAsInt)
-			}
-			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit integer"))
-		} else if v.Kind() == constant.Float {
-			if valueAsFloat, exact := constant.Float64Val(v); exact {
-				return constant.MakeFloat64(-valueAsFloat)
-			}
-			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit float"))
-		}
-	case TokenNot:
-		return constant.MakeBool(!constant.BoolVal(v))
-	case TokenXor:
-		if v.Kind() == constant.Int {
-			if valueAsInt, exact := constant.Int64Val(v); exact {
-				return constant.MakeInt64(^valueAsInt)
-			}
-			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit integer"))
-		}
-	}
-	return nil
+	return t.UnaryOp(e.Operator.Kind())
 }
 
 func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
@@ -738,10 +727,6 @@ func typeFromName(name Token) Type {
 	default:
 		return BuiltinVoidType
 	}
-}
-
-func typeIsArithmetic(t Type) bool {
-	return t == BuiltinIntType || t == BuiltinUintType || t == BuiltinFloat32Type || t == BuiltinFloat64Type
 }
 
 func (checker *Checker) resolveStmt(stmt Stmt) {
