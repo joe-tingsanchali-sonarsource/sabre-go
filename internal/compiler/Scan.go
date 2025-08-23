@@ -288,7 +288,8 @@ func (s *Scanner) Scan() Token {
 		}
 
 		switch token.kind {
-		case TokenIdentifier, TokenBreak, TokenFallthrough, TokenContinue, TokenReturn:
+		// in go spec, true and false are considered identifiers, but we don't, maybe we should fix that later
+		case TokenIdentifier, TokenBreak, TokenFallthrough, TokenContinue, TokenReturn, TokenTrue, TokenFalse:
 			insertSemi = true
 		}
 

@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"go/constant"
+	"go/token"
 	"strconv"
 )
 
@@ -57,6 +58,31 @@ const (
 	AddressModeComputedValue
 )
 
+func (a AddressMode) Combine(b AddressMode) AddressMode {
+	switch a {
+	case AddressModeInvalid, AddressModeNoValue, AddressModeType:
+		return a
+	case AddressModeConstant:
+		switch b {
+		case AddressModeConstant:
+			return AddressModeConstant
+		case AddressModeVariable, AddressModeComputedValue:
+			return AddressModeComputedValue
+		default:
+			return b
+		}
+	case AddressModeVariable, AddressModeComputedValue:
+		switch b {
+		case AddressModeConstant, AddressModeVariable, AddressModeComputedValue:
+			return AddressModeComputedValue
+		default:
+			return b
+		}
+	default:
+		panic("unexpected AddressMode")
+	}
+}
+
 type TypeAndValue struct {
 	Mode  AddressMode
 	Type  Type
@@ -81,6 +107,101 @@ func (v TypeAndValue) IsAddressable() bool {
 
 func (v TypeAndValue) IsAssignable() bool {
 	return v.Mode == AddressModeVariable
+}
+
+func convertTokenToConstantToken(op TokenKind) token.Token {
+	switch op {
+	case TokenLT:
+		return token.LSS
+	case TokenGT:
+		return token.GTR
+	case TokenLE:
+		return token.LEQ
+	case TokenGE:
+		return token.GEQ
+	case TokenEQ:
+		return token.EQL
+	case TokenNE:
+		return token.NEQ
+	case TokenAdd:
+		return token.ADD
+	case TokenSub:
+		return token.SUB
+	case TokenMul:
+		return token.MUL
+	case TokenDiv:
+		return token.QUO
+	case TokenMod:
+		return token.REM
+	case TokenLOr:
+		return token.LOR
+	case TokenLAnd:
+		return token.LAND
+	case TokenXor:
+		return token.XOR
+	case TokenOr:
+		return token.OR
+	case TokenNot:
+		return token.NOT
+	case TokenAnd:
+		return token.AND
+	case TokenAndNot:
+		return token.AND_NOT
+	case TokenShl:
+		return token.SHL
+	case TokenShr:
+		return token.SHR
+	default:
+		panic("unexpected binary operator token")
+	}
+}
+
+func (a *TypeAndValue) UnaryOp(op TokenKind) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode,
+		Type: a.Type,
+	}
+	if res.Mode == AddressModeConstant {
+		res.Value = constant.UnaryOp(convertTokenToConstantToken(op), a.Value, 0)
+	}
+	return
+}
+
+func (a *TypeAndValue) BinaryOpWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode.Combine(b.Mode),
+		Type: t,
+	}
+	if res.Mode == AddressModeConstant {
+		res.Value = constant.BinaryOp(a.Value, convertTokenToConstantToken(op), b.Value)
+	}
+	return
+}
+
+func (a *TypeAndValue) CompareWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode.Combine(b.Mode),
+		Type: t,
+	}
+	if res.Mode == AddressModeConstant {
+		res.Value = constant.MakeBool(constant.Compare(a.Value, convertTokenToConstantToken(op), b.Value))
+	}
+	return
+}
+
+func (a *TypeAndValue) ShiftWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode.Combine(b.Mode),
+		Type: t,
+	}
+	if res.Mode == AddressModeConstant {
+		v, ok := constant.Int64Val(b.Value)
+		if !ok || v < 0 {
+			panic("unexpected shift value")
+		}
+		res.Value = constant.Shift(a.Value, convertTokenToConstantToken(op), uint(v))
+	}
+	return
 }
 
 type Checker struct {
@@ -277,6 +398,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveIdentifierExpr(e)
 	case *ParenExpr:
 		t = checker.resolveParenExpr(e)
+	case *BinaryExpr:
+		t = checker.resolveBinaryExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
 	case *UnaryExpr:
@@ -373,6 +496,100 @@ func (checker *Checker) resolveParenExpr(e *ParenExpr) *TypeAndValue {
 	return checker.resolveExpr(e.Base)
 }
 
+func (checker *Checker) resolveBinaryExpr(e *BinaryExpr) *TypeAndValue {
+	lhsType := checker.resolveExpr(e.LHS)
+	rhsType := checker.resolveExpr(e.RHS)
+
+	equalTypes := func(e Expr, lhsType, rhsType Type) bool {
+		if lhsType != rhsType {
+			checker.error(NewError(
+				e.SourceRange(),
+				"type mismatch in binary expression, lhs is '%v' and rhs is '%v'",
+				lhsType,
+				rhsType,
+			))
+			return false
+		}
+		return true
+	}
+
+	hasTypeProperty := func(e Expr, t Type, hasFeature bool, capName string) bool {
+		if !hasFeature {
+			checker.error(NewError(
+				e.SourceRange(),
+				"type '%v' doesn't support %v",
+				t,
+				capName,
+			))
+			return false
+		}
+		return true
+	}
+
+	invalidResult := &TypeAndValue{
+		Mode: AddressModeInvalid,
+		Type: BuiltinVoidType,
+	}
+
+	switch e.Operator.Kind() {
+	case TokenOr, TokenAnd, TokenXor, TokenAndNot:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasBitOps, "bitwise operations") {
+			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	case TokenAdd, TokenSub, TokenMul, TokenDiv, TokenMod:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasArithmetic, "arithmetic operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasArithmetic, "arithmetic operations") {
+			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	case TokenLOr, TokenLAnd:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasLogicOps, "logic operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasLogicOps, "logic operations") {
+			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	case TokenLT, TokenGT, TokenLE, TokenGE:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasCompare, "compare operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasCompare, "compare operations") {
+			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, BuiltinBoolType)
+		}
+	case TokenEQ, TokenNE:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasEquality, "equality operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasEquality, "equality operations") {
+			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, BuiltinBoolType)
+		}
+	case TokenShl, TokenShr:
+		if !rhsType.Type.Properties().Integral {
+			checker.error(NewError(
+				e.RHS.SourceRange(),
+				"shift operator should be integral type instead of '%v'",
+				rhsType.Type,
+			))
+			return invalidResult
+		}
+
+		if rhsType.Mode == AddressModeConstant && constant.Compare(rhsType.Value, token.LSS, constant.MakeInt64(0)) {
+			checker.error(NewError(
+				e.RHS.SourceRange(),
+				"shift operator should not be negative, but it has value '%v'",
+				rhsType.Value,
+			))
+			return invalidResult
+		}
+
+		if hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") {
+			return lhsType.ShiftWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	default:
+		panic("unexpected binary operator")
+	}
+	return invalidResult
+}
+
 func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 	if e.Package.valid() {
 		panic("we don't support packages yet")
@@ -387,71 +604,48 @@ func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {
 func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
 	t := checker.resolveExpr(e.Base)
 
-	res := &TypeAndValue{
+	invalidResult := &TypeAndValue{
 		Mode:  AddressModeInvalid,
-		Type:  t.Type,
+		Type:  BuiltinVoidType,
 		Value: nil,
+	}
+
+	hasTypeProperty := func(e Expr, t Type, hasFeature bool, capName string) bool {
+		if !hasFeature {
+			checker.error(NewError(
+				e.SourceRange(),
+				"type '%v' doesn't support %v",
+				t,
+				capName,
+			))
+			return false
+		}
+		return true
 	}
 
 	switch e.Operator.Kind() {
 	case TokenAdd:
 		fallthrough
 	case TokenSub:
-		if !typeIsArithmetic(t.Type) {
-			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for arithmetic types, but expression type is '%v'", e.Operator, t.Type))
-			return res
+		if !hasTypeProperty(e.Base, t.Type, t.Type.Properties().HasArithmetic, "arithmetic operations") {
+			return invalidResult
 		}
 	case TokenNot:
-		if t.Type != BuiltinBoolType {
-			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for boolean types, but expression type is '%v'", e.Operator, t.Type))
-			return res
+		if !hasTypeProperty(e.Base, t.Type, t.Type.Properties().HasLogicOps, "logic operations") {
+			return invalidResult
 		}
 	case TokenXor:
-		if t.Type != BuiltinIntType && t.Type != BuiltinUintType {
-			checker.error(NewError(e.Base.SourceRange(), "'%v' is only allowed for integer types, but expression type is '%v'", e.Operator, t.Type))
-			return res
+		if !hasTypeProperty(e.Base, t.Type, t.Type.Properties().HasBitOps, "bitwise operations") {
+			return invalidResult
 		}
 	default:
 		panic("invalid unary operator")
 	}
 
-	res.Mode = t.Mode
-	if res.Mode != AddressModeConstant {
-		res.Mode = AddressModeComputedValue
+	if t.Mode != AddressModeConstant {
+		t.Mode = AddressModeComputedValue
 	}
-	if t.Value != nil {
-		res.Value = checker.computeUnaryExprValue(e, t.Value)
-	}
-	return res
-}
-
-func (checker *Checker) computeUnaryExprValue(e *UnaryExpr, v constant.Value) constant.Value {
-	switch e.Operator.Kind() {
-	case TokenAdd:
-		return v
-	case TokenSub:
-		if v.Kind() == constant.Int {
-			if valueAsInt, exact := constant.Int64Val(v); exact {
-				return constant.MakeInt64(-valueAsInt)
-			}
-			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit integer"))
-		} else if v.Kind() == constant.Float {
-			if valueAsFloat, exact := constant.Float64Val(v); exact {
-				return constant.MakeFloat64(-valueAsFloat)
-			}
-			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit float"))
-		}
-	case TokenNot:
-		return constant.MakeBool(!constant.BoolVal(v))
-	case TokenXor:
-		if v.Kind() == constant.Int {
-			if valueAsInt, exact := constant.Int64Val(v); exact {
-				return constant.MakeInt64(^valueAsInt)
-			}
-			checker.error(NewError(e.Base.SourceRange(), "unary expression value does not fit in 64bit integer"))
-		}
-	}
-	return nil
+	return t.UnaryOp(e.Operator.Kind())
 }
 
 func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
@@ -573,10 +767,6 @@ func typeFromName(name Token) Type {
 	default:
 		return BuiltinVoidType
 	}
-}
-
-func typeIsArithmetic(t Type) bool {
-	return t == BuiltinIntType || t == BuiltinUintType || t == BuiltinFloat32Type || t == BuiltinFloat64Type
 }
 
 func typeIsFunc(t Type) bool {
