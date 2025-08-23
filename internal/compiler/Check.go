@@ -420,6 +420,28 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 	return t
 }
 
+func (checker *Checker) resolveExprList(exprs []Expr) (types []Type, sourceRanges []SourceRange) {
+	if len(exprs) == 1 {
+		e := exprs[0]
+		switch t := checker.resolveExpr(e).Type.(type) {
+		case *TupleType:
+			for _, tt := range t.Types {
+				types = append(types, tt)
+				sourceRanges = append(sourceRanges, e.SourceRange())
+			}
+		default:
+			types = append(types, t)
+			sourceRanges = append(sourceRanges, e.SourceRange())
+		}
+	} else {
+		for _, e := range exprs {
+			types = append(types, checker.resolveExpr(e).Type)
+			sourceRanges = append(sourceRanges, e.SourceRange())
+		}
+	}
+	return
+}
+
 func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
 	switch e.Token.Kind() {
 	case TokenLiteralInt:
@@ -661,26 +683,19 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 		return res
 	}
 
-	var arguments []Type
-	for _, a := range e.Args {
-		t := checker.resolveExpr(a)
-		if tt, ok := t.Type.(*TupleType); ok {
-			arguments = append(arguments, tt.Types...)
-		} else {
-			arguments = append(arguments, t.Type)
-		}
-	}
-
+	arguments, sourceRanges := checker.resolveExprList(e.Args)
 	funcType := t.Type.(*FuncType)
 	if len(arguments) != len(funcType.ParameterTypes) {
-		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ParameterTypes), len(e.Args)))
+		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ParameterTypes), len(e.Args)).
+			Note(e.SourceRange(), "have %v, want %v", TupleType{Types: arguments}, TupleType{Types: funcType.ParameterTypes}),
+		)
 		return res
 	}
 
 	for i, a := range arguments {
 		parameterType := funcType.ParameterTypes[i]
 		if a != parameterType {
-			checker.error(NewError(e.SourceRange(), "incorrect argument type '%v', expected '%v'", a, parameterType))
+			checker.error(NewError(sourceRanges[i], "incorrect argument type '%v', expected '%v'", a, parameterType))
 			return res
 		}
 	}
@@ -795,7 +810,7 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	returnTypes, sourceRanges := checker.resolveReturnStmtTypes(s)
+	returnTypes, sourceRanges := checker.resolveExprList(s.Exprs)
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
@@ -811,26 +826,4 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 			)
 		}
 	}
-}
-
-func (checker *Checker) resolveReturnStmtTypes(s *ReturnStmt) (returnTypes []Type, sourceRanges []SourceRange) {
-	if len(s.Exprs) == 1 {
-		e := s.Exprs[0]
-		switch t := checker.resolveExpr(e).Type.(type) {
-		case *TupleType:
-			for _, tt := range t.Types {
-				returnTypes = append(returnTypes, tt)
-				sourceRanges = append(sourceRanges, e.SourceRange())
-			}
-		default:
-			returnTypes = append(returnTypes, t)
-			sourceRanges = append(sourceRanges, e.SourceRange())
-		}
-	} else {
-		for _, e := range s.Exprs {
-			returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
-			sourceRanges = append(sourceRanges, e.SourceRange())
-		}
-	}
-	return
 }
