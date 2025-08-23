@@ -656,22 +656,30 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 		Value: nil,
 	}
 
-	if !typeIsFunc(t.Type) {
-		checker.error(NewError(e.SourceRange(), "invalid call expression, type is not a function"))
+	if _, ok := t.Type.(*FuncType); !ok {
+		checker.error(NewError(e.SourceRange(), "invalid call expression, expected function type but found '%v'", t.Type))
 		return res
 	}
 
+	var callArgs []Type
+	for _, a := range e.Args {
+		if tt, ok := checker.resolveExpr(a).Type.(*TupleType); ok {
+			callArgs = append(callArgs, tt.Types...)
+		} else {
+			callArgs = append(callArgs, checker.resolveExpr(a).Type)
+		}
+	}
+
 	funcType := t.Type.(*FuncType)
-	if len(e.Args) != len(funcType.ArgTypes) {
+	if len(callArgs) != len(funcType.ArgTypes) {
 		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ArgTypes), len(e.Args)))
 		return res
 	}
 
-	for i, a := range e.Args {
-		callArg := checker.resolveExpr(a)
+	for i, a := range callArgs {
 		funcArgType := funcType.ArgTypes[i]
-		if callArg.Type != funcArgType {
-			checker.error(NewError(e.SourceRange(), "incorrect argument type '%v', expected '%v'", callArg.Type, funcArgType))
+		if a != funcArgType {
+			checker.error(NewError(e.SourceRange(), "incorrect argument type '%v', expected '%v'", a, funcArgType))
 			return res
 		}
 	}
@@ -766,11 +774,6 @@ func typeFromName(name Token) Type {
 	default:
 		return BuiltinVoidType
 	}
-}
-
-func typeIsFunc(t Type) bool {
-	_, ok := t.(*FuncType)
-	return ok
 }
 
 func (checker *Checker) resolveStmt(stmt Stmt) {

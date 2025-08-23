@@ -1,0 +1,5 @@
+package main
+
+func bar(x int) (int, float32) {
+    return x()
+}

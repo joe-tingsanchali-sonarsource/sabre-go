@@ -1,0 +1,9 @@
+>> 	    return x()
+>> 	           ^^^ 
+Error[internal/compiler/testdata/Check/CallExpr1.sabre:4:12]: invalid call expression, expected function type but found 'int'
+>> 	    return x()
+>> 	    ^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/CallExpr1.sabre:4:5]: expected 2 return values, but found 1
+>> 	    return x()
+>> 	    ^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/CallExpr1.sabre:4:5]: have (void), want (int,float32)
