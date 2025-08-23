@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"go/constant"
+	"go/token"
 	"strconv"
 )
 
@@ -57,6 +58,32 @@ const (
 	AddressModeComputedValue
 )
 
+func (a AddressMode) Combine(b AddressMode) AddressMode {
+	switch a {
+	case AddressModeInvalid, AddressModeNoValue, AddressModeType:
+		return a
+	case AddressModeConstant:
+		switch b {
+		case AddressModeConstant:
+			return AddressModeConstant
+		case AddressModeVariable, AddressModeComputedValue:
+			return AddressModeComputedValue
+		default:
+			return b
+		}
+	case AddressModeVariable, AddressModeComputedValue:
+		switch b {
+		case AddressModeConstant, AddressModeVariable, AddressModeComputedValue:
+			return AddressModeComputedValue
+		default:
+			return b
+		}
+	default:
+		panic("unexpected AddressMode")
+	}
+	return AddressModeInvalid
+}
+
 type TypeAndValue struct {
 	Mode  AddressMode
 	Type  Type
@@ -81,6 +108,88 @@ func (v TypeAndValue) IsAddressable() bool {
 
 func (v TypeAndValue) IsAssignable() bool {
 	return v.Mode == AddressModeVariable
+}
+
+func convertTokenToConstantToken(op TokenKind) token.Token {
+	switch op {
+	case TokenLT:
+		return token.LSS
+	case TokenGT:
+		return token.GTR
+	case TokenLE:
+		return token.LEQ
+	case TokenGE:
+		return token.GEQ
+	case TokenEQ:
+		return token.EQL
+	case TokenNE:
+		return token.NEQ
+	case TokenAdd:
+		return token.ADD
+	case TokenSub:
+		return token.SUB
+	case TokenMul:
+		return token.MUL
+	case TokenDiv:
+		return token.QUO
+	case TokenMod:
+		return token.REM
+	case TokenLOr:
+		return token.LOR
+	case TokenLAnd:
+		return token.LAND
+	case TokenXor:
+		return token.XOR
+	case TokenOr:
+		return token.OR
+	case TokenAnd:
+		return token.AND
+	case TokenAndNot:
+		return token.AND_NOT
+	case TokenShl:
+		return token.SHL
+	case TokenShr:
+		return token.SHR
+	default:
+		panic("unexpected binary operator token")
+	}
+}
+
+func (a *TypeAndValue) BinaryOpWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode.Combine(b.Mode),
+		Type: t,
+	}
+	if res.Mode == AddressModeConstant {
+		res.Value = constant.BinaryOp(a.Value, convertTokenToConstantToken(op), b.Value)
+	}
+	return
+}
+
+func (a *TypeAndValue) CompareWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode.Combine(b.Mode),
+		Type: t,
+	}
+	if res.Mode == AddressModeConstant {
+		res.Value = constant.MakeBool(constant.Compare(a.Value, convertTokenToConstantToken(op), b.Value))
+	}
+	return
+}
+
+func (a *TypeAndValue) ShiftWithType(op TokenKind, b *TypeAndValue, t Type) (res *TypeAndValue) {
+	res = &TypeAndValue{
+		Mode: a.Mode.Combine(b.Mode),
+		Type: t,
+	}
+	if res.Mode == AddressModeConstant {
+		v, ok := constant.Int64Val(b.Value)
+		if !ok || v < 0 {
+			panic("unexpected shift value")
+		}
+		res.Value = constant.Shift(a.Value, convertTokenToConstantToken(op), uint(v))
+	}
+	return
 }
 
 type Checker struct {
@@ -277,6 +386,8 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveIdentifierExpr(e)
 	case *ParenExpr:
 		t = checker.resolveParenExpr(e)
+	case *BinaryExpr:
+		t = checker.resolveBinaryExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
 	case *ArrayTypeExpr:
@@ -367,6 +478,100 @@ func (checker *Checker) resolveIdentifierExpr(e *IdentifierExpr) *TypeAndValue {
 
 func (checker *Checker) resolveParenExpr(e *ParenExpr) *TypeAndValue {
 	return checker.resolveExpr(e.Base)
+}
+
+func (checker *Checker) resolveBinaryExpr(e *BinaryExpr) *TypeAndValue {
+	lhsType := checker.resolveExpr(e.LHS)
+	rhsType := checker.resolveExpr(e.RHS)
+
+	equalTypes := func(e Expr, lhsType, rhsType Type) bool {
+		if lhsType != rhsType {
+			checker.error(NewError(
+				e.SourceRange(),
+				"type mismatch in binary expression, lhs is '%v' and rhs is '%v'",
+				lhsType,
+				rhsType,
+			))
+			return false
+		}
+		return true
+	}
+
+	hasTypeProperty := func(e Expr, t Type, hasFeature bool, capName string) bool {
+		if !hasFeature {
+			checker.error(NewError(
+				e.SourceRange(),
+				"type '%v' doesn't support %v",
+				t,
+				capName,
+			))
+			return false
+		}
+		return true
+	}
+
+	invalidResult := &TypeAndValue{
+		Mode: AddressModeInvalid,
+		Type: BuiltinVoidType,
+	}
+
+	switch e.Operator.Kind() {
+	case TokenOr, TokenAnd, TokenXor, TokenAndNot:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasBitOps, "bitwise operations") {
+			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	case TokenAdd, TokenSub, TokenMul, TokenDiv, TokenMod:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasArithmetic, "arithmetic operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasArithmetic, "arithmetic operations") {
+			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	case TokenLOr, TokenLAnd:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasLogicOps, "logic operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasLogicOps, "logic operations") {
+			return lhsType.BinaryOpWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	case TokenLT, TokenGT, TokenLE, TokenGE:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasCompare, "compare operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasCompare, "compare operations") {
+			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, BuiltinBoolType)
+		}
+	case TokenEQ, TokenNE:
+		if equalTypes(e, lhsType.Type, rhsType.Type) &&
+			hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasEquality, "equality operations") &&
+			hasTypeProperty(e.RHS, rhsType.Type, rhsType.Type.Properties().HasEquality, "equality operations") {
+			return lhsType.CompareWithType(e.Operator.Kind(), rhsType, BuiltinBoolType)
+		}
+	case TokenShl, TokenShr:
+		if !rhsType.Type.Properties().Integral {
+			checker.error(NewError(
+				e.RHS.SourceRange(),
+				"shift operator should be integral type instead of '%v'",
+				rhsType.Type,
+			))
+			return invalidResult
+		}
+
+		if rhsType.Mode == AddressModeConstant && constant.Compare(rhsType.Value, token.LSS, constant.MakeInt64(0)) {
+			checker.error(NewError(
+				e.RHS.SourceRange(),
+				"shift operator should not be negative, but it has value '%v'",
+				rhsType.Value,
+			))
+			return invalidResult
+		}
+
+		if hasTypeProperty(e.LHS, lhsType.Type, lhsType.Type.Properties().HasBitOps, "bitwise operations") {
+			return lhsType.ShiftWithType(e.Operator.Kind(), rhsType, lhsType.Type)
+		}
+	default:
+		panic("unexpected binary operator")
+	}
+	return invalidResult
 }
 
 func (checker *Checker) resolveNamedTypeExpr(e *NamedTypeExpr) *TypeAndValue {

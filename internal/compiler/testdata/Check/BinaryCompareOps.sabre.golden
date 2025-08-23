@@ -1,0 +1,18 @@
+>> 		return true > true
+>> 		       ^^^^        
+Error[internal/compiler/testdata/Check/BinaryCompareOps.sabre:13:9]: type 'bool' doesn't support compare operations
+>> 		return true > true
+>> 		       ^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryCompareOps.sabre:13:9]: incorrect return type 'void', expected 'bool'
+>> 		return 1 < 1.5
+>> 		       ^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryCompareOps.sabre:14:9]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+>> 		return 1 < 1.5
+>> 		       ^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryCompareOps.sabre:14:9]: incorrect return type 'void', expected 'bool'
+>> 		return 1 > true
+>> 		       ^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryCompareOps.sabre:15:9]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+>> 		return 1 > true
+>> 		       ^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryCompareOps.sabre:15:9]: incorrect return type 'void', expected 'bool'
