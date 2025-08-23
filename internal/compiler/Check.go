@@ -678,13 +678,13 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 		Value: nil,
 	}
 
-	if _, ok := t.Type.(*FuncType); !ok {
+	funcType, ok := t.Type.(*FuncType)
+	if !ok {
 		checker.error(NewError(e.SourceRange(), "invalid call expression, expected function type but found '%v'", t.Type))
 		return res
 	}
 
 	arguments, sourceRanges := checker.resolveAndUnpackTypesFromExprList(e.Args)
-	funcType := t.Type.(*FuncType)
 	if len(arguments) != len(funcType.ParameterTypes) {
 		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ParameterTypes), len(e.Args)).
 			Note(e.SourceRange(), "have %v, want %v", TupleType{Types: arguments}, TupleType{Types: funcType.ParameterTypes}),
@@ -762,7 +762,7 @@ func (checker *Checker) resolveFuncTypeExpr(e *FuncTypeExpr) *TypeAndValue {
 		return types
 	}
 
-	argTypes := processFields(e.Parameters.Fields)
+	parameterTypes := processFields(e.Parameters.Fields)
 	var returnTypes []Type
 	if e.Result != nil {
 		returnTypes = processFields(e.Result.Fields)
@@ -770,7 +770,7 @@ func (checker *Checker) resolveFuncTypeExpr(e *FuncTypeExpr) *TypeAndValue {
 
 	return &TypeAndValue{
 		Mode:  AddressModeType,
-		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(argTypes, returnTypes),
+		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(parameterTypes, returnTypes),
 		Value: nil,
 	}
 }
