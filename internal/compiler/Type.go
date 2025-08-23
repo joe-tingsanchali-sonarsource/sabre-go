@@ -5,11 +5,15 @@ import (
 	"strings"
 )
 
+type TypeProperties struct {
+	Size, Align                           int
+	Signed, Integral, Floating            bool
+	HasBitOps, HasArithmetic, HasLogicOps bool
+}
+
 type Type interface {
 	aType()
-	Size() int
-	Align() int
-	Signed() bool
+	Properties() TypeProperties
 	String() string
 	HashKey() string
 }
@@ -18,10 +22,10 @@ type VoidType struct{}
 
 var BuiltinVoidType = &VoidType{}
 
-func (VoidType) aType()            {}
-func (VoidType) Size() int         { return 0 }
-func (VoidType) Align() int        { return 0 }
-func (VoidType) Signed() bool      { return false }
+func (VoidType) aType() {}
+func (VoidType) Properties() TypeProperties {
+	return TypeProperties{}
+}
 func (VoidType) String() string    { return "void" }
 func (t VoidType) HashKey() string { return t.String() }
 
@@ -29,10 +33,14 @@ type BoolType struct{}
 
 var BuiltinBoolType = &BoolType{}
 
-func (BoolType) aType()            {}
-func (BoolType) Size() int         { return 1 }
-func (BoolType) Align() int        { return 4 }
-func (BoolType) Signed() bool      { return false }
+func (BoolType) aType() {}
+func (BoolType) Properties() TypeProperties {
+	return TypeProperties{
+		Size:        1,
+		Align:       4,
+		HasLogicOps: true,
+	}
+}
 func (BoolType) String() string    { return "bool" }
 func (t BoolType) HashKey() string { return t.String() }
 
@@ -40,10 +48,17 @@ type IntType struct{}
 
 var BuiltinIntType = &IntType{}
 
-func (IntType) aType()            {}
-func (IntType) Size() int         { return 4 }
-func (IntType) Align() int        { return 4 }
-func (IntType) Signed() bool      { return true }
+func (IntType) aType() {}
+func (IntType) Properties() TypeProperties {
+	return TypeProperties{
+		Size:          4,
+		Align:         4,
+		Signed:        true,
+		Integral:      true,
+		HasBitOps:     true,
+		HasArithmetic: true,
+	}
+}
 func (IntType) String() string    { return "int" }
 func (t IntType) HashKey() string { return t.String() }
 
@@ -51,10 +66,16 @@ type UintType struct{}
 
 var BuiltinUintType = &UintType{}
 
-func (UintType) aType()            {}
-func (UintType) Size() int         { return 4 }
-func (UintType) Align() int        { return 4 }
-func (UintType) Signed() bool      { return false }
+func (UintType) aType() {}
+func (UintType) Properties() TypeProperties {
+	return TypeProperties{
+		Size:          4,
+		Align:         4,
+		Integral:      true,
+		HasBitOps:     true,
+		HasArithmetic: true,
+	}
+}
 func (UintType) String() string    { return "uint" }
 func (t UintType) HashKey() string { return t.String() }
 
@@ -62,10 +83,16 @@ type Float32Type struct{}
 
 var BuiltinFloat32Type = &Float32Type{}
 
-func (Float32Type) aType()            {}
-func (Float32Type) Size() int         { return 4 }
-func (Float32Type) Align() int        { return 4 }
-func (Float32Type) Signed() bool      { return true }
+func (Float32Type) aType() {}
+func (Float32Type) Properties() TypeProperties {
+	return TypeProperties{
+		Size:          4,
+		Align:         4,
+		Signed:        true,
+		Floating:      true,
+		HasArithmetic: true,
+	}
+}
 func (Float32Type) String() string    { return "float32" }
 func (t Float32Type) HashKey() string { return t.String() }
 
@@ -73,10 +100,16 @@ type Float64Type struct{}
 
 var BuiltinFloat64Type = &Float64Type{}
 
-func (Float64Type) aType()            {}
-func (Float64Type) Size() int         { return 8 }
-func (Float64Type) Align() int        { return 8 }
-func (Float64Type) Signed() bool      { return true }
+func (Float64Type) aType() {}
+func (Float64Type) Properties() TypeProperties {
+	return TypeProperties{
+		Size:          8,
+		Align:         8,
+		Signed:        true,
+		Floating:      true,
+		HasArithmetic: true,
+	}
+}
 func (Float64Type) String() string    { return "float64" }
 func (t Float64Type) HashKey() string { return t.String() }
 
@@ -84,10 +117,10 @@ type StringType struct{}
 
 var BuiltinStringType = &StringType{}
 
-func (StringType) aType()            {}
-func (StringType) Size() int         { return 0 }
-func (StringType) Align() int        { return 0 }
-func (StringType) Signed() bool      { return false }
+func (StringType) aType() {}
+func (StringType) Properties() TypeProperties {
+	return TypeProperties{}
+}
 func (StringType) String() string    { return "string" }
 func (t StringType) HashKey() string { return t.String() }
 
@@ -96,10 +129,10 @@ type FuncType struct {
 	ReturnTypes []Type
 }
 
-func (FuncType) aType()       {}
-func (FuncType) Size() int    { return 0 }
-func (FuncType) Align() int   { return 0 }
-func (FuncType) Signed() bool { return false }
+func (FuncType) aType() {}
+func (FuncType) Properties() TypeProperties {
+	return TypeProperties{}
+}
 func (t FuncType) String() string {
 	var b strings.Builder
 	b.WriteString("func(")
@@ -129,10 +162,16 @@ type ArrayType struct {
 	ElementType Type
 }
 
-func (ArrayType) aType()         {}
-func (t ArrayType) Size() int    { return t.ElementType.Size() * t.Length }
-func (t ArrayType) Align() int   { return t.ElementType.Align() }
-func (t ArrayType) Signed() bool { return t.ElementType.Signed() }
+func (ArrayType) aType() {}
+func (t ArrayType) Properties() TypeProperties {
+	return TypeProperties{
+		Size:     t.ElementType.Properties().Size * t.Length,
+		Align:    t.ElementType.Properties().Align,
+		Signed:   t.ElementType.Properties().Signed,
+		Integral: t.ElementType.Properties().Integral,
+		Floating: t.ElementType.Properties().Floating,
+	}
+}
 func (t ArrayType) String() string {
 	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.String())
 }
