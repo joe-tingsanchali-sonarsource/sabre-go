@@ -1,24 +1,24 @@
 >> 		1 | 2.5
 >> 		^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:11:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:11:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
 >> 		1 & 2.5
 >> 		^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:12:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:12:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
 >> 		1 ^ 2.5
 >> 		^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:13:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:13:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
 >> 		1 &^ 2.5
 >> 		^^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:14:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:14:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'float32'
 >> 		1 | true
 >> 		^^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:16:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:16:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
 >> 		1 & true
 >> 		^^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:17:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:17:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
 >> 		1 ^ true
 >> 		^^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:18:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:18:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
 >> 		1 &^ true
 >> 		^^^^^^^^^ 
-Error[internal/compiler/testdata/Check/BinaryBitOp.sabre:19:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
+Error[internal/compiler/testdata/Check/BinaryBitOps.sabre:19:2]: type mismatch in binary expression, lhs is 'int' and rhs is 'bool'
