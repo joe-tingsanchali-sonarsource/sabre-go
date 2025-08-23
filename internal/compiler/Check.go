@@ -661,25 +661,25 @@ func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
 		return res
 	}
 
-	var callArgs []Type
+	var arguments []Type
 	for _, a := range e.Args {
 		if tt, ok := checker.resolveExpr(a).Type.(*TupleType); ok {
-			callArgs = append(callArgs, tt.Types...)
+			arguments = append(arguments, tt.Types...)
 		} else {
-			callArgs = append(callArgs, checker.resolveExpr(a).Type)
+			arguments = append(arguments, checker.resolveExpr(a).Type)
 		}
 	}
 
 	funcType := t.Type.(*FuncType)
-	if len(callArgs) != len(funcType.ArgTypes) {
-		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ArgTypes), len(e.Args)))
+	if len(arguments) != len(funcType.ParameterTypes) {
+		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ParameterTypes), len(e.Args)))
 		return res
 	}
 
-	for i, a := range callArgs {
-		funcArgType := funcType.ArgTypes[i]
-		if a != funcArgType {
-			checker.error(NewError(e.SourceRange(), "incorrect argument type '%v', expected '%v'", a, funcArgType))
+	for i, a := range arguments {
+		parameterType := funcType.ParameterTypes[i]
+		if a != parameterType {
+			checker.error(NewError(e.SourceRange(), "incorrect argument type '%v', expected '%v'", a, parameterType))
 			return res
 		}
 	}

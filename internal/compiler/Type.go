@@ -135,8 +135,8 @@ func (StringType) String() string    { return "string" }
 func (t StringType) HashKey() string { return t.String() }
 
 type FuncType struct {
-	ArgTypes    []Type
-	ReturnTypes []Type
+	ParameterTypes []Type
+	ReturnTypes    []Type
 }
 
 func (FuncType) aType() {}
@@ -146,7 +146,7 @@ func (FuncType) Properties() TypeProperties {
 func (t FuncType) String() string {
 	var b strings.Builder
 	b.WriteString("func(")
-	for i, a := range t.ArgTypes {
+	for i, a := range t.ParameterTypes {
 		if i > 0 {
 			b.WriteRune(',')
 		}
@@ -168,7 +168,7 @@ func (t FuncType) String() string {
 func (t FuncType) HashKey() string {
 	var b strings.Builder
 	b.WriteString("func(")
-	for i, a := range t.ArgTypes {
+	for i, a := range t.ParameterTypes {
 		if i > 0 {
 			b.WriteRune(',')
 		}
@@ -263,8 +263,8 @@ func NewTypeInterner() *TypeInterner {
 
 func (t *TypeInterner) InternFuncType(args []Type, returns []Type) Type {
 	funcType := FuncType{
-		ArgTypes:    args,
-		ReturnTypes: returns,
+		ParameterTypes: args,
+		ReturnTypes:    returns,
 	}
 	key := funcType.HashKey()
 
