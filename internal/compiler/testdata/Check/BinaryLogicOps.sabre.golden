@@ -1,0 +1,12 @@
+>> 		1 && 1
+>> 		^      
+Error[internal/compiler/testdata/Check/BinaryLogicOps.sabre:9:2]: type 'int' doesn't support logic operations
+>> 		true && 1.5
+>> 		^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryLogicOps.sabre:10:2]: type mismatch in binary expression, lhs is 'bool' and rhs is 'float32'
+>> 		2 || 2
+>> 		^      
+Error[internal/compiler/testdata/Check/BinaryLogicOps.sabre:12:2]: type 'int' doesn't support logic operations
+>> 		false && 1.5
+>> 		^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/BinaryLogicOps.sabre:13:2]: type mismatch in binary expression, lhs is 'bool' and rhs is 'float32'

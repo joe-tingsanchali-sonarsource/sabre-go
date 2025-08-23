@@ -1,0 +1,14 @@
+package main
+
+func correct() {
+	true && true
+	false || false
+}
+
+func incorrect() {
+	1 && 1
+	true && 1.5
+
+	2 || 2
+	false && 1.5
+}

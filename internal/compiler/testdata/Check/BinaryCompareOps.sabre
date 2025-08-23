@@ -1,0 +1,16 @@
+package main
+
+func correct() bool {
+	return 1 < 1
+	return 1 > 1 + 1
+	return 1 <= 1
+	return 1 >= 1 * 10
+	return 1 == 1 >> 1
+	return 1 != 1
+}
+
+func incorrect() bool {
+	return true > true
+	return 1 < 1.5
+	return 1 > true
+}
