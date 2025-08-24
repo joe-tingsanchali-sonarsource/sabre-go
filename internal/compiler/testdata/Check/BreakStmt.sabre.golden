@@ -1,0 +1,3 @@
+>> 	    break
+>> 	    ^^^^^ 
+Error[internal/compiler/testdata/Check/BreakStmt.sabre:4:5]: break statement not within loop or switch
