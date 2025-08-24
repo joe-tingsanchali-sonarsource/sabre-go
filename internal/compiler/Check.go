@@ -238,6 +238,16 @@ func (checker *Checker) currentFunction() *FuncDecl {
 	return checker.functionStack[len(checker.functionStack)-1]
 }
 
+func (checker *Checker) findScopeWithName(name string) *Scope {
+	for i := len(checker.scopeStack) - 1; i >= 0; i-- {
+		scope := checker.scopeStack[i]
+		if scope.Name == name {
+			return scope
+		}
+	}
+	return nil
+}
+
 func (checker *Checker) enterFunction(function *FuncDecl) {
 	if function == nil {
 		panic("entering nil function")
@@ -798,6 +808,12 @@ func (checker *Checker) resolveStmt(stmt Stmt) {
 		checker.resolveExpr(s.Expr)
 	case *ReturnStmt:
 		checker.resolveReturnStmt(s)
+	case *BreakStmt:
+		checker.resolveBreakStmt(s)
+	case *FallthroughStmt:
+		checker.resolveFallthroughStmt(s)
+	case *ContinueStmt:
+		checker.resolveContinueStmt(s)
 	case *BlockStmt:
 		checker.resolveBlockStmt(s)
 	default:
@@ -838,4 +854,48 @@ func (checker *Checker) resolveBlockStmt(s *BlockStmt) {
 	for _, stmt := range s.Stmts {
 		checker.resolveStmt(stmt)
 	}
+}
+
+func (checker *Checker) resolveBreakStmt(s *BreakStmt) {
+	if s.Label.valid() {
+		panic("labeled break not supported yet")
+	}
+
+	switchScope := checker.findScopeWithName("switch")
+	if switchScope != nil {
+		return
+	}
+
+	forScope := checker.findScopeWithName("for")
+	if forScope != nil {
+		return
+	}
+
+	checker.error(NewError(s.SourceRange(), "break statement not within loop or switch"))
+}
+
+// TODO:
+// Once we have switch cases and for loops implemented, we need to add the following checks for fallthrough statements:
+// Check fallthrough is the last statement in a switch case and that the next case exists.
+// Check fallthrough is not in the default case.
+func (checker *Checker) resolveFallthroughStmt(s *FallthroughStmt) {
+	switchScope := checker.findScopeWithName("switch")
+	if switchScope != nil {
+		return
+	}
+
+	checker.error(NewError(s.SourceRange(), "fallthrough statement not within switch"))
+}
+
+func (checker *Checker) resolveContinueStmt(s *ContinueStmt) {
+	if s.Label.valid() {
+		panic("labeled continue not supported yet")
+	}
+
+	forScope := checker.findScopeWithName("for")
+	if forScope != nil {
+		return
+	}
+
+	checker.error(NewError(s.SourceRange(), "continue statement not within for loop"))
 }

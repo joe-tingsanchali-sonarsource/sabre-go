@@ -1,0 +1,3 @@
+>> 	    continue
+>> 	    ^^^^^^^^ 
+Error[internal/compiler/testdata/Check/continueStmt.sabre:4:5]: continue statement not within for loop
