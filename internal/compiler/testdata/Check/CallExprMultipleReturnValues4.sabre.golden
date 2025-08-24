@@ -1,0 +1,6 @@
+>> 	    return foo(), 1.5
+>> 	    ^^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/CallExprMultipleReturnValues4.sabre:8:5]: expected 3 return values, but found 2
+>> 	    return foo(), 1.5
+>> 	    ^^^^^^^^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/CallExprMultipleReturnValues4.sabre:8:5]: have ((int,float32),float32), want (int,int,float32)

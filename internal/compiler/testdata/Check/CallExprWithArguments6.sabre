@@ -1,0 +1,16 @@
+package main
+
+func foo() (int, int) {
+	return 1, 2
+}
+
+func foo2() (int, int) {
+	return foo()
+}
+
+func bar(a, b int) {
+}
+
+func main() {
+	bar(foo2())
+}

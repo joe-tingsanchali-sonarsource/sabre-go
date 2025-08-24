@@ -135,8 +135,8 @@ func (StringType) String() string    { return "string" }
 func (t StringType) HashKey() string { return t.String() }
 
 type FuncType struct {
-	ArgTypes    []Type
-	ReturnTypes []Type
+	ParameterTypes []Type
+	ReturnTypes    []Type
 }
 
 func (FuncType) aType() {}
@@ -146,7 +146,7 @@ func (FuncType) Properties() TypeProperties {
 func (t FuncType) String() string {
 	var b strings.Builder
 	b.WriteString("func(")
-	for i, a := range t.ArgTypes {
+	for i, a := range t.ParameterTypes {
 		if i > 0 {
 			b.WriteRune(',')
 		}
@@ -165,7 +165,28 @@ func (t FuncType) String() string {
 	}
 	return b.String()
 }
-func (t FuncType) HashKey() string { return t.String() }
+func (t FuncType) HashKey() string {
+	var b strings.Builder
+	b.WriteString("func(")
+	for i, a := range t.ParameterTypes {
+		if i > 0 {
+			b.WriteRune(',')
+		}
+		b.WriteString(a.HashKey())
+	}
+	b.WriteRune(')')
+	if len(t.ReturnTypes) > 0 {
+		b.WriteRune('(')
+		for i, a := range t.ReturnTypes {
+			if i > 0 {
+				b.WriteRune(',')
+			}
+			b.WriteString(a.HashKey())
+		}
+		b.WriteRune(')')
+	}
+	return b.String()
+}
 
 type ArrayType struct {
 	Length      int
@@ -186,6 +207,50 @@ func (t ArrayType) HashKey() string {
 	return fmt.Sprintf("[%v]%v", t.Length, t.ElementType.HashKey())
 }
 
+type TupleType struct {
+	Types []Type
+}
+
+func (TupleType) aType() {}
+func (t TupleType) Properties() TypeProperties {
+	size := 0
+	align := 0
+	for _, typ := range t.Types {
+		size += typ.Properties().Size
+		if typ.Properties().Align > align {
+			align = typ.Properties().Align
+		}
+	}
+	return TypeProperties{
+		Size:  size,
+		Align: align,
+	}
+}
+func (t TupleType) String() string {
+	var b strings.Builder
+	b.WriteRune('(')
+	for i, typ := range t.Types {
+		if i > 0 {
+			b.WriteRune(',')
+		}
+		b.WriteString(typ.String())
+	}
+	b.WriteRune(')')
+	return b.String()
+}
+func (t TupleType) HashKey() string {
+	var b strings.Builder
+	b.WriteRune('(')
+	for i, typ := range t.Types {
+		if i > 0 {
+			b.WriteRune(',')
+		}
+		b.WriteString(typ.HashKey())
+	}
+	b.WriteRune(')')
+	return b.String()
+}
+
 type TypeInterner struct {
 	types map[string]Type
 }
@@ -198,8 +263,8 @@ func NewTypeInterner() *TypeInterner {
 
 func (t *TypeInterner) InternFuncType(args []Type, returns []Type) Type {
 	funcType := FuncType{
-		ArgTypes:    args,
-		ReturnTypes: returns,
+		ParameterTypes: args,
+		ReturnTypes:    returns,
 	}
 	key := funcType.HashKey()
 
@@ -224,4 +289,18 @@ func (t *TypeInterner) InternArrayType(length int, elementType Type) Type {
 
 	t.types[key] = &arrayType
 	return &arrayType
+}
+
+func (t *TypeInterner) InternTupleType(types []Type) Type {
+	tupleType := TupleType{
+		Types: types,
+	}
+	key := tupleType.HashKey()
+
+	if v, ok := t.types[key]; ok {
+		return v
+	}
+
+	t.types[key] = &tupleType
+	return &tupleType
 }

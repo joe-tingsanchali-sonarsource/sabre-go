@@ -1,3 +1,6 @@
 >> 	    return
 >> 	    ^^^^^^ 
 Error[internal/compiler/testdata/Check/FuncWithMissingReturnValue.sabre:4:5]: expected 1 return values, but found 0
+>> 	    return
+>> 	    ^^^^^^ 
+Note[internal/compiler/testdata/Check/FuncWithMissingReturnValue.sabre:4:5]: have (), want (int)

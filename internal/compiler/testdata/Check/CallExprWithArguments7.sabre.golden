@@ -1,0 +1,6 @@
+>> 		bar(foo2(), 1)
+>> 		^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/CallExprWithArguments7.sabre:15:2]: expected 3 arguments, but found 2
+>> 		bar(foo2(), 1)
+>> 		^^^^^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/CallExprWithArguments7.sabre:15:2]: have ((int,int),int), want (int,int,int)

@@ -1,0 +1,6 @@
+>> 	    return foo(1, 2)
+>> 	    ^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/CallExprWithArguments3.sabre:8:5]: expected 1 return values, but found 2
+>> 	    return foo(1, 2)
+>> 	    ^^^^^^^^^^^^^^^^ 
+Note[internal/compiler/testdata/Check/CallExprWithArguments3.sabre:8:5]: have (int,int), want (int)

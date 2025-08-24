@@ -400,12 +400,14 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 		t = checker.resolveIdentifierExpr(e)
 	case *ParenExpr:
 		t = checker.resolveParenExpr(e)
+	case *UnaryExpr:
+		t = checker.resolveUnaryExpr(e)
 	case *BinaryExpr:
 		t = checker.resolveBinaryExpr(e)
 	case *NamedTypeExpr:
 		t = checker.resolveNamedTypeExpr(e)
-	case *UnaryExpr:
-		t = checker.resolveUnaryExpr(e)
+	case *CallExpr:
+		t = checker.resolveCallExpr(e)
 	case *ArrayTypeExpr:
 		t = checker.resolveArrayTypeExpr(e)
 	case *FuncTypeExpr:
@@ -416,6 +418,28 @@ func (checker *Checker) resolveExpr(expr Expr) (t *TypeAndValue) {
 
 	checker.unit.semanticInfo.SetTypeOf(expr, t)
 	return t
+}
+
+func (checker *Checker) resolveAndUnpackTypesFromExprList(exprs []Expr) (types []Type, sourceRanges []SourceRange) {
+	if len(exprs) == 1 {
+		e := exprs[0]
+		switch t := checker.resolveExpr(e).Type.(type) {
+		case *TupleType:
+			for _, tt := range t.Types {
+				types = append(types, tt)
+				sourceRanges = append(sourceRanges, e.SourceRange())
+			}
+		default:
+			types = append(types, t)
+			sourceRanges = append(sourceRanges, e.SourceRange())
+		}
+	} else {
+		for _, e := range exprs {
+			types = append(types, checker.resolveExpr(e).Type)
+			sourceRanges = append(sourceRanges, e.SourceRange())
+		}
+	}
+	return
 }
 
 func (checker *Checker) resolveLiteralExpr(e *LiteralExpr) *TypeAndValue {
@@ -645,6 +669,46 @@ func (checker *Checker) resolveUnaryExpr(e *UnaryExpr) *TypeAndValue {
 	return t.UnaryOp(e.Operator.Kind())
 }
 
+func (checker *Checker) resolveCallExpr(e *CallExpr) *TypeAndValue {
+	t := checker.resolveExpr(e.Base)
+
+	res := &TypeAndValue{
+		Mode:  AddressModeInvalid,
+		Type:  BuiltinVoidType,
+		Value: nil,
+	}
+
+	funcType, ok := t.Type.(*FuncType)
+	if !ok {
+		checker.error(NewError(e.SourceRange(), "invalid call expression, expected function type but found '%v'", t.Type))
+		return res
+	}
+
+	arguments, sourceRanges := checker.resolveAndUnpackTypesFromExprList(e.Args)
+	if len(arguments) != len(funcType.ParameterTypes) {
+		checker.error(NewError(e.SourceRange(), "expected %v arguments, but found %v", len(funcType.ParameterTypes), len(e.Args)).
+			Note(e.SourceRange(), "have %v, want %v", TupleType{Types: arguments}, TupleType{Types: funcType.ParameterTypes}),
+		)
+		return res
+	}
+
+	for i, a := range arguments {
+		parameterType := funcType.ParameterTypes[i]
+		if a != parameterType {
+			checker.error(NewError(sourceRanges[i], "incorrect argument type '%v', expected '%v'", a, parameterType))
+			return res
+		}
+	}
+
+	res.Mode = AddressModeComputedValue
+	if len(funcType.ReturnTypes) == 1 {
+		res.Type = funcType.ReturnTypes[0]
+	} else if len(funcType.ReturnTypes) > 1 {
+		res.Type = checker.unit.semanticInfo.TypeInterner.InternTupleType(funcType.ReturnTypes)
+	}
+	return res
+}
+
 func (checker *Checker) resolveArrayTypeExpr(e *ArrayTypeExpr) *TypeAndValue {
 	elementType := checker.resolveExpr(e.ElementType)
 
@@ -698,7 +762,7 @@ func (checker *Checker) resolveFuncTypeExpr(e *FuncTypeExpr) *TypeAndValue {
 		return types
 	}
 
-	argTypes := processFields(e.Parameters.Fields)
+	parameterTypes := processFields(e.Parameters.Fields)
 	var returnTypes []Type
 	if e.Result != nil {
 		returnTypes = processFields(e.Result.Fields)
@@ -706,7 +770,7 @@ func (checker *Checker) resolveFuncTypeExpr(e *FuncTypeExpr) *TypeAndValue {
 
 	return &TypeAndValue{
 		Mode:  AddressModeType,
-		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(argTypes, returnTypes),
+		Type:  checker.unit.semanticInfo.TypeInterner.InternFuncType(parameterTypes, returnTypes),
 		Value: nil,
 	}
 }
@@ -746,23 +810,20 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 		return
 	}
 
-	var returnTypes []Type
-	for _, e := range s.Exprs {
-		returnTypes = append(returnTypes, checker.resolveExpr(e).Type)
-	}
-
+	returnTypes, sourceRanges := checker.resolveAndUnpackTypesFromExprList(s.Exprs)
 	expectedReturnTypes := checker.unit.semanticInfo.TypeOf(funcDecl).Type.(*FuncType).ReturnTypes
 	if len(returnTypes) == len(expectedReturnTypes) {
 		for i, et := range expectedReturnTypes {
-			t := returnTypes[i]
-			if t != et {
-				checker.error(NewError(s.Exprs[i].SourceRange(), "incorrect return type '%v', expected '%v'", t, et))
+			if t := returnTypes[i]; t != et {
+				checker.error(NewError(sourceRanges[i], "incorrect return type '%v', expected '%v'", t, et))
 			}
 		}
 	} else {
 		named := funcDecl.Type.Result != nil && len(funcDecl.Type.Result.Fields[0].Names) > 0
 		if len(returnTypes) != 0 || !named {
-			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)))
+			checker.error(NewError(s.SourceRange(), "expected %v return values, but found %v", len(expectedReturnTypes), len(returnTypes)).
+				Note(s.SourceRange(), "have %v, want %v", TupleType{Types: returnTypes}, TupleType{Types: expectedReturnTypes}),
+			)
 		}
 	}
 }
