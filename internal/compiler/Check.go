@@ -843,29 +843,6 @@ func (checker *Checker) resolveBlockStmt(s *BlockStmt) {
 }
 
 func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
-	resolveRHS := func(exprs []Expr) (types []*TypeAndValue, sourceRanges []SourceRange) {
-		if len(exprs) == 1 {
-			e := exprs[0]
-			tv := checker.resolveExpr(e)
-			switch t := tv.Type.(type) {
-			case *TupleType:
-				for _, tt := range t.Types {
-					types = append(types, &TypeAndValue{Mode: AddressModeComputedValue, Type: tt})
-					sourceRanges = append(sourceRanges, e.SourceRange())
-				}
-			default:
-				types = append(types, tv)
-				sourceRanges = append(sourceRanges, e.SourceRange())
-			}
-		} else {
-			for _, e := range exprs {
-				types = append(types, checker.resolveExpr(e))
-				sourceRanges = append(sourceRanges, e.SourceRange())
-			}
-		}
-		return
-	}
-
 	hasMultiValue := func(s *AssignStmt, lhsValuesLen, rhsValuesLen int) bool {
 		if lhsValuesLen != rhsValuesLen {
 			checker.error(NewError(
@@ -930,10 +907,9 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 		}
 	}
 
-	rhsTypes, rhsSourceRanges := resolveRHS(s.RHS)
-
 	switch s.Operator.Kind() {
 	case TokenColonAssign:
+		rhsTypes, _ := checker.resolveAndUnpackTypesFromExprList(s.RHS)
 		if !hasMultiValue(s, len(s.LHS), len(rhsTypes)) {
 			return
 		}
@@ -953,10 +929,11 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 			name := lhs.(*IdentifierExpr).Token
 			v := NewVarSymbol(name, nil, name.SourceRange())
 			v.SetResolveState(ResolveStateResolved)
-			checker.unit.semanticInfo.SetTypeOf(v, &TypeAndValue{Mode: AddressModeVariable, Type: rhsTypes[i].Type})
+			checker.unit.semanticInfo.SetTypeOf(v, &TypeAndValue{Mode: AddressModeVariable, Type: rhsTypes[i]})
 			checker.addSymbol(v)
 		}
 	case TokenAssign:
+		rhsTypes, rhsSourceRanges := checker.resolveAndUnpackTypesFromExprList(s.RHS)
 		if !hasMultiValue(s, len(s.LHS), len(rhsTypes)) {
 			return
 		}
@@ -966,7 +943,7 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 			lhsType := checker.resolveExpr(lhs)
 			checkIsAssignable(lhs, lhsType)
 
-			if lhsType.Type != rhsTypes[i].Type {
+			if lhsType.Type != rhsTypes[i] {
 				checker.error(
 					NewError(
 						s.SourceRange(),
@@ -978,7 +955,7 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 					).Note(
 						rhsSourceRanges[i],
 						"RHS type is '%v'",
-						rhsTypes[i].Type,
+						rhsTypes[i],
 					),
 				)
 			}
@@ -996,14 +973,15 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 			lhsType.Type.Properties().HasArithmetic,
 			"arithmetic operations",
 		)
-		rhsType := rhsTypes[0]
+		rhs := s.RHS[0]
+		rhsType := checker.resolveExpr(rhs)
 		checkTypeProperty(
-			rhsSourceRanges[0],
+			rhs.SourceRange(),
 			rhsType.Type,
 			rhsType.Type.Properties().HasArithmetic,
 			"arithmetic operations",
 		)
-		checkTypeEqual(lhsType.Type, rhsType.Type, lhs.SourceRange(), rhsSourceRanges[0])
+		checkTypeEqual(lhsType.Type, rhsType.Type, lhs.SourceRange(), rhs.SourceRange())
 	case TokenAndAssign, TokenAndNotAssign, TokenOrAssign, TokenXorAssign:
 		if !hasSingleValue(s) {
 			return
@@ -1017,14 +995,15 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 			lhsType.Type.Properties().HasBitOps,
 			"bitwise operations",
 		)
-		rhsType := rhsTypes[0]
+		rhs := s.RHS[0]
+		rhsType := checker.resolveExpr(rhs)
 		checkTypeProperty(
-			rhsSourceRanges[0],
+			rhs.SourceRange(),
 			rhsType.Type,
 			rhsType.Type.Properties().HasBitOps,
 			"bitwise operations",
 		)
-		checkTypeEqual(lhsType.Type, rhsType.Type, lhs.SourceRange(), rhsSourceRanges[0])
+		checkTypeEqual(lhsType.Type, rhsType.Type, lhs.SourceRange(), rhs.SourceRange())
 	case TokenShlAssign, TokenShrAssign:
 		if !hasSingleValue(s) {
 			return
@@ -1038,10 +1017,11 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 			lhsType.Type.Properties().HasBitOps,
 			"bitwise operations",
 		)
-		rhsType := rhsTypes[0]
+		rhs := s.RHS[0]
+		rhsType := checker.resolveExpr(rhs)
 		if !rhsType.Type.Properties().Integral {
 			checker.error(NewError(
-				rhsSourceRanges[0],
+				rhs.SourceRange(),
 				"shift operator should be integral type instead of '%v'",
 				rhsType.Type,
 			))
@@ -1049,7 +1029,7 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 		} else {
 			if rhsType.Mode == AddressModeConstant && constant.Compare(rhsType.Value, token.LSS, constant.MakeInt64(0)) {
 				checker.error(NewError(
-					rhsSourceRanges[0],
+					rhs.SourceRange(),
 					"shift operator should not be negative, but it has value '%v'",
 					rhsType.Value,
 				))
