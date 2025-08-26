@@ -1,0 +1,30 @@
+package main
+
+func foo() (int, float32) {
+	return 1, 2.5
+}
+
+func singleValue() int {
+	return 1
+}
+
+func correct() {
+	a1, b1 := foo()
+	a2, b2 := 1, 2
+	a3 := 1
+	a4 := singleValue()
+}
+
+func incorrect() {
+	a1, b1, c1 := foo(), 1
+	a2, b2 := 3
+	a3 := 1, 2
+
+	a4 := 1
+	a4 := 1
+
+	a5 := 1
+	a5 = 2.5
+
+	a6() := 1
+}

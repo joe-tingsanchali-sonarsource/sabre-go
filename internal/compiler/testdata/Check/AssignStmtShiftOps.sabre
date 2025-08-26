@@ -1,0 +1,30 @@
+package main
+
+func foo() (int, float32) {
+	return 1, 2.5
+}
+
+func singleValue() int {
+	return 1
+}
+
+func negativeOne() int {
+	return -1
+}
+
+func correct() {
+	a1, b1 := 1, 1
+	a1 >>= 1
+	b1 <<= singleValue()
+	a1 <<= negativeOne()
+}
+
+func incorrect() {
+	a1, b1 := 1, 1
+	a1, b1 >>= 1, 1
+	a1, b1 <<= foo()
+	foo() >>= 1, 2.5
+	singleValue() <<= 1
+	a1 >>= true
+	a1 >>= -1
+}
