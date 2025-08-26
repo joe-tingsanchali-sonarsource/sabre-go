@@ -798,6 +798,8 @@ func (checker *Checker) resolveStmt(stmt Stmt) {
 		checker.resolveExpr(s.Expr)
 	case *ReturnStmt:
 		checker.resolveReturnStmt(s)
+	case *BlockStmt:
+		checker.resolveBlockStmt(s)
 	default:
 		panic("unexpected stmt type")
 	}
@@ -825,5 +827,15 @@ func (checker *Checker) resolveReturnStmt(s *ReturnStmt) {
 				Note(s.SourceRange(), "have %v, want %v", TupleType{Types: returnTypes}, TupleType{Types: expectedReturnTypes}),
 			)
 		}
+	}
+}
+
+func (checker *Checker) resolveBlockStmt(s *BlockStmt) {
+	scope := checker.unit.semanticInfo.createScopeFor(s, checker.currentScope(), "block")
+	checker.enterScope(scope)
+	defer checker.leaveScope()
+
+	for _, stmt := range s.Stmts {
+		checker.resolveStmt(stmt)
 	}
 }
