@@ -1,0 +1,36 @@
+>> 		a1, b1, c1 = foo(), 3
+>> 		^^^^^^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:20:2]: assignment mismatch: 3 variables but 2 values
+>> 		a1, b1 := 3
+>> 		^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:22:2]: assignment mismatch: 2 variables but 1 values
+>> 		a1 := 1, 2
+>> 		^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:23:2]: assignment mismatch: 1 variables but 2 values
+>> 		foo() = 1, 2.5
+>> 		^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:25:2]: assignment mismatch: 1 variables but 2 values
+>> 		foo() = 1
+>> 		^^^^^     
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:26:2]: expression is not assignable
+>> 		foo() = 1
+>> 		^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:26:2]: type mistmatch in assignment
+>> 		foo() = 1
+>> 		^^^^^     
+Note[internal/compiler/testdata/Check/AssignStmtAssign.sabre:26:2]: LHS type is '(int,float32)'
+>> 		foo() = 1
+>> 		        ^ 
+Note[internal/compiler/testdata/Check/AssignStmtAssign.sabre:26:10]: RHS type is 'int'
+>> 		singleValue() = 1
+>> 		^^^^^^^^^^^^^     
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:28:2]: expression is not assignable
+>> 		a5 = 2.5
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtAssign.sabre:31:2]: type mistmatch in assignment
+>> 		a5 = 2.5
+>> 		^^       
+Note[internal/compiler/testdata/Check/AssignStmtAssign.sabre:31:2]: LHS type is 'int'
+>> 		a5 = 2.5
+>> 		     ^^^ 
+Note[internal/compiler/testdata/Check/AssignStmtAssign.sabre:31:7]: RHS type is 'float32'

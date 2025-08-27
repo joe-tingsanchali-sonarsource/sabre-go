@@ -1,0 +1,27 @@
+>> 		a1, b1, c1 := foo(), 1
+>> 		^^^^^^^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:19:2]: assignment mismatch: 3 variables but 2 values
+>> 		a2, b2 := 3
+>> 		^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:20:2]: assignment mismatch: 2 variables but 1 values
+>> 		a3 := 1, 2
+>> 		^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:21:2]: assignment mismatch: 1 variables but 2 values
+>> 		a4 := 1
+>> 		^^      
+Error[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:24:2]: symbol 'a4' redefinition
+>> 		a4 := 1
+>> 		^^      
+Note[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:23:2]: first declared here
+>> 		a5 = 2.5
+>> 		^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:27:2]: type mistmatch in assignment
+>> 		a5 = 2.5
+>> 		^^       
+Note[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:27:2]: LHS type is 'int'
+>> 		a5 = 2.5
+>> 		     ^^^ 
+Note[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:27:7]: RHS type is 'float32'
+>> 		a6() := 1
+>> 		^^^^      
+Error[internal/compiler/testdata/Check/AssignStmtColonAssign.sabre:29:2]: expression can not be used as variable name

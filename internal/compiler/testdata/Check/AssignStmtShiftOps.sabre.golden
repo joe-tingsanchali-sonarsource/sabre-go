@@ -1,0 +1,18 @@
+>> 		a1, b1 >>= 1, 1
+>> 		^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtShiftOps.sabre:24:2]: assignment operator >>= requires single value expressions
+>> 		a1, b1 <<= foo()
+>> 		^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtShiftOps.sabre:25:2]: assignment operator <<= requires single value expressions
+>> 		foo() >>= 1, 2.5
+>> 		^^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtShiftOps.sabre:26:2]: assignment operator >>= requires single value expressions
+>> 		singleValue() <<= 1
+>> 		^^^^^^^^^^^^^       
+Error[internal/compiler/testdata/Check/AssignStmtShiftOps.sabre:27:2]: expression is not assignable
+>> 		a1 >>= true
+>> 		       ^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtShiftOps.sabre:28:9]: shift operator should be integral type instead of 'bool'
+>> 		a1 >>= -1
+>> 		       ^^ 
+Error[internal/compiler/testdata/Check/AssignStmtShiftOps.sabre:29:9]: shift operator should not be negative, but it has value '-1'

@@ -1,0 +1,36 @@
+>> 		a1, b1 &= 1, 1
+>> 		^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:19:2]: assignment operator &= requires single value expressions
+>> 		a1, b1 ^= foo()
+>> 		^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:20:2]: assignment operator ^= requires single value expressions
+>> 		foo() |= 1, 2.5
+>> 		^^^^^^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:21:2]: assignment operator |= requires single value expressions
+>> 		singleValue() |= 1
+>> 		^^^^^^^^^^^^^      
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:22:2]: expression is not assignable
+>> 		a1 |= true
+>> 		      ^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:23:8]: type 'bool' doesn't support bitwise operations
+>> 		a1 |= true
+>> 		^^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:23:2]: type mistmatch in assignment
+>> 		a1 |= true
+>> 		^^         
+Note[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:23:2]: LHS type is 'int'
+>> 		a1 |= true
+>> 		      ^^^^ 
+Note[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:23:8]: RHS type is 'bool'
+>> 		b1 ^= 2.5
+>> 		      ^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:24:8]: type 'float32' doesn't support bitwise operations
+>> 		b1 ^= 2.5
+>> 		^^^^^^^^^ 
+Error[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:24:2]: type mistmatch in assignment
+>> 		b1 ^= 2.5
+>> 		^^        
+Note[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:24:2]: LHS type is 'int'
+>> 		b1 ^= 2.5
+>> 		      ^^^ 
+Note[internal/compiler/testdata/Check/AssignStmtBitOps.sabre:24:8]: RHS type is 'float32'
