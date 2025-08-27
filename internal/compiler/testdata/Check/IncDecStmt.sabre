@@ -1,0 +1,21 @@
+package main
+
+func correct() {
+    x := 1
+    y := 1.5
+    x++
+    x--
+    y++
+    y--
+}
+
+func incorrect() {
+    x := true
+    x++
+    true++
+    false--
+}
+
+func main() {
+    correct()
+}
