@@ -1,0 +1,3 @@
+>> 		if w := true; w++ {
+>> 		              ^^^   
+Error[internal/compiler/testdata/Check/IfStmt2.sabre:8:16]: Expected boolean expression as condition in if statement

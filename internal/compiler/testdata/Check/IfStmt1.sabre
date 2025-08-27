@@ -1,0 +1,21 @@
+package main
+
+func main() {
+	x := true
+	y := false
+	if x {
+		x = false
+	} else if y {
+		y = true
+	} else {
+		x, y = false, false
+	}
+
+	if z := true; z {
+		z = false
+	}
+
+	if w := 1; true {
+		w = 0
+	}
+}

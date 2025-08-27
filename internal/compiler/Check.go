@@ -802,6 +802,8 @@ func (checker *Checker) resolveStmt(stmt Stmt) {
 		checker.resolveBlockStmt(s)
 	case *AssignStmt:
 		checker.resolveAssignStmt(s)
+	case *IfStmt:
+		checker.resolveIfStmt(s)
 	default:
 		panic("unexpected stmt type")
 	}
@@ -1019,5 +1021,31 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 				))
 			}
 		}
+	}
+}
+
+func (checker *Checker) resolveIfStmt(s *IfStmt) {
+	scope := checker.unit.semanticInfo.createScopeFor(s, checker.currentScope(), "if")
+	checker.enterScope(scope)
+	defer checker.leaveScope()
+
+	if s.Init != nil {
+		checker.resolveStmt(s.Init)
+	}
+
+	condType := checker.resolveExpr(s.Cond)
+	if condType.Type != BuiltinBoolType {
+		checker.error(NewError(
+			s.Cond.SourceRange(),
+			"if condition should be boolean, but found '%v'",
+			condType.Type,
+		))
+		return
+	}
+
+	checker.resolveBlockStmt(s.Body)
+
+	if s.Else != nil {
+		checker.resolveStmt(s.Else)
 	}
 }
