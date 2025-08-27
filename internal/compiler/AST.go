@@ -42,6 +42,30 @@ type LiteralExpr struct {
 func (e *LiteralExpr) exprNode()                {}
 func (e *LiteralExpr) SourceRange() SourceRange { return e.Token.SourceRange() }
 func (e *LiteralExpr) Visit(v NodeVisitor) {
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
 	v.VisitLiteralExpr(e)
 }
 
