@@ -943,22 +943,7 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 			lhsType := checker.resolveExpr(lhs)
 			checkIsAssignable(lhs, lhsType)
 
-			if lhsType.Type != rhsTypes[i] {
-				checker.error(
-					NewError(
-						s.SourceRange(),
-						"type mistmatch in assignment",
-					).Note(
-						lhs.SourceRange(),
-						"LHS type is '%v'",
-						lhsType.Type,
-					).Note(
-						rhsSourceRanges[i],
-						"RHS type is '%v'",
-						rhsTypes[i],
-					),
-				)
-			}
+			checkTypeEqual(lhsType.Type, rhsTypes[i], lhs.SourceRange(), rhsSourceRanges[i])
 		}
 	case TokenAddAssign, TokenSubAssign, TokenMulAssign, TokenDivAssign, TokenModAssign:
 		if !hasSingleValue(s) {
@@ -1025,7 +1010,6 @@ func (checker *Checker) resolveAssignStmt(s *AssignStmt) {
 				"shift operator should be integral type instead of '%v'",
 				rhsType.Type,
 			))
-
 		} else {
 			if rhsType.Mode == AddressModeConstant && constant.Compare(rhsType.Value, token.LSS, constant.MakeInt64(0)) {
 				checker.error(NewError(
