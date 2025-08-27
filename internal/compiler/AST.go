@@ -9,6 +9,30 @@ type Node interface {
 type Expr interface {
 	Node
 	exprNode()
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
+	// oaiwejfio
 }
 
 type LiteralExpr struct {
