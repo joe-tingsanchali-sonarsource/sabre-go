@@ -28,8 +28,15 @@ jobs:
           ./sabre test-parse-decl ./internal/compiler/testdata/Parse/decl
           ./sabre test-check ./internal/compiler/testdata/Check
           go tool covdata textfmt -i=cov -o sabre-cov.out
-
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
+        with:
+          args: >
+            -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
