@@ -1,0 +1,9 @@
+>> 	    x++
+>> 	    ^^^ 
+Error[internal/compiler/testdata/Check/IncDecStmt.sabre:14:5]: expected integral or floating type, but found 'bool'
+>> 	    true++
+>> 	    ^^^^^^ 
+Error[internal/compiler/testdata/Check/IncDecStmt.sabre:15:5]: expression is not assignable
+>> 	    false--
+>> 	    ^^^^^^^ 
+Error[internal/compiler/testdata/Check/IncDecStmt.sabre:16:5]: expression is not assignable
